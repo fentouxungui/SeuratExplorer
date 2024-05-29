@@ -21,9 +21,8 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 You can install the development version of `SeuratExplorer` like so:
 
 ``` r
-library(devtools)
+if(!require(devtools)){install.packages("devtools")}
 install_github("fentouxungui/SeuratExplorer")
-library(SeuratExplorer)
 ```
 
 **建议将各个软件包升级到最新版本！否则可能出现兼容问题**
@@ -31,6 +30,7 @@ library(SeuratExplorer)
 Run App:
 
 ``` r
+library(SeuratExplorer)
 launchSeuratExplorer()
 ```
 
