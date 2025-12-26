@@ -140,7 +140,7 @@ explorer_body_ui <- function(tab_list){
                                         ),
                                         conditionalPanel(
                                           condition = "output.Vlnplot_StackPlot && input.VlnSplitBy == 'None'", # only work when split is set to NULL
-                                          selectInput("VlnFillBy","Color By:", choices = c(Feature = "feature", Ident = "ident")),
+                                          selectInput("VlnFillBy","Color By:", choices = c(Feature = "feature", Cluster = "ident")),
                                         ),
                                         conditionalPanel(
                                           condition = "input.VlnSplitBy == 'None'", # only work when split is set to NULL
