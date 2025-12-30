@@ -11,9 +11,10 @@
 [![](https://www.r-pkg.org/badges/version/SeuratExplorer)](https://cran.r-project.org/package=SeuratExplorer)
 [![](https://img.shields.io/badge/devel%20version-0.1.2-rossellhayes.svg)](https://github.com/fentouxungui/SeuratExplorer)
 [![](http://cranlogs.r-pkg.org/badges/grand-total/SeuratExplorer)](https://cran.r-project.org/package=SeuratExplorer)
+![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Ffentouxungui%2FSeuratExplorer&label=Visitor&icon=github&color=%23198754&message=&style=flat&tz=Asia%2FHong_Kong)
 [![](https://img.shields.io/github/languages/code-size/fentouxungui/SeuratExplorer.svg)](https://github.com/fentouxungui/SeuratExplorer)
 [![AskDeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/fentouxungui/SeuratExplorer)
-[![AskZreadAI]()](https://zread.ai/fentouxungui/SeuratExplorer)
+[![AskZreadAI](https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff)](https://zread.ai/fentouxungui/SeuratExplorer)
 <!-- badges: end -->
 
 > An `Shiny` App for Exploring scRNA-seq Data Processed in `Seurat`
@@ -137,14 +138,14 @@ etc.
 - support data processed by `Seurat` V5 and older versions. it may takes
   a while to update `Seurat` object when loading data.
 
-<img src="./inst/extdata/www/upload-data.png" width="100%" />
+<img src="./inst/extdata/www/upload-data.png" alt="" width="100%" />
 
 ### Cell Metadata
 
 - support download cell metadata in `csv` format, which can be used for
   further analysis.
 
-<img src="./inst/extdata/www/cell-metadata.jpg" width="100%" />
+<img src="./inst/extdata/www/cell-metadata.jpg" alt="" width="100%" />
 
 ### Dimensional Reduction Plot
 
@@ -168,7 +169,7 @@ etc.
 
 **Example plots:**
 
-<img src="./inst/extdata/www/Dimplot-splited.png" width="80%" />
+<img src="./inst/extdata/www/Dimplot-splited.png" alt="" width="80%" />
 
 ### Feature Plot
 
@@ -192,7 +193,7 @@ etc.
 
 **Example plots:**
 
-<img src="./inst/extdata/www/Featureplot-splited.png" width="50%" />
+<img src="./inst/extdata/www/Featureplot-splited.png" alt="" width="50%" />
 
 ### Violin Plot
 
@@ -218,7 +219,7 @@ etc.
 
 **Example plots:**
 
-<img src="./inst/extdata/www//ViolinPlot-splited-Stack.png" width="50%" />
+<img src="./inst/extdata/www//ViolinPlot-splited-Stack.png" alt="" width="50%" />
 
 ### Dot Plot
 
@@ -245,7 +246,7 @@ etc.
 
 **Example plots:**
 
-<img src="./inst/extdata/www/DotPlot-Splited.png" width="50%" />
+<img src="./inst/extdata/www/DotPlot-Splited.png" alt="" width="50%" />
 
 ### Heatmap for cell level expression
 
@@ -271,7 +272,7 @@ etc.
 
 **Example plots:**
 
-<img src="./inst/extdata/www/Heatmap-CellLevel.png" width="100%" />
+<img src="./inst/extdata/www/Heatmap-CellLevel.png" alt="" width="100%" />
 
 ### Heatmap for group averaged expression
 
@@ -293,7 +294,7 @@ etc.
 
 **Example plots:**
 
-<img src="./inst/extdata/www/Heatmap-GroupLevel-2.png" width="50%" />
+<img src="./inst/extdata/www/Heatmap-GroupLevel-2.png" alt="" width="50%" />
 
 ### Ridge Plot
 
@@ -317,7 +318,7 @@ etc.
 
 **Example plots:**
 
-<img src="./inst/extdata/www/RidgePlot.png" width="50%" />
+<img src="./inst/extdata/www/RidgePlot.png" alt="" width="50%" />
 
 ### Plot Cell Percentage
 
@@ -329,7 +330,7 @@ etc.
 
 **Example plots:**
 
-<img src="./inst/extdata/www/CellRatio-Splited.png" width="50%" />
+<img src="./inst/extdata/www/CellRatio-Splited.png" alt="" width="50%" />
 
 ### Find Cluster Markers and DEGs Analysis
 
@@ -351,11 +352,11 @@ You can modify part calculation parameters before a analysis.
 
 **Screen shots:**
 
-<img src="./inst/extdata/www/DEGs-2.png" width="50%" />
+<img src="./inst/extdata/www/DEGs-2.png" alt="" width="50%" />
 
 #### Output description
 
-<img src="./inst/extdata/www/DEGs-4.jpg" width="100%" />
+<img src="./inst/extdata/www/DEGs-4.jpg" alt="" width="100%" />
 
 > [FindMarkers(object,
 > …)](https://satijalab.org/seurat/reference/findmarkers)
@@ -403,7 +404,7 @@ each gene, count cells in which this genes is highly expressed, and also
 calculate the mean and median UMI percentage in those highly expressed
 cells.
 
-<img src="./inst/extdata/www/Find-Top-Genes-by-Cell.jpg" width="80%" />
+<img src="./inst/extdata/www/Find-Top-Genes-by-Cell.jpg" alt="" width="80%" />
 
 #### Output description
 
@@ -435,7 +436,7 @@ escaped.
 
 - support switch Assays which contain slot: counts
 
-<img src="./inst/extdata/www/Find-Top-Genes-by-Mean-UMI-counts.jpg" width="80%" />
+<img src="./inst/extdata/www/Find-Top-Genes-by-Mean-UMI-counts.jpg" alt="" width="80%" />
 
 #### Output description
 
@@ -461,7 +462,7 @@ percentage and mean/median expression level.
 
 - support switch Assays which contain slot: data
 
-<img src="./inst/extdata/www/gene-short-summary.jpg" width="80%" />
+<img src="./inst/extdata/www/gene-short-summary.jpg" alt="" width="80%" />
 
 #### Output description
 
@@ -497,11 +498,11 @@ cluster, support pearson & spearman methods.
 - `Calculate Correlation for A Gene List`: to calculate the correlation
   value for each pair of the input genes
 
-<img src="./inst/extdata/www/featurecorrelation.jpg" width="100%" />
+<img src="./inst/extdata/www/featurecorrelation.jpg" alt="" width="100%" />
 
 #### Output description
 
-<img src="./inst/extdata/www/feature-correlation-output.jpg" width="40%" />
+<img src="./inst/extdata/www/feature-correlation-output.jpg" alt="" width="40%" />
 
 - `GeneA`: the first gene in a Gene pair
 
@@ -612,10 +613,10 @@ filtering, integrating, and visualizing single-cell RNA-seq data.
     #> [1] stats     graphics  grDevices utils     datasets  methods   base     
     #> 
     #> loaded via a namespace (and not attached):
-    #>  [1] compiler_4.4.3    fastmap_1.2.0     cli_3.6.3         tools_4.4.3      
-    #>  [5] htmltools_0.5.8.1 rstudioapi_0.17.1 yaml_2.3.10       rmarkdown_2.29   
-    #>  [9] knitr_1.50        xfun_0.52         digest_0.6.36     rlang_1.1.4      
-    #> [13] evaluate_1.0.3
+    #>  [1] compiler_4.4.3    fastmap_1.2.0     cli_3.6.5         tools_4.4.3      
+    #>  [5] htmltools_0.5.9   otel_0.2.0        rstudioapi_0.17.1 yaml_2.3.12      
+    #>  [9] rmarkdown_2.30    knitr_1.51        xfun_0.55         digest_0.6.39    
+    #> [13] rlang_1.1.6       evaluate_1.0.5
 
 ## 中文介绍
 
