@@ -35,7 +35,7 @@ library(badger)
 <!-- badges: start -->
 [![](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 [![](https://www.r-pkg.org/badges/version/SeuratExplorer)](https://cran.r-project.org/package=SeuratExplorer)
-[![](https://img.shields.io/badge/devel%20version-0.1.2-rossellhayes.svg)](https://github.com/fentouxungui/SeuratExplorer)
+[![](https://img.shields.io/badge/devel%20version-0.1.3-rossellhayes.svg)](https://github.com/fentouxungui/SeuratExplorer)
 [![](http://cranlogs.r-pkg.org/badges/grand-total/SeuratExplorer)](https://cran.r-project.org/package=SeuratExplorer)
 ![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Ffentouxungui%2FSeuratExplorer&label=Visitor&icon=github&color=%23198754&message=&style=flat&tz=Asia%2FHong_Kong)
 [![](https://img.shields.io/github/languages/code-size/fentouxungui/SeuratExplorer.svg)](https://github.com/fentouxungui/SeuratExplorer)
@@ -53,6 +53,17 @@ A simple, one-command package which runs an interactive dashboard capable of com
 
 > Essentially, what ``SeuratExplorer`` done is just to perform visual operations for command line tools from ``Seurat`` or other packages.
 
+### Key Features
+
+- **No Coding Required**: Interactive point-and-click interface for all analyses
+- **Comprehensive Visualizations**: 10+ plot types for exploring single-cell data
+- **Multi-Assay Support**: Works with scRNA-seq, scATAC-seq, spatial, and multi-omics data
+- **Flexible Analysis**: Find markers, explore correlations, and summarize features interactively
+- **Publication-Ready Plots**: Download high-quality PDF figures directly from the app
+- **Batch Processing**: Analyze multiple genes/clusters simultaneously
+- **Real-time Results**: See changes immediately as you adjust parameters
+- **Data Export**: Download analysis results in CSV format for further analysis
+
 ## Installation
 
 Install the latest version from github - ***Recommended***:
@@ -65,21 +76,72 @@ install_github("fentouxungui/SeuratExplorer", dependencies = TRUE)
 Or install from CRAN:
 
 ```{r eval=FALSE}
-# install none-CRAN dependency
-if (!require("BiocManager", quietly = TRUE)){install.packages("BiocManager")}
+# Install non-CRAN dependencies first
+if (!require("BiocManager", quietly = TRUE)){
+  install.packages("BiocManager")
+}
 BiocManager::install(c("ComplexHeatmap", "MAST", "limma", "DESeq2"))
-if(!require(devtools)){install.packages("devtools")}
+
+# Install presto from GitHub
+if(!require(devtools)){
+  install.packages("devtools")
+}
 devtools::install_github("immunogenomics/presto")
 
+# Install SeuratExplorer from CRAN
 install.packages("SeuratExplorer")
 ```
 
+**System Requirements:**
+
+- R (>= 4.1.0)
+- Seurat (>= 5.4.0)
+- SeuratObject (>= 5.3.0)
+- ggplot2 (>= 4.0.1)
+
 ## Run app on local
- 
+
 ```{r eval=FALSE}
 library(SeuratExplorer)
 launchSeuratExplorer()
 ```
+
+You can customize the launch behavior with additional parameters:
+
+- `verbose`: Set to `TRUE` for debug messages (default: `FALSE`)
+- `ReductionKeyWords`: Keywords for dimension reduction options (default: `c("umap","tsne")`)
+- `SplitOptionMaxLevel`: Maximum levels for split options (default: `12`)
+- `MaxInputFileSize`: Maximum upload file size in bytes (default: `20*1024^3`, i.e., 20GB)
+
+```{r eval=FALSE}
+# Example with custom parameters
+launchSeuratExplorer(
+  verbose = TRUE,
+  ReductionKeyWords = c("umap", "tsne", "pca"),
+  MaxInputFileSize = 10*1024^3  # 10GB
+)
+```
+
+## Exported Functions
+
+Besides the interactive Shiny app, `SeuratExplorer` provides several utility functions that can be used in R scripts:
+
+### Main Functions
+
+- `launchSeuratExplorer()`: Launch the interactive Shiny application
+- `getColors()`: Get color palettes for visualization
+- `cellRatioPlot()`: Create stacked bar plots showing cell type proportions across samples
+- `top_genes()`: Find top expressed genes by cell cluster
+
+### UI/Server Components
+
+For advanced users who want to customize the Shiny app:
+
+- `ui()` / `server()`: Main UI and server functions
+- `explorer_body_ui()` / `explorer_sidebar_ui()`: Modular UI components
+- `explorer_server()`: Modular server function
+
+See function documentation for detailed usage examples.
 
 ## Deploy on server
 
@@ -96,41 +158,49 @@ launchSeuratExplorer()
 ## Assay option
 
 > [Seurat Assay](https://github.com/satijalab/seurat/wiki/Assay)
-
-> The Assay class stores single cell data.For typical scRNA-seq experiments, a Seurat object will have a single Assay ("RNA"). This assay will also store multiple 'transformations' of the data, including raw counts (@counts slot), normalized data (@data slot), and scaled data for dimensional reduction (@scale.data slot).
-
+>
+> The Assay class stores single cell data. For typical scRNA-seq experiments, a Seurat object will have a single Assay ("RNA"). This assay will also store multiple 'transformations' of the data, including raw counts (@counts slot), normalized data (@data slot), and scaled data for dimensional reduction (@scale.data slot).
 
 SeuratExplorer allows for assay switching, thereby multiple data types can be supported, including:
 
-- scRNA-seq, usually the default 'RNA' assay.
+**Single-cell Modalities:**
 
-- scATAC-seq, usually named with "ATAC", and "ACTIVITY" based on former.
+- **scRNA-seq**: Usually the default 'RNA' assay containing gene expression data
+- **scATAC-seq**: Usually named with "ATAC" (chromatin accessibility) and "ACTIVITY" (derived gene activity scores)
+- **Spatial Transcriptomics**:
+  - Xenium data, usually named with 'Xenium'
+  - Visium HD data, usually named with 'Visium'
+  - Other spatial platforms (MERFISH, seqFISH, etc.)
+- **CITE-seq**: For antibody-derived tags (ADT) data, usually named with 'ADT' or 'HTO'
+- **Multi-omics**: Any custom assay types following Seurat's assay structure
 
-- Xenium data, usually named with 'Xenium'.
+**Normalization Methods:**
 
-- Visium HD data, usually named with 'Visium'.
+- **SCT assay**: Using SCTransform normalization method
+- **cellbender assay**: Using cellbender background correction output
+- **lsi assay**: From Latent Semantic Indexing dimensionality reduction
+- Other custom normalization approaches
 
-- CITE-seq data,for the data of antibody-derived tags, usually named with 'ADT'.
+**Assay Slots:**
 
-etc.
+- **counts**: Stores unnormalized data such as raw counts or TPMs
+- **data**: Normalized data matrix (log-normalized or other transformations)
+- **scale.data**: Scaled data matrix (used for dimensional reduction and visualization)
 
-Besides:
+### Assay Slot Support by Feature
 
-- SCT assay for using SCT normalization method
+Different visualization features support different assay slots:
 
-- cellbender assay by using cellbender output
-
-- lsi assay from LSI weight reduction
-
-etc.
-
-**Slots**
-
-- counts: Stores unnormalized data such as raw counts or TPMs
-
-- data: Normalized data matrix
-
-- scale.data:	Scaled data matrix
+- **Feature Plot**: Supports `counts`, `data`, `scale.data`
+- **Violin Plot**: Supports `counts`, `data`, `scale.data`
+- **Dot Plot**: Supports `data` slot
+- **Heatmap (Cell Level)**: Supports any available slot
+- **Heatmap (Group Level)**: Supports `data`, `scale.data`
+- **Ridge Plot**: Supports `counts`, `data`, `scale.data`
+- **DEGs Analysis**: Supports `counts`, `data`
+- **Top Expressed Features**: Supports `counts` (by accumulation) or any slot (by cell)
+- **Feature Summary**: Supports `data`
+- **Feature Correlation**: Supports `data`
 
 ## Introduction
 
@@ -145,18 +215,6 @@ if(for_github){
   knitr::include_graphics('./inst/extdata/www/upload-data.png')
 }else{
   knitr::include_graphics(system.file("extdata", "www/upload-data.png", package ="SeuratExplorer"), rel_path = FALSE)
-}
-```
-
-### Cell Metadata
-
-- support download cell metadata in ``csv`` format, which can be used for further analysis.
-
-```{r  echo = FALSE, message=FALSE, warning=FALSE}
-if(for_github){
-  knitr::include_graphics('./inst/extdata/www/cell-metadata.jpg')
-} else{
- knitr::include_graphics(system.file("extdata", "www/cell-metadata.jpg", package ="SeuratExplorer"), rel_path = FALSE) 
 }
 ```
 
@@ -585,16 +643,32 @@ if (for_github) {
 
 if nothing return, this is because the input genes has very low expression level, very low expressed genes will be removed before analysis.
 
+### Rename cluster name
+
+You can rename cluster names, and changes will take effect immediately, while the raw Seurat object file will be never changed, once you close the session, the newly added annotation will be lost, You can download the old name and new name mapping file, and send it to technician to ask for permanent change.
+
 ### Search Features
 
 all features(genes) extracted from the row names of assay, can be used search features.
 
 - support switch Assays which contain any one of the slots: counts, data, scale.data
+- case-insensitive search for gene/feature names
+- view feature annotations for ATAC assays (requires Signac package)
+- copy multiple feature names for use in other analysis modules
 
-### Metadata of Cells
+### Cell Metadata
 
-The metadata of all cells extracted from the meta.data slot of Seurat object, ehich contains descriptive information for each cell, such as quality control metrics, cell type classifications, batch information, and experimental conditions. This metadata is crucial for organizing, filtering, integrating, and visualizing single-cell RNA-seq data.
+The metadata of all cells extracted from the meta.data slot of Seurat object, which contains descriptive information for each cell, such as quality control metrics, cell type classifications, batch information, and experimental conditions. This metadata is crucial for organizing, filtering, integrating, and visualizing single-cell RNA-seq data.
 
+- support download cell metadata in ``csv`` format, which can be used for further analysis.
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+if(for_github){
+  knitr::include_graphics('./inst/extdata/www/cell-metadata.jpg')
+} else{
+ knitr::include_graphics(system.file("extdata", "www/cell-metadata.jpg", package ="SeuratExplorer"), rel_path = FALSE) 
+}
+```
 
 ### Structure of Seurat Object
 
@@ -628,21 +702,152 @@ images:
 > misc:
 > A list for storing miscellaneous information not fitting into other specific slots.
 
+### About
+
+Yeah, it's the tutorial right here!
+
+## Data Preparation Tips
+
+### Preparing Your Seurat Object
+
+For the best experience with SeuratExplorer, ensure your Seurat object contains:
+
+1. **Required Elements:**
+   - At least one assay with data (`RNA`, `ATAC`, etc.)
+   - Dimensional reductions (`umap`, `tsne`, or `pca`)
+   - Cell metadata (`meta.data` slot) with cluster information
+
+2. **Recommended Elements:**
+   - Multiple cluster resolutions (e.g., `seurat_clusters` at different resolutions)
+   - Sample or batch information in metadata
+   - Cell type annotations (can be added interactively in the app)
+   - Quality control metrics (nCount_RNA, nFeature_RNA, percent.mt, etc.)
+
+3. **File Formats:**
+   - `.rds`: Standard R data format (smaller files, faster I/O)
+   - `.qs2`: QSZ compression format (better compression for large objects)
+
+4. **File Size Considerations:**
+   - Maximum upload size: 20GB (configurable via `MaxInputFileSize` parameter)
+   - For large datasets, consider subsetting or using data with fewer cells
+   - Use `.qs2` format for better compression of large objects
+
+### Example Preprocessing Code
+
+```{r eval=FALSE}
+# Basic Seurat preprocessing
+library(Seurat)
+
+# Load your data
+seurat_obj <- Read10X(data.dir = "path/to/data")
+seurat_obj <- CreateSeuratObject(counts = seurat_obj)
+
+# Standard processing
+seurat_obj <- NormalizeData(seurat_obj)
+seurat_obj <- FindVariableFeatures(seurat_obj)
+seurat_obj <- ScaleData(seurat_obj)
+seurat_obj <- RunPCA(seurat_obj)
+seurat_obj <- RunUMAP(seurat_obj, dims = 1:30)
+
+# Clustering at multiple resolutions
+seurat_obj <- FindNeighbors(seurat_obj, dims = 1:30)
+seurat_obj <- FindClusters(seurat_obj, resolution = 0.4)
+seurat_obj <- FindClusters(seurat_obj, resolution = 0.8)
+
+# Save for SeuratExplorer
+saveRDS(seurat_obj, "my_seurat_object.rds")
+# or
+qs2::qs_save(seurat_obj, "my_seurat_object.qs2")
+```
+
+## FAQ
+
+**Q: Can I use SeuratExplorer with Seurat v3 objects?**
+
+A: Yes! SeuratExplorer automatically updates old Seurat objects when loading. However, for very old versions (v2 or earlier), manual update using `UpdateSeuratObject()` may be required before use.
+
+**Q: Is my data uploaded to any server?**
+
+A: No. When running locally (`launchSeuratExplorer()`), all data stays on your computer. Only when deployed on a Shiny Server would data be uploaded to that server.
+
+**Q: Can I save my analysis results?**
+
+A: Yes! Most visualizations can be downloaded as PDF files. Analysis results (DEGs, feature summaries, etc.) can be downloaded as CSV files. Cluster name mappings can also be exported.
+
+**Q: What's the difference between the two "Top Expressed Features" methods?**
+
+A:
+- **Find Top Genes by Cell**: Identifies genes that are highly expressed in individual cells, useful for finding cell-specific markers
+- **Find Top Genes by Mean UMI**: Finds genes with high average expression across all cells in a cluster, useful for identifying cluster characteristics
+
+**Q: How do I add custom color palettes?**
+
+A: While SeuratExplorer includes many predefined color palettes, you can use the `getColors()` function in your own R scripts to access these palettes for custom visualizations.
+
 ## Key related packages
 
-- [satijalab/seurat](https://github.com/satijalab/seurat): Seurat is an R toolkit for single cell genomics, developed and maintained by the Satija Lab at NYGC.
+### Core Dependencies
 
-- [Hla-Lab/SeuratExplorer](https://github.com/rwcrocker/SeuratExplorer/): An interactive R shiny application for exploring scRNAseq data processed in Seurat.
+- [satijalab/seurat](https://github.com/satijalab/seurat): Seurat is an R toolkit for single cell genomics, developed and maintained by the Satija Lab at NYGC. SeuratExplorer builds upon Seurat's powerful analysis capabilities to provide interactive visualization.
 
-- [junjunlab/scRNAtoolVis](https://github.com/junjunlab/scRNAtoolVis): Some useful function to make your scRNA-seq plot more beautiful.
+- [rstudio/shiny](https://shiny.rstudio.com/): Shiny is an R package that makes it easy to build interactive web apps straight from R. SeuratExplorer uses Shiny to create its interactive dashboard.
 
-- [rstudio/shiny-server](https://github.com/rstudio/shiny-server): Shiny Server is a server program that makes Shiny applications available over the web.
+### Visualization Dependencies
+
+- [ggplot2](https://ggplot2.tidyverse.org/): A system for declaratively creating graphics, based on "The Grammar of Graphics". SeuratExplorer uses ggplot2 for all its visualizations.
+
+- [ComplexHeatmap](https://jokergoo.github.io/ComplexHeatmap/reference/Heatmap.html): Bioconductor package for making complex heatmaps with annotations.
+
+- [shinydashboard](https://rstudio.github.io/shinydashboard/): Create dashboards with Shiny. SeuratExplorer uses this for its admin-style interface.
+
+### Related Projects
+
+- [Hla-Lab/SeuratExplorer](https://github.com/rwcrocker/SeuratExplorer/): An interactive R shiny application for exploring scRNAseq data processed in Seurat (another implementation with similar goals).
+
+- [junjunlab/scRNAtoolVis](https://github.com/junjunlab/scRNAtoolVis): Some useful functions to make your scRNA-seq plots more beautiful. Some code from this package has been adapted in SeuratExplorer.
+
+- [rstudio/shiny-server](https://github.com/rstudio/shiny-server): Shiny Server is a server program that makes Shiny applications available over the web. Use this to deploy SeuratExplorer on a server for multi-user access.
 
 ## Session Info
 
 ```{r echo = FALSE}
 sessionInfo()
 ```
+
+## Contributing and Support
+
+### Getting Help
+
+- **Documentation**: See function documentation with `?function_name` in R
+- **Issues**: Report bugs or request features at [GitHub Issues](https://github.com/fentouxungui/SeuratExplorer/issues)
+- **WeChat**: Follow [微信公众号：分析力工厂](https://mp.weixin.qq.com/s/lpvI9OnyN95amOeVGmeyMQ) for tutorials and updates in Chinese
+
+### Citation
+
+If you use SeuratExplorer in your research, please cite:
+
+```bibtex
+@software{seuratexplorer2025,
+  title = {SeuratExplorer: An Shiny App for Exploring scRNA-seq Data Processed in Seurat},
+  author = {Zhang, Yongchao},
+  year = {2025},
+  url = {https://github.com/fentouxungui/SeuratExplorer},
+  note = {R package version 0.1.3}
+}
+```
+
+### License
+
+This package is licensed under GPL (>= 3). See [LICENSE.md](LICENSE.md) for details.
+
+## Acknowledgments
+
+SeuratExplorer is built upon excellent work by:
+
+- The Seurat development team (Satija Lab)
+- The RStudio/Shiny team
+- The Bioconductor community
+- All contributors and users who provide feedback and suggestions
 
 ## 中文介绍
 

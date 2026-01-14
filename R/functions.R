@@ -494,6 +494,10 @@ top_genes <- function(SeuratObj, percent.cut = 0.01, group.by, assay = 'RNA') {
 }
 
 top_genes_core <- function(expr_mat, cutoff = 0.01, celltype){
+  # to block R RMD check note: Undefined global functions or variables:
+  Expr <- NULL
+  Gene <- NULL
+
   # Optimized version using matrix operations instead of loops
   # Calculate total UMI per cell
   cell_totals <- colSums(expr_mat)
