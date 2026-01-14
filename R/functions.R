@@ -404,12 +404,12 @@ cellRatioPlot <- function(object = NULL,
   if (is.null(facet.name)) {
     ratio.info <- meta %>%
       dplyr::group_by(.data[[sample.name]], .data[[celltype.name]]) %>%
-      dplyr::summarise(num = dplyr::n(), .groups = 'drop') %>%
+      dplyr::summarise(num = dplyr::n()) %>%
       dplyr::mutate(rel_num = num / sum(num))
   }else{
     ratio.info <- meta %>%
       dplyr::group_by(.data[[sample.name]], .data[[facet.name]],.data[[celltype.name]]) %>%
-      dplyr::summarise(num = dplyr::n(), .groups = 'drop') %>%
+      dplyr::summarise(num = dplyr::n()) %>%
       dplyr::mutate(rel_num = num / sum(num))
   }
 
@@ -536,7 +536,7 @@ top_genes_core <- function(expr_mat, cutoff = 0.01, celltype){
   genes.statics <- dplyr::group_by(res_cell_level, Gene) %>%
     dplyr::summarise(cut.pct.mean = round(mean(Expr),digits = 4),
                      cut.pct.median = round(stats::median(Expr),digits = 4),
-                     cut.Cells = length(Expr), .groups = 'drop')
+                     cut.Cells = length(Expr))
   genes.statics$total.pos.cells <- apply(expr_mat[genes.statics$Gene,,drop = FALSE] > 0, 1, sum)
   genes.statics$total.UMI.pct <- round(apply(expr_mat[genes.statics$Gene,,drop = FALSE], 1, sum)/sum(expr_mat),digits = 4)
   genes.statics$total.cells <- ncol(expr_mat)
