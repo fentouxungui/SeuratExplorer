@@ -2022,6 +2022,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       data$split_options <- prepare_split_options(df = data$obj@meta.data,
                                                   max.level = data$split_maxlevel,
                                                   verbose = getOption('SeuratExplorerVerbose'))
+      data$version <- data$version + 1
       showModal(modalDialog(title = "Congratulations:",
                             "New annotation added!",
                             footer= modalButton("Dismiss"),
@@ -2128,7 +2129,8 @@ server <- function(input, output, session) {
                         assay_slots = c('counts', 'data', 'scale.data'),
                         split_maxlevel = getOption("SeuratExplorerSplitOptionMaxLevel"),
                         split_options = NULL,
-                        extra_qc_options = NULL)
+                        extra_qc_options = NULL,
+                        version = 0)
 
   # reductions_options: xy axis coordinate
   # cluster_options/split_options/extra_qc_options all are column name from seurat object meta.data,
