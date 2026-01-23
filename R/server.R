@@ -137,9 +137,39 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   do.call(tagList, c(output_dimension_reduction, output_resolution, output_assay))
 
   ############################# Dimension Reduction Plot
+  # Track resolution changes and whether order is ready
+  resolution_state <- reactiveValues(
+    ready = FALSE,
+    current_resolution = NULL
+  )
+
+  # Update ready state when DimClusterOrder is ready
+  observe({
+    req(input$DimClusterResolution, input$DimClusterOrder)
+    # Check if order matches current resolution
+    expected_levels <- levels(data$obj@meta.data[,input$DimClusterResolution])
+    actual_order <- if (!is.null(input$DimClusterOrder) && length(input$DimClusterOrder) > 0) {
+      input$DimClusterOrder
+    } else {
+      NULL
+    }
+
+    # Order is ready if it's not null and contains expected cluster names (in any order)
+    if (!is.null(actual_order) && length(intersect(actual_order, expected_levels)) == length(actual_order)) {
+      if (is.null(resolution_state$current_resolution) || resolution_state$current_resolution != input$DimClusterResolution) {
+        resolution_state$current_resolution <- input$DimClusterResolution
+        resolution_state$ready <- TRUE
+        if(verbose){message("SeuratExplorer: DimClusterOrder is now ready for resolution: ", input$DimClusterResolution)}
+      }
+    }
+  })
+
+
   # define Cluster order
   output$DimClusterOrder.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing DimClusterOrder.UI...")}
+    # Mark as not ready when UI is being rebuilt
+    resolution_state$ready <- FALSE
     shinyjqui::orderInput(inputId = 'DimClusterOrder',
                           label = 'Drag to order:',
                           items = levels(data$obj@meta.data[,input$DimClusterResolution]),
@@ -173,6 +203,21 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }
   })
 
+  # Safe cluster order reactive - waits for order to be ready
+  DimClusterOrder.Safe <- reactive({
+    req(input$DimClusterResolution)
+    req(resolution_state$ready, "Waiting for cluster order to update...")
+
+    if (!is.null(input$DimClusterOrder) && length(input$DimClusterOrder) > 0) {
+      if(verbose){message("SeuratExplorer: DimClusterOrder.Safe using user order...")}
+      return(input$DimClusterOrder)
+    }
+
+    # Fallback to default levels
+    if(verbose){message("SeuratExplorer: DimClusterOrder.Safe using default levels...")}
+    levels(data$obj@meta.data[,input$DimClusterResolution])
+  })
+
   # define Cluster choice for highlight
   output$DimHighlightedClusters.UI <- renderUI({
     req(input$DimClusterResolution)
@@ -188,18 +233,164 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   # Pixel (X) to Centimeter: 1 pixel (X)	= 0.0264583333 cm, if use this value,
   # the picture is a little bit of small, unknown why.
-  px2cm <- 0.03
+  px2cm <- 0.0264583333 * 1.5
+
+  # Store the current plot dimensions
+  dimplot_dims <- reactiveValues(width = 800, height = 720)
+
+  # Custom message handlers to update plot dimensions from JavaScript
+  observeEvent(input$dimplot_width, {
+    req(input$dimplot_width)
+    dimplot_dims$width <- input$dimplot_width
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+
+  observeEvent(input$dimplot_height, {
+    req(input$dimplot_height)
+    dimplot_dims$height <- input$dimplot_height
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+
+  # Render resizable dimplot container (free resize, no aspect ratio lock)
+  output$dimplot_resizable_ui <- renderUI({
+    div(
+      id = "dimplot_wrapper",
+      style = "
+        background-color: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        position: relative;
+        overflow: visible;
+      ",
+      shinyjqui::jqui_resizable(
+        div(
+          id = "dimplot_inner",
+          style = "
+            width: 800px;
+            height: 720px;
+            overflow: hidden;
+            position: relative;
+          ",
+          plotOutput("dimplot", width = "100%", height = "100%")
+        ),
+        options = list(
+          minWidth = 400,
+          maxWidth = 1500,
+          minHeight = 300,
+          maxHeight = 1200,
+          handles = "s, e, se"  # Only enable south, east, and south-east handles
+        )
+      ),
+      # Add visual indicators for the resizable handle
+      tags$style(HTML("
+        /* Ensure resizable container works properly */
+        #dimplot_inner.ui-resizable {
+          position: relative !important;
+        }
+
+        /* Base handle styles - always visible */
+        .ui-resizable-handle {
+          position: absolute;
+          z-index: 9999 !important;
+          font-size: 0.1px;
+          display: block;
+        }
+
+        /* Bottom edge handle */
+        .ui-resizable-s {
+          height: 20px !important;
+          bottom: -10px !important;
+          left: 0 !important;
+          width: 100% !important;
+          cursor: s-resize;
+          background: rgba(0, 123, 255, 0.1) !important;
+          border-bottom: 4px solid #007bff !important;
+        }
+
+        .ui-resizable-s:hover {
+          background: rgba(0, 123, 255, 0.2) !important;
+          border-bottom: 5px solid #0056b3 !important;
+        }
+
+        /* Right edge handle */
+        .ui-resizable-e {
+          width: 20px !important;
+          right: -10px !important;
+          top: 0 !important;
+          height: 100% !important;
+          cursor: e-resize;
+          background: rgba(0, 123, 255, 0.1) !important;
+          border-right: 4px solid #007bff !important;
+        }
+
+        .ui-resizable-e:hover {
+          background: rgba(0, 123, 255, 0.2) !important;
+          border-right: 5px solid #0056b3 !important;
+        }
+
+        /* Bottom-right corner handle */
+        .ui-resizable-se {
+          bottom: -10px !important;
+          right: -10px !important;
+          width: 30px !important;
+          height: 30px !important;
+          cursor: se-resize;
+          background: conic-gradient(from 225deg, transparent 0deg, transparent 90deg, #007bff 90deg, #007bff 180deg, transparent 180deg) !important;
+          border: 3px solid #007bff !important;
+          border-radius: 4px !important;
+        }
+
+        .ui-resizable-se:hover {
+          background: conic-gradient(from 225deg, transparent 0deg, transparent 90deg, #0056b3 90deg, #0056b3 180deg, transparent 180deg) !important;
+          transform: scale(1.15);
+        }
+
+        /* Make plot canvas visible */
+        #dimplot {
+          display: block !important;
+        }
+      ")),
+      # JavaScript to sync plot dimensions with resizable container
+      tags$script(HTML("
+        $(function() {
+          var updateDimensions = function() {
+            var container = $('#dimplot_inner');
+            var width = container.width();
+            var height = container.height();
+            Shiny.setInputValue('dimplot_width', width, {priority: 'event'});
+            Shiny.setInputValue('dimplot_height', height, {priority: 'event'});
+          };
+
+          // Initial dimensions
+          updateDimensions();
+
+          // Update on resize
+          var resizeTimer;
+          $('#dimplot_inner').on('resize', function(e, ui) {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+              Shiny.setInputValue('dimplot_width', ui.size.width, {priority: 'event'});
+              Shiny.setInputValue('dimplot_height', ui.size.height, {priority: 'event'});
+            }, 100);
+          });
+
+          // Update periodically as a fallback
+          setInterval(updateDimensions, 2000);
+        });
+      "))
+    )
+  })
 
   output$dimplot <- renderPlot({
-    req(input$DimSplit, input$DimClusterOrder, input$DimClusterResolution,
-        input$DimPlotHWRatio, data$obj, session$clientData$output_dimplot_width,
+    req(input$DimSplit,
+        input$DimClusterResolution,
+        data$obj,
         input$DimPointSize)
 
     if(verbose){
       message("SeuratExplorer: preparing dimplot...")
-      # message(paste("Current width:", session$clientData$output_dimplot_width)) # for debug use, init dimplot has double refresh!
     }
     cds <- data$obj # not a memory saving way
+
     # for highlight cells
     if (any(is.null(input$DimHighlightedClusters))) {
       dim_cells_highlighted <- NULL
@@ -207,7 +398,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       dim_cells_highlighted <- colnames(cds)[cds@meta.data[,isolate(input$DimClusterResolution)] %in% input$DimHighlightedClusters]
     }
     cds@meta.data[,isolate(input$DimClusterResolution)] <- factor(cds@meta.data[,isolate(input$DimClusterResolution)],
-                                                         levels = input$DimClusterOrder)
+                                                         levels = DimClusterOrder.Safe())
     if (is.null(DimSplit.Revised())) { # not splited
       p <- Seurat::DimPlot(cds,
                            reduction = input$DimDimensionReduction,
@@ -231,12 +422,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }
     ggplot2::ggsave(paste0(temp_dir,"/dimplot.pdf"),
                     p,
-                    width = session$clientData$output_dimplot_width * px2cm,
-                    height = session$clientData$output_dimplot_width * input$DimPlotHWRatio * px2cm,
+                    width = dimplot_dims$width * px2cm,
+                    height = dimplot_dims$height * px2cm,
                     units = "cm",
                     limitsize = FALSE)
     return(p)
-  }, height = function(){session$clientData$output_dimplot_width * input$DimPlotHWRatio})
+  }, height = function(){
+    if (is.null(input$dimplot_height)) 720 else input$dimplot_height
+  })
   # box plot: height = width default
 
   # refer to: https://stackoverflow.com/questions/14810409/how-to-save-plots-that-are-made-in-a-shiny-app

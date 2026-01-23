@@ -60,7 +60,8 @@ explorer_body_ui <- function(tab_list){
   tab_list[["dimplot"]] = tabItem(tabName = "dimplot",
                                   fluidRow(
                                     box(title = "Dimensional Reduction Plot",
-                                        withSpinner(plotOutput("dimplot",height = "auto")), # Add a spinner that shows when an output is recalculating
+                                        uiOutput("dimplot_resizable_ui"),
+                                        # withSpinner(plotOutput("dimplot_resizable_ui",height = "auto")), # Add a spinner that shows when an output is recalculating
                                         # show the button on right end, refer to: https://stackoverflow.com/questions/28749693/shiny-r-aligning-buttons
                                         div(style = "display:inline-block; float:right",downloadBttn(outputId = "downloaddimplot",style = "bordered",color = "primary")),
                                         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
@@ -78,7 +79,11 @@ explorer_body_ui <- function(tab_list){
                                         checkboxInput("DimShowLegend",label = "Show Legend", TRUE),
                                         sliderInput("DimLabelSize", label = "Label Size:", min = 0, max = 10, value = 7),
                                         sliderInput("DimPointSize", label = "Point Size", min = 0.001, max = 2, value = 0.8),
-                                        sliderInput("DimPlotHWRatio", label = "Adjust H/W Ratio of DimPlot", min = 0.1, max = 4, value = 0.9)
+                                        hr(),
+                                        div(
+                                          style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 10px; border-radius: 4px;",
+                                          p("🖱️ Tip: Drag the right or bottom edge to resize the plot", style = "font-size: 12px; margin: 0; color: #004085;")
+                                        )
                                     )
                                   )
   )
