@@ -67,6 +67,9 @@ Install the latest version from github - ***Recommended***:
 ``` r
 if(!require(devtools)){install.packages("devtools")}
 install_github("fentouxungui/SeuratExplorer", dependencies = TRUE)
+
+# You can try the beta version which support mannually adjust figure size
+install_github("fentouxungui/SeuratExplorer@adjustable_plot_size", dependencies = TRUE)
 ```
 
 Or install from CRAN:
