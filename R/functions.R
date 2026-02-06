@@ -722,10 +722,6 @@ AverageHeatmap <- function(
 
   # get cells mean gene expression
   # check Seurat version first
-  print(object)
-  print(group.by)
-  print(assays)
-  print(slot)
   mean_gene_exp <- as.matrix(
       data.frame(
         Seurat::AverageExpression(object,
@@ -922,6 +918,137 @@ check_allowed_chars <- function(text_string) {
 }
 
 
+# create_resizable_plot_ui is a function created by Claude code
+create_resizable_plot_ui <- function(plot_id, initial_width = 800, initial_height = 720) {
+  div(
+    id = paste0(plot_id, "_wrapper"),
+    style = "
+        background-color: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        position: relative;
+        overflow: visible;
+      ",
+    shinyjqui::jqui_resizable(
+      div(
+        id = paste0(plot_id, "_inner"),
+        style = paste0("
+            width: ", initial_width, "px;
+            height: ", initial_height, "px;
+            overflow: hidden;
+            position: relative;
+          "),
+        plotOutput(plot_id, width = "100%", height = "100%")
+      ),
+      options = list(
+        minWidth = 100,
+        maxWidth = 2000,
+        minHeight = 100,
+        maxHeight = 6000,
+        handles = "s, e, se"  # Only enable south, east, and south-east handles
+      )
+    ),
+    # Add visual indicators for the resizable handle
+    tags$style(HTML(paste0("
+        /* Ensure resizable container works properly */
+        #", plot_id, "_inner.ui-resizable {
+          position: relative !important;
+        }
 
+        /* Base handle styles - always visible */
+        .ui-resizable-handle {
+          position: absolute;
+          z-index: 9999 !important;
+          font-size: 0.1px;
+          display: block;
+        }
 
+        /* Bottom edge handle */
+        .ui-resizable-s {
+          height: 20px !important;
+          bottom: -10px !important;
+          left: 0 !important;
+          width: 100% !important;
+          cursor: s-resize;
+          background: rgba(0, 123, 255, 0.1) !important;
+          border-bottom: 4px solid #007bff !important;
+        }
+
+        .ui-resizable-s:hover {
+          background: rgba(0, 123, 255, 0.2) !important;
+          border-bottom: 5px solid #0056b3 !important;
+        }
+
+        /* Right edge handle */
+        .ui-resizable-e {
+          width: 20px !important;
+          right: -10px !important;
+          top: 0 !important;
+          height: 100% !important;
+          cursor: e-resize;
+          background: rgba(0, 123, 255, 0.1) !important;
+          border-right: 4px solid #007bff !important;
+        }
+
+        .ui-resizable-e:hover {
+          background: rgba(0, 123, 255, 0.2) !important;
+          border-right: 5px solid #0056b3 !important;
+        }
+
+        /* Bottom-right corner handle */
+        .ui-resizable-se {
+          bottom: -10px !important;
+          right: -10px !important;
+          width: 30px !important;
+          height: 30px !important;
+          cursor: se-resize;
+          background: conic-gradient(from 225deg, transparent 0deg, transparent 90deg, #007bff 90deg, #007bff 180deg, transparent 180deg) !important;
+          border: 3px solid #007bff !important;
+          border-radius: 4px !important;
+        }
+
+        .ui-resizable-se:hover {
+          background: conic-gradient(from 225deg, transparent 0deg, transparent 90deg, #0056b3 90deg, #0056b3 180deg, transparent 180deg) !important;
+          transform: scale(1.15);
+        }
+
+        /* Make plot canvas visible */
+        #", plot_id," {
+          display: block !important;
+        }
+      ")
+      )
+    ),
+    # JavaScript to sync plot dimensions with resizable container
+    tags$script(HTML(paste0("
+        $(function() {
+          var updateDimensions = function() {
+            var container = $('#", plot_id, "_inner');
+            var width = container.width();
+            var height = container.height();
+            Shiny.setInputValue('", plot_id, "_width', width, {priority: 'event'});
+            Shiny.setInputValue('", plot_id, "_height', height, {priority: 'event'});
+          };
+
+          // Initial dimensions
+          updateDimensions();
+
+          // Update on resize
+          var resizeTimer;
+          $('#", plot_id, "_inner').on('resize', function(e, ui) {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+              Shiny.setInputValue('", plot_id, "_width', ui.size.width, {priority: 'event'});
+              Shiny.setInputValue('", plot_id, "_height', ui.size.height, {priority: 'event'});
+            }, 100);
+          });
+
+          // Update periodically as a fallback
+          setInterval(updateDimensions, 2000);
+        });
+      "))
+    )
+  )
+}
 

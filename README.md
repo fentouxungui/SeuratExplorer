@@ -124,29 +124,6 @@ launchSeuratExplorer(
 )
 ```
 
-## Exported Functions
-
-Besides the interactive Shiny app, `SeuratExplorer` provides several
-utility functions that can be used in R scripts:
-
-### Main Functions
-
-- `launchSeuratExplorer()`: Launch the interactive Shiny application
-- `getColors()`: Get color palettes for visualization
-- `cellRatioPlot()`: Create stacked bar plots showing cell type
-  proportions across samples
-- `top_genes()`: Find top expressed genes by cell cluster
-
-### UI/Server Components
-
-For advanced users who want to customize the Shiny app:
-
-- `ui()` / `server()`: Main UI and server functions
-- `explorer_body_ui()` / `explorer_sidebar_ui()`: Modular UI components
-- `explorer_server()`: Modular server function
-
-See function documentation for detailed usage examples.
-
 ## Deploy on server
 
 You can deploy this app on a Shiny Server, which allows users to
@@ -257,7 +234,7 @@ Different visualization features support different assay slots:
 
 **Example plots:**
 
-<img src="./inst/extdata/www/Dimplot-splited.png" alt="" width="80%" />
+<img src="./inst/extdata/www/Dimplot-1.png" alt="" width="100%" /><img src="./inst/extdata/www/Dimplot-2.png" alt="" width="100%" /><img src="./inst/extdata/www/Dimplot-1-highlight.png" alt="" width="100%" />
 
 ### Feature Plot
 
@@ -281,7 +258,7 @@ Different visualization features support different assay slots:
 
 **Example plots:**
 
-<img src="./inst/extdata/www/Featureplot-splited.png" alt="" width="50%" />
+<img src="./inst/extdata/www/featureplot-1.png" alt="" width="100%" /><img src="./inst/extdata/www/featureplot-2.png" alt="" width="100%" /><img src="./inst/extdata/www/featureplot-3.png" alt="" width="100%" />
 
 ### Violin Plot
 
@@ -308,7 +285,7 @@ Different visualization features support different assay slots:
 
 **Example plots:**
 
-<img src="./inst/extdata/www//ViolinPlot-splited-Stack.png" alt="" width="50%" />
+<img src="./inst/extdata/www/violin-1.png" alt="" width="100%" /><img src="./inst/extdata/www/violin-2.png" alt="" width="100%" /><img src="./inst/extdata/www/violin-3.png" alt="" width="100%" /><img src="./inst/extdata/www/violin-4.png" alt="" width="100%" /><img src="./inst/extdata/www/violin-5.png" alt="" width="100%" /><img src="./inst/extdata/www/violin-6.png" alt="" width="100%" /><img src="./inst/extdata/www/violin-7.png" alt="" width="100%" />
 
 ### Dot Plot
 
@@ -335,7 +312,7 @@ Different visualization features support different assay slots:
 
 **Example plots:**
 
-<img src="./inst/extdata/www/DotPlot-Splited.png" alt="" width="50%" />
+<img src="./inst/extdata/www/dotplot.png" alt="" width="100%" /><img src="./inst/extdata/www/dotplot-1.png" alt="" width="100%" />
 
 ### Heatmap for cell level expression
 
@@ -361,7 +338,7 @@ Different visualization features support different assay slots:
 
 **Example plots:**
 
-<img src="./inst/extdata/www/Heatmap-CellLevel.png" alt="" width="100%" />
+<img src="./inst/extdata/www/heatmap-cell-level.png" alt="" width="100%" />
 
 ### Heatmap for group averaged expression
 
@@ -383,7 +360,7 @@ Different visualization features support different assay slots:
 
 **Example plots:**
 
-<img src="./inst/extdata/www/Heatmap-GroupLevel-2.png" alt="" width="50%" />
+<img src="./inst/extdata/www/heatmap-group-level.png" alt="" width="100%" />
 
 ### Ridge Plot
 
@@ -407,7 +384,7 @@ Different visualization features support different assay slots:
 
 **Example plots:**
 
-<img src="./inst/extdata/www/RidgePlot.png" alt="" width="50%" />
+<img src="./inst/extdata/www/ridge-plot.png" alt="" width="100%" /><img src="./inst/extdata/www/ridge-plot-2.png" alt="" width="100%" />
 
 ### Plot Cell Percentage
 
@@ -419,7 +396,7 @@ Different visualization features support different assay slots:
 
 **Example plots:**
 
-<img src="./inst/extdata/www/CellRatio-Splited.png" alt="" width="50%" />
+<img src="./inst/extdata/www/cell-ratio.png" alt="" width="100%" /><img src="./inst/extdata/www/cell-ratio-2.png" alt="" width="100%" />
 
 ### Find Cluster Markers and DEGs Analysis
 
@@ -817,34 +794,6 @@ palettes for custom visualizations.
   over the web. Use this to deploy SeuratExplorer on a server for
   multi-user access.
 
-## Session Info
-
-    #> R version 4.4.3 (2025-02-28 ucrt)
-    #> Platform: x86_64-w64-mingw32/x64
-    #> Running under: Windows 11 x64 (build 26200)
-    #> 
-    #> Matrix products: default
-    #> 
-    #> 
-    #> locale:
-    #> [1] LC_COLLATE=Chinese (Simplified)_China.utf8 
-    #> [2] LC_CTYPE=Chinese (Simplified)_China.utf8   
-    #> [3] LC_MONETARY=Chinese (Simplified)_China.utf8
-    #> [4] LC_NUMERIC=C                               
-    #> [5] LC_TIME=Chinese (Simplified)_China.utf8    
-    #> 
-    #> time zone: Asia/Shanghai
-    #> tzcode source: internal
-    #> 
-    #> attached base packages:
-    #> [1] stats     graphics  grDevices utils     datasets  methods   base     
-    #> 
-    #> loaded via a namespace (and not attached):
-    #>  [1] compiler_4.4.3    fastmap_1.2.0     cli_3.6.5         tools_4.4.3      
-    #>  [5] htmltools_0.5.9   otel_0.2.0        rstudioapi_0.17.1 yaml_2.3.12      
-    #>  [9] rmarkdown_2.30    knitr_1.51        xfun_0.55         digest_0.6.39    
-    #> [13] rlang_1.1.6       evaluate_1.0.5
-
 ## Contributing and Support
 
 ### Getting Help
@@ -889,3 +838,31 @@ SeuratExplorer is built upon excellent work by:
 
 [微信公众号：
 分析力工厂](https://mp.weixin.qq.com/s/lpvI9OnyN95amOeVGmeyMQ)
+
+## Session Info
+
+    #> R version 4.4.3 (2025-02-28 ucrt)
+    #> Platform: x86_64-w64-mingw32/x64
+    #> Running under: Windows 11 x64 (build 26200)
+    #> 
+    #> Matrix products: default
+    #> 
+    #> 
+    #> locale:
+    #> [1] LC_COLLATE=Chinese (Simplified)_China.utf8 
+    #> [2] LC_CTYPE=Chinese (Simplified)_China.utf8   
+    #> [3] LC_MONETARY=Chinese (Simplified)_China.utf8
+    #> [4] LC_NUMERIC=C                               
+    #> [5] LC_TIME=Chinese (Simplified)_China.utf8    
+    #> 
+    #> time zone: Asia/Shanghai
+    #> tzcode source: internal
+    #> 
+    #> attached base packages:
+    #> [1] stats     graphics  grDevices utils     datasets  methods   base     
+    #> 
+    #> loaded via a namespace (and not attached):
+    #>  [1] compiler_4.4.3    fastmap_1.2.0     cli_3.6.5         tools_4.4.3      
+    #>  [5] htmltools_0.5.9   otel_0.2.0        rstudioapi_0.17.1 yaml_2.3.12      
+    #>  [9] rmarkdown_2.30    knitr_1.51        xfun_0.55         digest_0.6.39    
+    #> [13] rlang_1.1.6       evaluate_1.0.5
