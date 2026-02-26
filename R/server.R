@@ -146,6 +146,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # Update ready state when DimClusterOrder is ready
   observe({
     req(input$DimClusterResolution, input$DimClusterOrder)
+    req(input$DimClusterResolution %in% colnames(data$obj@meta.data))
     # Check if order matches current resolution
     expected_levels <- levels(data$obj@meta.data[,input$DimClusterResolution])
     actual_order <- if (!is.null(input$DimClusterOrder) && length(input$DimClusterOrder) > 0) {
@@ -168,6 +169,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   # define Cluster order
   output$DimClusterOrder.UI <- renderUI({
+    req(input$DimClusterResolution %in% colnames(data$obj@meta.data))
     if(verbose){message("SeuratExplorer: preparing DimClusterOrder.UI...")}
     # Mark as not ready when UI is being rebuilt
     dimplot_resolution_state$ready <- FALSE
@@ -222,6 +224,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # define Cluster choice for highlight
   output$DimHighlightedClusters.UI <- renderUI({
     req(input$DimClusterResolution)
+    req(input$DimClusterResolution %in% colnames(data$obj@meta.data))
+
     if(verbose){message("SeuratExplorer: preparing DimHighlightedClusters.UI...")}
     shinyWidgets::pickerInput(inputId = "DimHighlightedClusters", label = "Highlight Clusters:",
                               choices = levels(data$obj@meta.data[,input$DimClusterResolution]),
@@ -271,6 +275,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         input$DimClusterResolution,
         data$obj,
         input$DimPointSize)
+    req(input$DimClusterResolution %in% colnames(data$obj@meta.data))
 
     if(verbose){
       message("SeuratExplorer: preparing dimplot...")
@@ -589,6 +594,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # define the idents used
   output$VlnIdentsSelected.UI <- renderUI({
     req(input$VlnClusterResolution)
+    req(input$VlnClusterResolution %in% colnames(data$obj@meta.data))
     if(verbose){message("SeuratExplorer: preparing VlnIdentsSelected.UI...")}
     shinyWidgets::pickerInput(inputId = "VlnIdentsSelected", label = "Clusters Used:",
                               choices = levels(data$obj@meta.data[,input$VlnClusterResolution]),
@@ -636,6 +642,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # Conditional panel: show this panel when split.by is selected and the the level equals to 2
   output$Vlnplot_splitoption_twolevels = reactive({
     req(input$VlnSplitBy)
+    req(input$VlnSplitBy == "None" | input$VlnSplitBy %in% colnames(data$obj@meta.data))
+
     if(verbose){message("SeuratExplorer: preparing Vlnplot_splitoption_twolevels...")}
     if (input$VlnSplitBy == "None"){
       return(FALSE)
@@ -751,6 +759,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   output$vlnplot <- renderPlot({
+    req(input$VlnSlot)
+    req(input$VlnClusterResolution %in% colnames(data$obj@meta.data))
+    req(all(input$VlnIdentsSelected %in% levels(data$obj@meta.data[,input$VlnClusterResolution])))
+
     if(verbose){message("SeuratExplorer: preparing vlnplot...")}
     if (any(is.na(features_vlnplot$features_current))) { # when NA value
       p <- empty_plot # when no symbol or wrong input, show a blank pic.
@@ -886,6 +898,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # define the idents used
   output$DotIdentsSelected.UI <- renderUI({
     req(input$DotClusterResolution)
+    req(input$DotClusterResolution %in% colnames(data$obj@meta.data))
+
     if(verbose){message("SeuratExplorer: preparing DotIdentsSelected.UI...")}
     shinyWidgets::pickerInput(inputId = "DotIdentsSelected", label = "Clusters Used:",
                               choices = levels(data$obj@meta.data[,input$DotClusterResolution]),
@@ -992,6 +1006,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   output$dotplot <- renderPlot({
+    req(input$DotClusterResolution %in% colnames(data$obj@meta.data))
+    req(all(input$DotIdentsSelected %in% levels(data$obj@meta.data[,input$DotClusterResolution])))
+    req(input$DotAssay)
+    req(all(DotClusterOrder.Safe() %in% levels(data$obj@meta.data[,input$DotClusterResolution])))
+
     if(verbose){message("SeuratExplorer: preparing dotplot...")}
     if (any(is.na(features_dotplot$features_current)) | is.null(DotClusterOrder.Safe())) { # NA
       p <- empty_plot # when no symbol or wrong input, show a blank pic.
@@ -1132,6 +1151,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     # define the idents used
   output$HeatmapIdentsSelected.UI <- renderUI({
     req(input$HeatmapClusterResolution)
+    req(input$HeatmapClusterResolution %in% colnames(data$obj@meta.data))
+
     if(verbose){message("SeuratExplorer: preparing HeatmapIdentsSelected.UI...")}
     shinyWidgets::pickerInput(inputId = "HeatmapIdentsSelected", label = "Clusters Used:",
                               choices = levels(data$obj@meta.data[,input$HeatmapClusterResolution]),
@@ -1204,6 +1225,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   output$heatmap <- renderPlot({
+    req(input$HeatmapClusterResolution %in% colnames(data$obj@meta.data))
+    req(input$HeatmapSlot)
+    req(all(HeatmapClusterOrder.Safe() %in% levels(data$obj@meta.data[,input$HeatmapClusterResolution])))
+
     if(verbose){message("SeuratExplorer: preparing heatmap...")}
     if (any(is.na(features_heatmap$features_current)) | is.null(HeatmapClusterOrder.Safe())) { # NA
       p <- empty_plot # when no symbol or wrong input, show a blank pic.
@@ -1325,6 +1350,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # define the idents used
   output$AveragedHeatmapIdentsSelected.UI <- renderUI({
     req(input$AveragedHeatmapClusterResolution)
+    req(input$AveragedHeatmapClusterResolution %in% colnames(data$obj@meta.data))
+
     if(verbose){message("SeuratExplorer: preparing AveragedHeatmapIdentsSelected.UI...")}
     shinyWidgets::pickerInput(inputId = "AveragedHeatmapIdentsSelected", label = "Clusters Used:",
                               choices = levels(data$obj@meta.data[,input$AveragedHeatmapClusterResolution]),
@@ -1398,6 +1425,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   output$averagedheatmap <- renderPlot({
+    req(input$AveragedHeatmapClusterResolution %in% colnames(data$obj@meta.data))
+    req(all(AveragedHeatmapClusterOrder.Safe() %in% levels(data$obj@meta.data[,input$AveragedHeatmapClusterResolution])))
+
     if(verbose){message("SeuratExplorer: preparing averagedheatmap...")}
     if (any(is.na(features_heatmap_averaged$features_current)) | is.null(input$AveragedHeatmapClusterOrder)) { # NA
       p <- empty_plot # when no symbol or wrong input, show a blank pic.
@@ -1521,6 +1551,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # define the idents used
   output$RidgeplotIdentsSelected.UI <- renderUI({
     req(input$RidgeplotClusterResolution)
+    req(input$RidgeplotClusterResolution %in% colnames(data$obj@meta.data))
+
     if(verbose){message("SeuratExplorer: preparing RidgeplotIdentsSelected.UI...")}
     shinyWidgets::pickerInput(inputId = "RidgeplotIdentsSelected", label = "Clusters Used:",
                               choices = levels(data$obj@meta.data[,input$RidgeplotClusterResolution]),
@@ -1563,7 +1595,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # Conditional panel: show this panel when input multiple genes and stack is set to TRUE
   output$Ridgeplot_stack_NotSelected = reactive({
     if(verbose){message("SeuratExplorer: preparing Ridgeplot_stack_NotSelected...")}
-    !input$RidgeplotStackPlot
+    !isTRUE(input$RidgeplotStackPlot)
   })
 
   outputOptions(output, 'Ridgeplot_stack_NotSelected', suspendWhenHidden = FALSE)
@@ -1624,6 +1656,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   output$ridgeplot <- renderPlot({
+    req(input$RidgeplotClusterResolution %in% colnames(data$obj@meta.data))
+    req(all(RidgeplotClusterOrder.Safe() %in% levels(data$obj@meta.data[,input$RidgeplotClusterResolution])))
+
     if(verbose){message("SeuratExplorer: preparing ridgeplot...")}
     if (any(is.na(features_ridgeplot$features_current))) { # NA
       p <- empty_plot # when no symbol or wrong input, show a blank pic.
@@ -1731,6 +1766,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # define the idents used
   output$CellratioIdentsSelected.UI <- renderUI({
     req(input$CellratioFillChoice)
+    req(input$CellratioFillChoice %in% colnames(data$obj@meta.data))
+
     if(verbose){message("SeuratExplorer: preparing CellratioIdentsSelected.UI...")}
     shinyWidgets::pickerInput(inputId = "CellratioIdentsSelected",
                               label = "Clusters Used:",
@@ -1775,6 +1812,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   # define x choice order
   output$CellratioplotXOrder.UI <- renderUI({
+    req(input$CellratioXChoice %in% colnames(data$obj@meta.data))
+
     if(verbose){message("SeuratExplorer: preparing CellratioplotXOrder.UI...")}
     shinyjqui::orderInput(inputId = 'CellratioXOrder',
                           label = 'Drag to order:',
@@ -1807,6 +1846,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   # define Facet order
   output$CellratioplotFacetOrder.UI <- renderUI({
+    req(input$CellratioFacetChoice %in% colnames(data$obj@meta.data))
+
     if(verbose){message("SeuratExplorer: preparing CellratioplotFacetOrder.UI...")}
     if (!is.null(FacetChoice.Revised())) {
       shinyjqui::orderInput(inputId = 'CellratioFacetOrder',
@@ -1855,6 +1896,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # plot
   output$cellratioplot <- renderPlot({
     req(input$CellratioXOrder, input$CellratioFillChoice, input$CellratioXChoice)
+    req(input$CellratioFillChoice %in% colnames(data$obj@meta.data))
+    req(input$CellratioXChoice %in% colnames(data$obj@meta.data))
+    req(all(CellratioFillOrder.Safe() %in% levels(data$obj@meta.data[,input$CellratioFillChoice])))
+    req(all(input$CellratioXOrder %in% levels(data$obj@meta.data[,input$CellratioXChoice])))
+    req(input$CellratioFillChoice != input$CellratioXOrder)
+
     if(verbose){message("SeuratExplorer: preparing cellratioplot...")}
       cds <- data$obj
     if (is.null(FacetChoice.Revised())) { # not facet
@@ -1926,6 +1973,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$cellratiodata <-  DT::renderDT(server=FALSE,{
     req(input$CellratioFillChoice)
+    req(input$CellratioFillChoice %in% colnames(data$obj@meta.data))
+    req(input$CellratioXChoice %in% colnames(data$obj@meta.data))
+
     meta <- data$obj@meta.data
     # subset
     meta <- meta[meta[,input$CellratioFillChoice] %in% input$CellratioIdentsSelected,]
