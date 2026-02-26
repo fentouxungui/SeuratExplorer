@@ -2027,7 +2027,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   observeEvent(input$DEGsClusterMarkersAnalysis, {
     if(verbose){message("SeuratExplorer: preparing DEGsClusterMarkersAnalysis...")}
     cds <- data$obj
-    if (length(unique(as.character(Idents(cds)))) < 2) {
+    if (length(levels(cds@meta.data[,input$ClusterMarkersClusterResolution])) < 2) {
       showModal(modalDialog(title = "Error...",
                             "Please select a cluster resolution with more than one group!",
                             easyClose = TRUE,
@@ -2035,18 +2035,29 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                             size = "l"))
     }else{
       showModal(modalDialog(title = "Calculating Cluster Markers...",
-                            "Please wait for a few minutes!",
-                            footer= NULL,
+                            div(id = 'clustermarkers_log_output', 'Please wait a moment!'),
+                            footer = NULL,
+                            # footer = modalButton("Cancel"), # future work to stop current run
                             size = "l"))
       cds <- check_SCT_assay(cds)
-      cluster.markers <- Seurat::FindAllMarkers(cds,
-                                                test.use = input$testuse,
-                                                assay = input$DEGsAssay,
-                                                logfc.threshold = input$logfcthreshold,
-                                                group.by = input$ClusterMarkersClusterResolution,
-                                                min.pct = input$minpct,
-                                                min.diff.pct = ifelse(input$mindiffpct, input$mindiffpct, -Inf),
-                                                only.pos = TRUE)
+      cluster.markers <- withCallingHandlers({
+        Seurat::FindAllMarkers(cds,
+                              test.use = input$testuse,
+                              assay = input$DEGsAssay,
+                              logfc.threshold = input$logfcthreshold,
+                              group.by = input$ClusterMarkersClusterResolution,
+                              min.pct = input$minpct,
+                              min.diff.pct = ifelse(input$mindiffpct, input$mindiffpct, -Inf),
+                              only.pos = TRUE,
+                              verbose = TRUE)
+        },
+        message = function(m) {
+          # refresh UI
+          shinyjs::html(id = "clustermarkers_log_output", html = paste0( "<br>", m$message), add = TRUE)
+          # auto scroll to bottom to ensure showing the latest messages
+          shinyjs::runjs("var d = document.getElementById('clustermarkers_log_output'); d.scrollTop = d.scrollHeight;")
+        }
+      )
       removeModal()
       DEGs$degs <- cluster.markers
       DEGs$degs_ready <- TRUE

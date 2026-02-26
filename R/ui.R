@@ -363,6 +363,7 @@ explorer_body_ui <- function(tab_list){
                                    id = "tabset_degs", width = 12, # height = "250px",
                                    tabPanel("Find Markers for All Clusters",
                                             withSpinner(uiOutput("ClusterMarkersClusterResolution.UI"), proxy.height = "10px"),
+                                            shinyjs::useShinyjs(),
                                             actionButton("DEGsClusterMarkersAnalysis", "Analyze", icon = shiny::icon("magnifying-glass-chart"), class = "btn-primary")),
                                    tabPanel("Find DEGs for two groups",
                                             strong(h3("Step 1: Filter Cells (Optional)")),
