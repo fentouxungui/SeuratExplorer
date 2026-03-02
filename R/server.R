@@ -2652,6 +2652,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$cell_annotation <- DT::renderDataTable({
     req(input$renameclustersClusterResolution)
+    req(input$renameclustersClusterResolution %in% colnames(data$obj@meta.data))
     DT::datatable(cell_annotation_df(),
                   editable = list(target = 'cell', disable = list(columns = 0)), # Disables columns 1
                   selection = "single",
