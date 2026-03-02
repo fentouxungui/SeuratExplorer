@@ -2656,7 +2656,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                   editable = list(target = 'cell', disable = list(columns = 0)), # Disables columns 1
                   selection = "single",
                   options = list(dom = 'lrtip', lengthChange = FALSE, pageLength = -1,
-                                 language = list(info = "Double click '-' to start edit, only support letters, numbers, - and _.")),
+                                 language = list(info = "Double click '-' to start edit, only support letters, numbers, whitespace, - and _.")),
                   rownames = FALSE
                   )
   })
@@ -2664,7 +2664,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   observeEvent(input$cell_annotation_cell_edit, {
     info <- input$cell_annotation_cell_edit
     new_df <- cell_annotation_df()
-    new_df[info$row, info$col + 1] <- info$value
+    new_df[info$row, info$col + 1] <- trimws(info$value)
     cell_annotation_df(new_df)
   })
 
@@ -2688,21 +2688,23 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else if('' %in% trimws(cell_annotation_df()$New_Name)){
       showModal(modalDialog(title = "Error",
-                            "New cluster can not be empty!",
+                            "New cluster name can not be empty!",
                             footer= modalButton("Dismiss"),
                             easyClose = TRUE,
                             size = "l"))
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else if (!all(sapply(cell_annotation_df()$New_Name, check_allowed_chars))) {
+      error_names <- cell_annotation_df()$New_Name[!sapply(cell_annotation_df()$New_Name, check_allowed_chars)]
       showModal(modalDialog(title = "Error",
-                            "Unsupported character found! only support letters, numbers, - and _.",
+                            HTML(paste(c("Unsupported character found! only support letters, numbers, whitespace, - and _. Please check names bellow:", error_names),
+                                  collapse = '<br>')),
                             footer= modalButton("Dismiss"),
                             easyClose = TRUE,
                             size = "l"))
       output$renameclusterscheck_OK <- reactive(FALSE)
     } else  if (!check_allowed_chars(input$renameclustersNewClusterName)) {
       showModal(modalDialog(title = "Error",
-                            "Unsupported character found! only support letters, numbers, - and _.",
+                            "Unsupported character found! only support letters, numbers, whitespace, - and _.",
                             footer= modalButton("Dismiss"),
                             easyClose = TRUE,
                             size = "l"))
@@ -2738,9 +2740,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$renameclustersNewClusterNamehints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing renameclustersNewClusterNamehints.UI...")}
-    helpText(strong(paste("Avoid using: ",
-                          paste(colnames(data$obj@meta.data), collapse = " "), ". Only support letters, numbers, - and _.",
-                          sep = "")),style = "font-size:12px;")
+    p(paste0("Avoid using already existed column names in meta data. And only support letters, numbers, -, whitespace, _, whitespace at botch ends will be removed automatically!"),
+      style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
   observeEvent(input$renameclustersSubmit, {

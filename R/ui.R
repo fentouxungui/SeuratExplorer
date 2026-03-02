@@ -488,14 +488,23 @@ explorer_body_ui <- function(tab_list){
                                                    withSpinner(uiOutput("renameclustersClusterResolution.UI"), proxy.height = "10px"),
                                                    withSpinner(uiOutput("renameclustersDimensionReduction.UI"), proxy.height = "10px"),
                                                    textInput('renameclustersNewClusterName', 'Input Cluster name:', value = "group"),
-                                                   withSpinner(uiOutput("renameclustersNewClusterNamehints.UI"), proxy.height = "10px"),
-                                                   actionButton("renameclustersCheck", "Check", icon = shiny::icon("check"), class = "btn-primary"),
+                                                   div(
+                                                     style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 5px; border-radius: 4px;",
+                                                     uiOutput("renameclustersNewClusterNamehints.UI")
+                                                   ),
+                                                   # withSpinner(uiOutput("renameclustersNewClusterNamehints.UI"), proxy.height = "10px"),
+                                                   div(style = "margin-top: 10px;",
+                                                       actionButton("renameclustersCheck", "Check", icon = shiny::icon("check"), class = "btn-primary")
+                                                   ),
                                                    conditionalPanel(
                                                      condition = "output.renameclusterscheck_OK",
                                                      div(style = "margin-top: 10px;",
                                                          actionButton("renameclustersSubmit", "Update", icon = shiny::icon("arrows-rotate"), class = "btn-primary"),
-                                                         downloadButton("renameclustersDownload", "Download", icon = shiny::icon("file-arrow-down"), class = "btn-primary")
-                                                         ),
+                                                         downloadButton("renameclustersDownload", "Download", icon = shiny::icon("file-arrow-down"), class = "btn-primary")),
+                                                     div(
+                                                       style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 5px; border-radius: 4px; margin-top: 10px;",
+                                                       p("Tips: if you want to save the new cluster name permanently, please download the cluster name mapping file, and send it to your technician.", style = "font-size: 12px; margin: 0; color: #004085;")
+                                                     )
                                                    ))
                                              )
   )
