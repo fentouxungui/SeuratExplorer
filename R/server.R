@@ -2681,7 +2681,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   observeEvent(input$renameclustersCheck, {
     # check input format
     if ('-' %in% cell_annotation_df()$New_Name) {
-      showModal(modalDialog(title = "Error",
+      showModal(modalDialog(title = "Error:",
                             "'-' found, please edit all levels!",
                             footer= modalButton("Dismiss"),
                             easyClose = TRUE,
@@ -2689,23 +2689,24 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else if('' %in% trimws(cell_annotation_df()$New_Name)){
       showModal(modalDialog(title = "Error",
-                            "New cluster name can not be empty!",
+                            "New cluster names can not be empty!",
                             footer= modalButton("Dismiss"),
                             easyClose = TRUE,
                             size = "l"))
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else if (!all(sapply(cell_annotation_df()$New_Name, check_allowed_chars))) {
       error_names <- cell_annotation_df()$New_Name[!sapply(cell_annotation_df()$New_Name, check_allowed_chars)]
-      showModal(modalDialog(title = "Error",
-                            HTML(paste(c("Unsupported character found! only support letters, numbers, whitespace, - and _. Please check names bellow:", error_names),
+      showModal(modalDialog(title = "Error:",
+                            HTML(paste(c("Unsupported character found in New_Name! only support letters, numbers, whitespace, - and _. Please check names bellow:", error_names),
                                   collapse = '<br>')),
                             footer= modalButton("Dismiss"),
                             easyClose = TRUE,
                             size = "l"))
       output$renameclusterscheck_OK <- reactive(FALSE)
-    } else  if (!check_allowed_chars(input$renameclustersNewClusterName)) {
-      showModal(modalDialog(title = "Error",
-                            "Unsupported character found! only support letters, numbers, whitespace, - and _.",
+    } else  if (!check_allowed_chars(input$renameclustersNewClusterName, allowed_characters = "[^a-zA-Z0-9_]")) {
+      showModal(modalDialog(title = "Error:",
+                            # Seurat meta.data colnames not allow - character,which will cause an error when plot Dimplot.
+                            paste0("Unsupported character found in ", input$renameclustersNewClusterName, "! only support letters, numbers, and _."),
                             footer= modalButton("Dismiss"),
                             easyClose = TRUE,
                             size = "l"))
@@ -2713,7 +2714,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else{
       # check cluster name duplicates
       if (input$renameclustersNewClusterName %in% colnames(data$obj@meta.data)) {
-          showModal(modalDialog(title = "Error",
+          showModal(modalDialog(title = "Error:",
                                 "Duplicated cluster name found, please change the cluster name!",
                                 footer= modalButton("Dismiss"),
                                 easyClose = TRUE,

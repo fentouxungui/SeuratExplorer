@@ -912,10 +912,10 @@ empty_plot <- ggplot2::ggplot() +
 
 
 
-check_allowed_chars <- function(text_string) {
+check_allowed_chars <- function(text_string, allowed_characters = "[^a-z A-Z0-9_-]") {
   # Returns TRUE if NO forbidden characters are found (meaning only allowed chars are present)
   # allows for letters, numbers, whitespace, -, and _
-  !grepl("[^a-z A-Z0-9_-]", text_string)
+  !grepl(allowed_characters, text_string)
 }
 
 
