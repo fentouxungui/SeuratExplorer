@@ -863,22 +863,26 @@ AverageHeatmap <- function(
 readSeurat <- function(path, verbose = FALSE){
   if(verbose){message("SeuratExplorer: Reading in data...")}
   # read data
-  if (tools::file_ext(path) == 'qs2') {
-    seu_obj <- qs2::qs_read(path)
+  if (tolower(tools::file_ext(path)) == 'qs2') {
+    obj <- qs2::qs_read(path)
   }else(
-    seu_obj <- readRDS(path)
+    obj <- readRDS(path)
   )
+  return(obj)
+}
+
+updateSeurat <- function(obj, verbose = FALSE){
   # update Seurat object
-  if (class(seu_obj)[[1]] == 'seurat') { # for very old version: seurat object
-    if(verbose){message('SeuratExplorer: prepare_seurat_object Update Seurat Object for very old versions!')}
-    seu_obj <- suppressMessages(SeuratObject::UpdateSeuratObject(seu_obj))
-  }else if(SeuratObject::Version(seu_obj) < utils::packageVersion('SeuratObject')) {
+  if (class(obj)[[1]] == 'seurat') { # for very old version: seurat object
+    if(verbose){message('SeuratExplorer: Update Seurat Object for very old versions!')}
+    obj <- suppressMessages(SeuratObject::UpdateSeuratObject(obj))
+  }else if(SeuratObject::Version(obj) < utils::packageVersion('SeuratObject')) {
     if(verbose){message('SeuratExplorer: Update Seurat Object for old versions!')}
-    seu_obj <- suppressMessages(SeuratObject::UpdateSeuratObject(seu_obj))
+    obj <- suppressMessages(SeuratObject::UpdateSeuratObject(obj))
   }else{
     if(verbose){message('SeuratExplorer: Update Seurat Object escaped for it has been the latest version!')}
   }
-  return(seu_obj)
+  return(obj)
 }
 
 

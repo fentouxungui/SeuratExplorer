@@ -2892,40 +2892,72 @@ server <- function(input, output, session) {
   observeEvent(input$dataset_file, {
     ext = tools::file_ext(input$dataset_file$datapath) # file_ext: returns the file (name) extensions
     # validate + need: check file name post-fix, in not rds or qs2, will throw an error
-    validate(need(expr = ext %in% c("rds","qs2","Rds"),
-                  message = "Please upload a .rds or a .qs2 file"))
-    data$Path <- input$dataset_file$datapath
+    if (!(tolower(ext) %in% c("qs2",'rds'))) {
+      showModal(modalDialog(title = "Error...",
+                            "Please upload a file with the extension .rds or .qs2!",
+                            easyClose = TRUE,
+                            footer = NULL,
+                            size = "l"))
+      shinyjs::reset('dataset_file')
+    }else{
+      obj <- tryCatch({
+        readSeurat(path = input$dataset_file$datapath, verbose = getOption('SeuratExplorerVerbose'))
+      }, error = function(e) {
+        return(FALSE)
+      })
+      # validate Seurat object
+      if (is.logical(obj) && obj == FALSE) {
+        showModal(modalDialog(title = "Error...",
+                              "Read file failed!",
+                              easyClose = TRUE,
+                              footer = NULL,
+                              size = "l"))
+        shinyjs::reset('dataset_file')
 
-    data$obj <- prepare_seurat_object(obj = readSeurat(path = input$dataset_file$datapath, verbose = getOption('SeuratExplorerVerbose')),
-                                      verbose = getOption('SeuratExplorerVerbose'))
+      } else if (!all(validObject(obj), inherits(obj, "Seurat"))) {
+        showModal(modalDialog(title = "Error...",
+                              paste0("The submitted data is a ", class(obj)[[1]], " object, not a Seurat object!"),
+                              easyClose = TRUE,
+                              footer = NULL,
+                              size = "l"))
+        shinyjs::reset('dataset_file')
+      } else {
+        data$Path <- input$dataset_file$datapath
 
-    data$reduction_options <- prepare_reduction_options(obj = data$obj,
-                                                        keywords = getOption("SeuratExplorerReductionKeyWords"),
-                                                        verbose = getOption('SeuratExplorerVerbose'))
+        data$obj <- prepare_seurat_object(obj = updateSeurat(obj, verbose = getOption('SeuratExplorerVerbose')),
+                                          verbose = getOption('SeuratExplorerVerbose'))
 
-    data$assays_slots_options <- prepare_assays_slots(obj = data$obj,
-                                                      data_slot = data$assay_slots,
+        data$reduction_options <- prepare_reduction_options(obj = data$obj,
+                                                            keywords = getOption("SeuratExplorerReductionKeyWords"),
+                                                            verbose = getOption('SeuratExplorerVerbose'))
+
+        data$assays_slots_options <- prepare_assays_slots(obj = data$obj,
+                                                          data_slot = data$assay_slots,
+                                                          verbose = getOption('SeuratExplorerVerbose'))
+
+        data$assays_options <- prepare_assays_options(Alist = data$assays_slots_options,
                                                       verbose = getOption('SeuratExplorerVerbose'))
 
-    data$assays_options <- prepare_assays_options(Alist = data$assays_slots_options,
-                                                  verbose = getOption('SeuratExplorerVerbose'))
+        data$assay_default <- ifelse(data$assay_default %in% data$assays_options,data$assay_default,
+                                     data$assays_options[1]) # update the default assay
 
-    data$assay_default <- ifelse(data$assay_default %in% data$assays_options,data$assay_default,
-                                 data$assays_options[1]) # update the default assay
+        data$cluster_options <- prepare_cluster_options(df = data$obj@meta.data,
+                                                        verbose = getOption('SeuratExplorerVerbose'))
 
-    data$cluster_options <- prepare_cluster_options(df = data$obj@meta.data,
+        data$gene_annotions_list <- prepare_gene_annotations(obj = data$obj,
+                                                             verbose = getOption('SeuratExplorerVerbose'))
+
+        data$split_options <- prepare_split_options(df = data$obj@meta.data,
+                                                    max.level = data$split_maxlevel,
                                                     verbose = getOption('SeuratExplorerVerbose'))
 
-    data$gene_annotions_list <- prepare_gene_annotations(obj = data$obj,
-                                                         verbose = getOption('SeuratExplorerVerbose'))
+        data$extra_qc_options <- prepare_qc_options(df = data$obj@meta.data,
+                                                    types = c("double","integer","numeric"),
+                                                    verbose = getOption('SeuratExplorerVerbose'))
+      }
 
-    data$split_options <- prepare_split_options(df = data$obj@meta.data,
-                                                max.level = data$split_maxlevel,
-                                                verbose = getOption('SeuratExplorerVerbose'))
+    }
 
-    data$extra_qc_options <- prepare_qc_options(df = data$obj@meta.data,
-                                                types = c("double","integer","numeric"),
-                                                verbose = getOption('SeuratExplorerVerbose'))
   })
 
   # after data loaded,set loaded to TRUE
