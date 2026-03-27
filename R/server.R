@@ -2092,9 +2092,34 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   # Part-2: Find DEGs for two groups
   # define Cluster Annotation choice
+  output$IntraClusterDEGsSubsetCells.UI <- renderUI({
+    # req(input$IntraClusterDEGsCustomizedGroups)
+    if(verbose){message("SeuratExplorer: preparing IntraClusterDEGsSubsetCells.UI...")}
+    selectInput("IntraClusterDEGsSubsetCells","Filter Cells By:",
+                # choices = setdiff(data$cluster_options, input$IntraClusterDEGsCustomizedGroups))
+                choices = data$cluster_options)
+  })
+
+  # define Cluster Annotation choice
+  output$IntraClusterDEGsSubsetCellsSelectedClusters.UI <- renderUI({
+    # req(input$IntraClusterDEGsCustomizedGroups)
+    req(input$IntraClusterDEGsSubsetCells)
+    if(verbose){message("SeuratExplorer: preparing IntraClusterDEGsSubsetCellsSelectedClusters.UI...")}
+    shinyWidgets::pickerInput(inputId = "IntraClusterDEGsSubsetCellsSelectedClusters", label = "Cells to Keep:",
+                              choices = levels(data$obj@meta.data[,input$IntraClusterDEGsSubsetCells]),
+                              selected = levels(data$obj@meta.data[,input$IntraClusterDEGsSubsetCells]),
+                              options = shinyWidgets::pickerOptions(actionsBox = TRUE,
+                                                                    size = 10,
+                                                                    selectedTextFormat = "count > 3"),
+                              multiple = TRUE)
+  })
+
+  # define Cluster Annotation choice
   output$IntraClusterDEGsCustomizedGroups.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing IntraClusterDEGsCustomizedGroups.UI...")}
-    selectInput("IntraClusterDEGsCustomizedGroups","Group Cells By:", choices = data$cluster_options)
+    selectInput("IntraClusterDEGsCustomizedGroups","Group Cells By:",
+                choices = setdiff(data$cluster_options, input$IntraClusterDEGsSubsetCells))
+                # choices = data$cluster_options)
   })
 
   # define the idents used
@@ -2116,27 +2141,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                   input$IntraClusterDEGsCustomizedGroupsCase))
   })
 
-  # define Cluster Annotation choice
-  output$IntraClusterDEGsSubsetCells.UI <- renderUI({
-    req(input$IntraClusterDEGsCustomizedGroups)
-    if(verbose){message("SeuratExplorer: preparing IntraClusterDEGsSubsetCells.UI...")}
-    selectInput("IntraClusterDEGsSubsetCells","Filter Cells By:",
-                choices = setdiff(data$cluster_options, input$IntraClusterDEGsCustomizedGroups))
-  })
 
-  # define Cluster Annotation choice
-  output$IntraClusterDEGsSubsetCellsSelectedClusters.UI <- renderUI({
-    req(input$IntraClusterDEGsCustomizedGroups)
-    req(input$IntraClusterDEGsSubsetCells)
-    if(verbose){message("SeuratExplorer: preparing IntraClusterDEGsSubsetCellsSelectedClusters.UI...")}
-    shinyWidgets::pickerInput(inputId = "IntraClusterDEGsSubsetCellsSelectedClusters", label = "Cells to Keep:",
-                              choices = levels(data$obj@meta.data[,input$IntraClusterDEGsSubsetCells]),
-                              selected = levels(data$obj@meta.data[,input$IntraClusterDEGsSubsetCells]),
-                              options = shinyWidgets::pickerOptions(actionsBox = TRUE,
-                                                                    size = 10,
-                                                                    selectedTextFormat = "count > 3"),
-                              multiple = TRUE)
-  })
 
   # compare two groups, support subset clusters before comparison
   observeEvent(input$IntraClusterDEGssAnalysis, {
