@@ -2014,6 +2014,23 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   - Find DEGs for two groups: comparison between two groups, support subet cells before a comparison.')
   })
 
+  # Close button for Information Box
+  observeEvent(input$close_degs_info, {
+    shinyjs::hide(id = "degs-info-box", anim = TRUE, animType = "fade")
+  })
+
+  observeEvent(input$close_topgenes_info, {
+    shinyjs::hide(id = "topgenes-info-box", anim = TRUE, animType = "fade")
+  })
+
+  observeEvent(input$close_featuresummary_info, {
+    shinyjs::hide(id = "featuresummary-info-box", anim = TRUE, animType = "fade")
+  })
+
+  observeEvent(input$close_featurecorrelation_info, {
+    shinyjs::hide(id = "featurecorrelation-info-box", anim = TRUE, animType = "fade")
+  })
+
   DEGs <- reactiveValues(degs = NULL, degs_ready = FALSE)
 
   output$DEGs_ready <- reactive({
@@ -2028,17 +2045,26 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if(verbose){message("SeuratExplorer: preparing DEGsClusterMarkersAnalysis...")}
     cds <- data$obj
     if (length(levels(cds@meta.data[,input$ClusterMarkersClusterResolution])) < 2) {
-      showModal(modalDialog(title = "Error...",
-                            "Please select a cluster resolution with more than one group!",
-                            easyClose = TRUE,
-                            footer = NULL,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("Please select a cluster resolution with more than one group!"),
+          tags$small(style = "color: #6c757d;", "The selected resolution must have at least 2 clusters.")
+        ),
+        easyClose = TRUE,
+        footer = modalButton("OK"),
+        size = "m"
+      ))
     }else{
-      showModal(modalDialog(title = "Calculating Cluster Markers...",
-                            div(id = 'clustermarkers_log_output', 'Please wait a moment!'),
-                            footer = NULL,
-                            # footer = modalButton("Cancel"), # future work to stop current run
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⏳ Calculating Cluster Markers",
+        tags$div(
+          tags$p("Please wait a moment!"),
+          div(id = 'clustermarkers_log_output')
+        ),
+        footer = NULL,
+        size = "m"
+      ))
       cds <- check_SCT_assay(cds)
       cluster.markers <- withCallingHandlers({
         Seurat::FindAllMarkers(cds,
@@ -2118,14 +2144,23 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (any(is.null(input$IntraClusterDEGsCustomizedGroupsCase),
             is.null(input$IntraClusterDEGsCustomizedGroupsControl),
             is.null(input$IntraClusterDEGsSubsetCellsSelectedClusters))) {
-      showModal(modalDialog(title = "Error:",
-                            "Please specify the case & control samples and clusters used. Press ESC to close.",
-                            easyClose = TRUE,
-                            footer = NULL))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("Please specify the case & control samples and clusters used."),
+          tags$small(style = "color: #6c757d;", "All fields are required for DEGs analysis.")
+        ),
+        easyClose = TRUE,
+        footer = modalButton("OK"),
+        size = "m"
+      ))
     }else{
-      showModal(modalDialog(title = "Calculating DEGs...", "Please wait for a few minutes!",
-                            footer= NULL,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⏳ Calculating DEGs",
+        tags$p("Please wait for a few minutes!"),
+        footer = NULL,
+        size = "m"
+      ))
       cds <- data$obj
       Seurat::Idents(cds) <- input$IntraClusterDEGsSubsetCells
       cds <- subset_Seurat(cds, idents = input$IntraClusterDEGsSubsetCellsSelectedClusters)
@@ -2161,11 +2196,16 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if(verbose){message("SeuratExplorer: preparing dataset_degs...")}
     # Show data
     if (nrow(DEGs$degs) == 0 | is.null(DEGs$degs)) {
-      showModal(modalDialog(title = "Error",
-                            "None of DEGs found, You may try change the default Assay in 'Custom Parameters' page, or contact technican for details!",
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("None of DEGs found."),
+          tags$small(style = "color: #6c757d;", "Try changing the default Assay in 'Custom Parameters' page or contact technician for details.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
       return(NULL)
     }else{
       data_res <- DT::datatable(DEGs$degs,
@@ -2332,10 +2372,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   observeEvent(input$TopGenesAnalysis, {
     if(verbose){message("SeuratExplorer: preparing TopGenesAnalysis...")}
-    showModal(modalDialog(title = "Calculating Top Genes at Cell Level...",
-                          "Please wait for a few minutes!",
-                          footer= NULL,
-                          size = "l"))
+    showModal(modalDialog(
+      title = "⏳ Calculating Top Genes at Cell Level",
+      tags$p("Please wait for a few minutes!"),
+      footer = NULL,
+      size = "m"
+    ))
     cds <- data$obj
     Idents(cds) <- input$TopGenesClusterResolution
     cds <- subset_Seurat(cds, idents = input$TopGenesSelectedClusters)
@@ -2356,20 +2398,27 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (nrow(TopGenes$topgenes) > 0) {
       TopGenes$topgenes_ready <- TRUE
     }else{
-      showModal(modalDialog(title = "Error",
-                            "No genes found, please check the parameters.",
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("No genes found."),
+          tags$small(style = "color: #6c757d;", "Please check the parameters.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
     }
   })
 
   observeEvent(input$TopAccumulatedGenesAnalysis, {
     if(verbose){message("SeuratExplorer: preparing TopAccumulatedGenesAnalysis...")}
-    showModal(modalDialog(title = "Calculating Accumulated Top Genes...",
-                          "Please wait for a few minutes!",
-                          footer= NULL,
-                          size = "l"))
+    showModal(modalDialog(
+      title = "⏳ Calculating Accumulated Top Genes",
+      tags$p("Please wait for a few minutes!"),
+      footer = NULL,
+      size = "m"
+    ))
     cds <- data$obj
     Idents(cds) <- input$TopGenesClusterResolution
     cds <- subset_Seurat(cds, idents = input$TopGenesSelectedClusters)
@@ -2388,10 +2437,16 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (nrow(TopGenes$topgenes) > 0) {
       TopGenes$topgenes_ready <- TRUE
     }else{
-      showModal(modalDialog(title = "Error", "No genes found, please check the parameters.",
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("No genes found."),
+          tags$small(style = "color: #6c757d;", "Please check the parameters.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
     }
   })
 
@@ -2446,16 +2501,23 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                GeneLibrary =  rownames(data$obj[[input$FeatureSummaryAssay]]))
     }
     if (any(is.na(GeneRevised))) {
-      showModal(modalDialog(title = "Error",
-                            check_genes_error,
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p(check_genes_error),
+          tags$small(style = "color: #6c757d;", "Please check the gene symbols and try again.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
     }else{
-      showModal(modalDialog(title = "Summarizing features...",
-                            "Please wait for a few minutes!",
-                            footer= NULL,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⏳ Summarizing Features",
+        tags$p("Please wait for a few minutes!"),
+        footer = NULL,
+        size = "m"
+      ))
       cds <- data$obj
       Idents(cds) <- input$FeatureSummaryClusterResolution
       cds <- subset_Seurat(cds, idents = input$FeatureSummarySelectedClusters)
@@ -2528,10 +2590,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   observeEvent(input$TopCorrelationAnalysis, {
     if(verbose){message("SeuratExplorer: preparing TopCorrelationAnalysis...")}
-    showModal(modalDialog(title = "Calculating",
-                          "Calculate top correlated gene pairs, which usually takes longer...",
-                          footer= NULL,
-                          size = "l"))
+    showModal(modalDialog(
+      title = "⏳ Calculating Top Correlations",
+      tags$p("Calculate top correlated gene pairs, which usually takes longer..."),
+      footer = NULL,
+      size = "m"
+    ))
     cds <- data$obj
     Seurat::Idents(cds) <- input$FeatureCorrelationClusterResolution
     cds <- subset_Seurat(cds, idents = input$FeatureCorrelationIdentsSelected)
@@ -2542,10 +2606,16 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (nrow(FeatureCorrelation$summary) > 0) {
       FeatureCorrelation$summary_ready <- TRUE
     }else{
-      showModal(modalDialog(title = "Error",
-                            "No gene paris found, probably for some genes has very low expression value.",
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE, size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("No gene pairs found."),
+          tags$small(style = "color: #6c757d;", "Some genes may have very low expression values. Try different genes.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
     }
   })
 
@@ -2555,16 +2625,23 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     feature.revised <- ReviseGene(Agene = trimws(input$MostCorrelatedAGene),
                                   GeneLibrary = rownames(data$obj[[input$FeatureCorrelationAssay]]))
     if(is.na(feature.revised)){
-      showModal(modalDialog(title = "Error",
-                            "the input gene can not be found, please check...",
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("The input gene cannot be found."),
+          tags$small(style = "color: #6c757d;", "Please check the gene symbol and try again.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
     }else{
-      showModal(modalDialog(title = "Calculating",
-                            "Calculate the most correlated genes for the input gene, which usually takes longer...",
-                            footer= NULL,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⏳ Calculating",
+        tags$p("Calculate the most correlated genes for the input gene, which usually takes longer..."),
+        footer = NULL,
+        size = "m"
+      ))
       cds <- data$obj
       Seurat::Idents(cds) <- input$FeatureCorrelationClusterResolution
       cds <- subset_Seurat(cds, idents = input$FeatureCorrelationIdentsSelected)
@@ -2594,19 +2671,34 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                GeneLibrary =  rownames(data$obj[[input$FeatureCorrelationAssay]]))
     }
     if (any(is.na(GeneRevised))) {
-      showModal(modalDialog(title = "Error",
-                            check_genes_error,
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE, size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p(check_genes_error),
+          tags$small(style = "color: #6c757d;", "Please check the gene symbols.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
     }else if(length(GeneRevised) < 2){
-      showModal(modalDialog(title = "Error",
-                            "Please input at least two genes!",
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE, size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("Please input at least two genes!"),
+          tags$small(style = "color: #6c757d;", "Correlation analysis requires multiple genes.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
     }else{
-      showModal(modalDialog(title = "Calculating",
-                            "Calculate the correlation for the specified gene list...",
-                            footer= NULL, size = "l"))
+      showModal(modalDialog(
+        title = "⏳ Calculating",
+        tags$p("Calculate the correlation for the specified gene list..."),
+        footer = NULL,
+        size = "m"
+      ))
       cds <- data$obj
       Seurat::Idents(cds) <- input$FeatureCorrelationClusterResolution
       cds <- subset_Seurat(cds, idents = input$FeatureCorrelationIdentsSelected)
@@ -2618,11 +2710,16 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       if (nrow(FeatureCorrelation$summary) > 0) {
         FeatureCorrelation$summary_ready <- TRUE
       }else{
-        showModal(modalDialog(title = "Error",
-                              "No gene paris found, probably for some genes has very low expression value.",
-                              footer= modalButton("Dismiss"),
-                              easyClose = TRUE,
-                              size = "l"))
+        showModal(modalDialog(
+          title = "⚠️ Error",
+          tags$div(
+            tags$p("No gene pairs found."),
+            tags$small(style = "color: #6c757d;", "Some genes may have very low expression values.")
+          ),
+          footer = modalButton("OK"),
+          easyClose = TRUE,
+          size = "m"
+        ))
       }
     }
   })
@@ -2681,18 +2778,28 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   observeEvent(input$renameclustersCheck, {
     # check input format
     if ('-' %in% cell_annotation_df()$New_Name) {
-      showModal(modalDialog(title = "Error:",
-                            "'-' found, please edit all levels!",
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("'-' found in cluster names."),
+          tags$small(style = "color: #6c757d;", "Please edit all levels and remove '-' characters.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else if('' %in% trimws(cell_annotation_df()$New_Name)){
-      showModal(modalDialog(title = "Error",
-                            "New cluster names can not be empty!",
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("New cluster names cannot be empty!"),
+          tags$small(style = "color: #6c757d;", "Please provide names for all clusters.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else if (!all(sapply(cell_annotation_df()$New_Name, check_allowed_chars))) {
       error_names <- cell_annotation_df()$New_Name[!sapply(cell_annotation_df()$New_Name, check_allowed_chars)]
@@ -2704,21 +2811,30 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                             size = "l"))
       output$renameclusterscheck_OK <- reactive(FALSE)
     } else  if (!check_allowed_chars(input$renameclustersNewClusterName, allowed_characters = "[^a-zA-Z0-9_]")) {
-      showModal(modalDialog(title = "Error:",
-                            # Seurat meta.data colnames not allow - character,which will cause an error when plot Dimplot.
-                            paste0("Unsupported character found in ", input$renameclustersNewClusterName, "! only support letters, numbers, and _."),
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("Unsupported character found in cluster name."),
+          tags$small(style = "color: #6c757d;", paste0("Only letters, numbers, and underscore are supported. Found in: ", input$renameclustersNewClusterName))
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else{
       # check cluster name duplicates
       if (input$renameclustersNewClusterName %in% colnames(data$obj@meta.data)) {
-          showModal(modalDialog(title = "Error:",
-                                "Duplicated cluster name found, please change the cluster name!",
-                                footer= modalButton("Dismiss"),
-                                easyClose = TRUE,
-                                size = "l"))
+          showModal(modalDialog(
+            title = "⚠️ Error",
+            tags$div(
+              tags$p("Duplicated cluster name found."),
+              tags$small(style = "color: #6c757d;", "Please change the cluster name to a unique one.")
+            ),
+            footer = modalButton("OK"),
+            easyClose = TRUE,
+            size = "m"
+          ))
       }else{
         # show dimension plot
         cds <- data$obj
@@ -2751,17 +2867,27 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     need_update_data <- FALSE
 
     if (new_anno_mapping_list$NewClusterName == ''){
-      showModal(modalDialog(title = "Error:",
-                            "Please run Check before a submit!",
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("Please run Check before submitting!"),
+          tags$small(style = "color: #6c757d;", "Validate your changes first.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
     }else if(new_anno_mapping_list$NewClusterName %in% colnames(data$obj@meta.data)){
-      showModal(modalDialog(title = "Error",
-                            "Duplicated labels found, do not resubmit!",
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("Duplicated labels found."),
+          tags$small(style = "color: #6c757d;", "Do not resubmit existing cluster names.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE,
+        size = "m"
+      ))
     }else{
       cds <- data$obj
       Seurat::Idents(cds) <- new_anno_mapping_list$OldClusterName
@@ -2776,11 +2902,16 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                                   max.level = data$split_maxlevel,
                                                   verbose = getOption('SeuratExplorerVerbose'))
       data$version <- data$version + 1
-      showModal(modalDialog(title = "Congratulations:",
-                            "New annotation added!",
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "✅ Success",
+        tags$div(
+          tags$p("New annotation added!"),
+          tags$small(style = "color: #6c757d;", "Your changes have been saved.")
+        ),
+        footer = modalButton("Continue"),
+        easyClose = TRUE,
+        size = "m"
+      ))
     }
   })
 
@@ -2893,11 +3024,16 @@ server <- function(input, output, session) {
     ext = tools::file_ext(input$dataset_file$datapath) # file_ext: returns the file (name) extensions
     # validate + need: check file name post-fix, in not rds or qs2, will throw an error
     if (!(tolower(ext) %in% c("qs2",'rds'))) {
-      showModal(modalDialog(title = "Error...",
-                            "Please upload a file with the extension .rds or .qs2!",
-                            easyClose = TRUE,
-                            footer = NULL,
-                            size = "l"))
+      showModal(modalDialog(
+        title = "⚠️ Error",
+        tags$div(
+          tags$p("Invalid file format."),
+          tags$small(style = "color: #6c757d;", "Please upload a file with the extension .rds or .qs2!")
+        ),
+        easyClose = TRUE,
+        footer = modalButton("OK"),
+        size = "m"
+      ))
       shinyjs::reset('dataset_file')
     }else{
       obj <- tryCatch({
@@ -2907,19 +3043,29 @@ server <- function(input, output, session) {
       })
       # validate Seurat object
       if (is.logical(obj) && obj == FALSE) {
-        showModal(modalDialog(title = "Error...",
-                              "Read file failed!",
-                              easyClose = TRUE,
-                              footer = NULL,
-                              size = "l"))
+        showModal(modalDialog(
+          title = "⚠️ Error",
+          tags$div(
+            tags$p("Read file failed!"),
+            tags$small(style = "color: #6c757d;", "Please check the file format and try again.")
+          ),
+          easyClose = TRUE,
+          footer = modalButton("OK"),
+          size = "m"
+        ))
         shinyjs::reset('dataset_file')
 
       } else if (!all(validObject(obj), inherits(obj, "Seurat"))) {
-        showModal(modalDialog(title = "Error...",
-                              paste0("The submitted data is a ", class(obj)[[1]], " object, not a Seurat object!"),
-                              easyClose = TRUE,
-                              footer = NULL,
-                              size = "l"))
+        showModal(modalDialog(
+          title = "⚠️ Error",
+          tags$div(
+            tags$p("Invalid object type."),
+            tags$small(style = "color: #6c757d;", paste0("The submitted data is a ", class(obj)[[1]], " object, not a Seurat object!"))
+          ),
+          easyClose = TRUE,
+          footer = modalButton("OK"),
+          size = "m"
+        ))
         shinyjs::reset('dataset_file')
       } else {
         data$Path <- input$dataset_file$datapath
@@ -2979,5 +3125,30 @@ server <- function(input, output, session) {
                   session = session,
                   data = data,
                   verbose = getOption('SeuratExplorerVerbose'))
+
+  # Data Overview Output
+  output$dataOverview <- renderUI({
+    req(data$obj)
+
+    obj <- data$obj
+
+    # Calculate stats
+    total_cells <- ncol(obj)
+    total_genes <- nrow(obj)
+    n_clusters <- length(unique(Seurat::Idents(obj)))
+    n_assays <- length(Seurat::Assays(obj))
+
+    # Simple display with HTML
+    HTML(paste0(
+      '<div style="padding: 20px; background: #f8f9fa; border-radius: 8px; margin: 20px 0;">',
+      '<h4 style="color: #495057; margin-bottom: 15px;">📊 Data Overview</h4>',
+      '<div style="display: flex; gap: 30px; flex-wrap: wrap;">',
+      '<div><strong style="color: #3b82f6;">Total Cells:</strong> ', format(total_cells, big.mark = ","), '</div>',
+      '<div><strong style="color: #10b981;">Total Genes:</strong> ', format(total_genes, big.mark = ","), '</div>',
+      '<div><strong style="color: #f59e0b;">Clusters:</strong> ', n_clusters, '</div>',
+      '<div><strong style="color: #06b6d4;">Assays:</strong> ', n_assays, '</div>',
+      '</div></div>'
+    ))
+  })
 
 }

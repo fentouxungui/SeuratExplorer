@@ -1,6 +1,6 @@
 Package: SeuratExplorer
 Title: An 'Shiny' App for Exploring scRNA-seq Data Processed in 'Seurat'
-Version: 0.1.3
+Version: 0.1.5
 Authors@R: 
   person("Yongchao", "Zhang", , "zhangyongchao@nibs.ac.cn", role = c("aut", "cre"),
            comment = c("https://github.com/fentouxungui"))
