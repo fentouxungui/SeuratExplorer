@@ -7,8 +7,9 @@
 #' packages, such as 'fentouxungui/SeuratExplorerServer' from github.
 #'
 #' @import shiny markdown
-#' @import shinydashboard shinyBS
+#' @import shinyBS
 #' @importFrom shinydashboard menuItem menuSubItem
+#' @importFrom shinyjs useShinyjs
 #' @export
 #' @return return some menu items for the dashboard
 #' @examples

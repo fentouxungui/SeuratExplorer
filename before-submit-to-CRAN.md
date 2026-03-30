@@ -25,7 +25,13 @@ Remove files bellow:
 # 2. CITATION.cff
 ```
 
-## 3. Build the package
+## 3. Remove About page
+
+Remove 'About' UI page and related server codes.
+
+## 4. Check and Build the package
+
+Check and solve all errors, warnnings and notes.
 
 Build - More- Build Source Package.
 

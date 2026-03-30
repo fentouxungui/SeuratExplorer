@@ -7,9 +7,8 @@
 
 <!-- badges: start -->
 
-[![](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 [![](https://www.r-pkg.org/badges/version/SeuratExplorer)](https://cran.r-project.org/package=SeuratExplorer)
-[![](https://img.shields.io/badge/devel%20version-0.1.3-rossellhayes.svg)](https://github.com/fentouxungui/SeuratExplorer)
+[![](https://img.shields.io/badge/devel%20version-0.1.5-rossellhayes.svg)](https://github.com/fentouxungui/SeuratExplorer)
 [![](http://cranlogs.r-pkg.org/badges/grand-total/SeuratExplorer)](https://cran.r-project.org/package=SeuratExplorer)
 ![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Ffentouxungui%2FSeuratExplorer&label=Visitor&icon=github&color=%23198754&message=&style=flat&tz=Asia%2FHong_Kong)
 [![](https://img.shields.io/github/languages/code-size/fentouxungui/SeuratExplorer.svg)](https://github.com/fentouxungui/SeuratExplorer)

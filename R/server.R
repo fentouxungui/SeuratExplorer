@@ -13,6 +13,7 @@
 #' @importFrom utils str
 #' @importFrom grDevices dev.off pdf
 #' @importFrom stats na.omit
+#' @importFrom shinyjs hide html runjs
 #' @export
 #' @return server side functions related to `explorer_sidebar_ui`
 #'
@@ -2993,7 +2994,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 #' @import shiny shinydashboard shinyWidgets
 #' @import ggplot2 Seurat SeuratObject
 #' @importFrom utils write.csv
-#'
+#' @importFrom shinyjs reset
+#' @importFrom methods validObject
 #' @param input Input from the UI
 #' @param output Output to send back to UI
 #' @param session from shiny server function
