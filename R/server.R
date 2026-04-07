@@ -2121,6 +2121,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       removeModal()
       DEGs$degs <- cluster.markers
       DEGs$degs_ready <- TRUE
+      showNotification("✅ Cluster markers calculation completed!", type = "message", duration = 5)
     }
   })
 
@@ -2216,6 +2217,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       removeModal()
       DEGs$degs <- cluster.markers
       DEGs$degs_ready <- TRUE
+      showNotification("✅ Intra-cluster DEGs calculation completed!", type = "message", duration = 5)
     }
   })
 
@@ -2436,6 +2438,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     removeModal()
     if (nrow(TopGenes$topgenes) > 0) {
       TopGenes$topgenes_ready <- TRUE
+      showNotification("✅ Top genes analysis completed!", type = "message", duration = 5)
     }else{
       showModal(modalDialog(
         title = "⚠️ Error",
@@ -2475,6 +2478,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     removeModal()
     if (nrow(TopGenes$topgenes) > 0) {
       TopGenes$topgenes_ready <- TRUE
+      showNotification("✅ Accumulated top genes analysis completed!", type = "message", duration = 5)
     }else{
       showModal(modalDialog(
         title = "⚠️ Error",
@@ -2573,6 +2577,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
       removeModal()
       FeatureSummary$summary_ready <- TRUE
+      showNotification("✅ Feature summary completed!", type = "message", duration = 5)
     }
   })
 
@@ -2644,6 +2649,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     removeModal()
     if (nrow(FeatureCorrelation$summary) > 0) {
       FeatureCorrelation$summary_ready <- TRUE
+      showNotification("✅ Top correlations calculated successfully!", type = "message", duration = 5)
     }else{
       showModal(modalDialog(
         title = "⚠️ Error",
@@ -2691,6 +2697,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       removeModal()
       if (nrow(FeatureCorrelation$summary) > 0) {
         FeatureCorrelation$summary_ready <- TRUE
+        showNotification("✅ Most correlated genes calculated successfully!", type = "message", duration = 5)
       }else{
         showModal(modalDialog(title = "Error",
                               "No gene paris are found, probably for some genes has very low expression value.",
@@ -2748,6 +2755,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       removeModal()
       if (nrow(FeatureCorrelation$summary) > 0) {
         FeatureCorrelation$summary_ready <- TRUE
+        showNotification("✅ Gene correlation calculated successfully!", type = "message", duration = 5)
       }else{
         showModal(modalDialog(
           title = "⚠️ Error",
@@ -2951,6 +2959,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         easyClose = TRUE,
         size = "m"
       ))
+      showNotification("✅ Cluster renamed successfully!", type = "message", duration = 5)
     }
   })
 
