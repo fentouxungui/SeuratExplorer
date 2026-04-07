@@ -2,7 +2,7 @@
 
 ## 1. DESCRIPTION file
 
-Remove line bellow:
+Remove 'Remotes' part:
 
 ```
 Remotes:

@@ -41,7 +41,6 @@ Depends:
 Suggests:
     ComplexHeatmap,
     patchwork (>= 1.3.2),
-    presto,
     MAST,
     limma,
     DESeq2,

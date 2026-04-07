@@ -265,8 +265,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else{
       hr()
       div(
-        style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 10px; border-radius: 4px;",
-        p("Tip: Drag the right or bottom edge to resize the plot", style = "font-size: 12px; margin: 0; color: #004085;")
+        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
+        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
       )
     }
   })
@@ -368,7 +368,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # inform extra qc options for Gene symbol input
   output$Featurehints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Featurehints.UI...")}
-    p(paste0("Tips: also supports ", paste(data$extra_qc_options, collapse = " "),
+    if (length(data$extra_qc_options) > 10) {
+      colunms_names_show <- c(data$extra_qc_options[1:10], '...')
+    }else{
+      colunms_names_show <- data$extra_qc_options
+    }
+    p(paste0("Also supports: ", paste0(colunms_names_show, collapse = " "),
             "; you can paste multiple genes from a column in excel."),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
@@ -436,8 +441,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else{
       hr()
       div(
-        style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 10px; border-radius: 4px;",
-        p("Tip: Drag the right or bottom edge to resize the plot", style = "font-size: 12px; margin: 0; color: #004085;")
+        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
+        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
       )
     }
   })
@@ -587,7 +592,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # inform extra qc options for Gene symbol input
   output$Vlnhints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Vlnhints.UI...")}
-    p(paste0("Tips: also supports ", paste(data$extra_qc_options, collapse = " "),
+    if (length(data$extra_qc_options) > 10) {
+      colunms_names_show <- c(data$extra_qc_options[1:10], '...')
+    }else{
+      colunms_names_show <- data$extra_qc_options
+    }
+    p(paste0("Also supports: ", paste0(colunms_names_show, collapse = " "),
              "; you can paste multiple genes from a column in excel."),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
@@ -753,8 +763,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else{
       hr()
       div(
-        style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 10px; border-radius: 4px;",
-        p("Tip: Drag the right or bottom edge to resize the plot", style = "font-size: 12px; margin: 0; color: #004085;")
+        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
+        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
       )
     }
   })
@@ -892,7 +902,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # inform extra qc options for Gene symbol input
   output$Dothints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Dothints.UI...")}
-    p(paste0("Tips: You can paste multiple genes from a column in excel."),
+    if (length(data$extra_qc_options) > 10) {
+      colunms_names_show <- c(data$extra_qc_options[1:10], '...')
+    }else{
+      colunms_names_show <- data$extra_qc_options
+    }
+    p(paste0("Also supports: ", paste0(colunms_names_show, collapse = " "),
+            "; you can paste multiple genes from a column in excel."),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
@@ -1000,8 +1016,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else{
       hr()
       div(
-        style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 10px; border-radius: 4px;",
-        p("Tip: Drag the right or bottom edge to resize the plot", style = "font-size: 12px; margin: 0; color: #004085;")
+        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
+        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
       )
     }
   })
@@ -1120,7 +1136,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # inform extra qc options for Gene symbol input
   output$Heatmaphints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Heatmaphints.UI...")}
-    p(paste0("Tips: You can paste multiple genes from a column in excel."),
+    if (length(data$extra_qc_options) > 10) {
+      colunms_names_show <- c(data$extra_qc_options[1:10], '...')
+    }else{
+      colunms_names_show <- data$extra_qc_options
+    }
+    p(paste0("Also supports: ", paste0(colunms_names_show, collapse = " "),
+            "; you can paste multiple genes from a column in excel."),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
@@ -1219,8 +1241,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else{
       hr()
       div(
-        style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 10px; border-radius: 4px;",
-        p("Tip: Drag the right or bottom edge to resize the plot", style = "font-size: 12px; margin: 0; color: #004085;")
+        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
+        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
       )
     }
   })
@@ -1331,7 +1353,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$AveragedHeatmaphints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing AveragedHeatmaphints.UI...")}
-    p(paste0("Tips: You can paste multiple genes from a column in excel."),
+    if (length(data$extra_qc_options) > 10) {
+      colunms_names_show <- c(data$extra_qc_options[1:10], '...')
+    }else{
+      colunms_names_show <- data$extra_qc_options
+    }
+    p(paste0("Also supports: ", paste0(colunms_names_show, collapse = " "),
+            "; you can paste multiple genes from a column in excel."),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
@@ -1419,8 +1447,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else{
       hr()
       div(
-        style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 10px; border-radius: 4px;",
-        p("Tip: Drag the right or bottom edge to resize the plot", style = "font-size: 12px; margin: 0; color: #004085;")
+        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
+        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
       )
     }
   })
@@ -1519,8 +1547,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$Ridgeplothints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Ridgeplothints.UI...")}
-    p(paste0("Tips: also supports ", paste(data$extra_qc_options, collapse = " "),
-             "; you can paste multiple genes from a column in excel."),
+    if (length(data$extra_qc_options) > 10) {
+      colunms_names_show <- c(data$extra_qc_options[1:10], '...')
+    }else{
+      colunms_names_show <- data$extra_qc_options
+    }
+    p(paste0("Also supports: ", paste0(colunms_names_show, collapse = " "),
+            "; you can paste multiple genes from a column in excel."),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
@@ -1650,8 +1683,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else{
       hr()
       div(
-        style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 10px; border-radius: 4px;",
-        p("Tip: Drag the right or bottom edge to resize the plot", style = "font-size: 12px; margin: 0; color: #004085;")
+        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
+        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
       )
     }
   })
@@ -1888,8 +1921,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else{
       hr()
       div(
-        style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 10px; border-radius: 4px;",
-        p("Tip: Drag the right or bottom edge to resize the plot", style = "font-size: 12px; margin: 0; color: #004085;")
+        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
+        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
       )
     }
   })

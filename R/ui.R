@@ -126,7 +126,7 @@ explorer_body_ui <- function(tab_list){
                                               h5(icon("dna"), "Gene Selection", style = "color: #3b82f6; font-size: 14px; font-weight: 600; margin-bottom: 10px;"),
                                               textAreaInput("FeatureGeneSymbol", "Gene Symbol:", value = "", height = '80px', resize = "vertical"),
                                               div(
-                                                style = "background-color: #e9ecef; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 8px; border-radius: 4px; margin-top: 10px;",
+                                                style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
                                                 uiOutput("Featurehints.UI")
                                               )
                                             ),
@@ -149,14 +149,14 @@ explorer_body_ui <- function(tab_list){
                                             ),
                                             # Color Settings Group
                                             div(
-                                              style = "background: #f8f9fa; border-left: 4px solid #8b5cf6; padding: 12px; border-radius: 6px; margin-bottom: 15px;",
+                                              style = "background: #f8f9fa; border: 1px solid #8b5cf6; border-left: 4px solid #8b5cf6; padding: 12px; border-radius: 6px; margin-bottom: 15px;",
                                               h5(icon("palette"), "Color Settings", style = "color: #8b5cf6; font-size: 14px; font-weight: 600; margin-bottom: 10px;"),
                                               colourpicker::colourInput("FeaturePlotLowestExprColor", "Lowest expression color:", "#E5E5E5", palette = "limited"),
                                               colourpicker::colourInput("FeaturePlotHighestExprColor", "Highest expression color:", "#FF0000", palette = "limited")
                                             ),
                                             # Advanced Settings Group
                                             div(
-                                              style = "background: #f8f9fa; border-left: 4px solid #6b7280; padding: 12px; border-radius: 6px; margin-bottom: 15px;",
+                                              style = "background: #f8f9fa; border: 1px solid #6b7280; border-left: 4px solid #6b7280; padding: 12px; border-radius: 6px; margin-bottom: 15px;",
                                               h5(icon("cogs"), "Advanced Settings", style = "color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 10px;"),
                                               sliderInput("FeaturePointAlpha", label = "Point Alpha:", min = 0.1, max = 1, value = 1),
                                               sliderInput("FeatureMinCutoff", label = "Min expression cutoff (%):", min = 0, max = 100, value = 0),
@@ -187,7 +187,7 @@ explorer_body_ui <- function(tab_list){
                                           h5(icon("database"), "Data Selection", style = "color: #3b82f6; margin-bottom: 10px; font-size: 14px; font-weight: 600;"),
                                           textAreaInput("VlnGeneSymbol", "Gene Symbols:", value = "", height = '80px', resize = "vertical"),
                                           div(
-                                            style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 5px; border-radius: 4px; margin-top: 10px;",
+                                            style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
                                             uiOutput("Vlnhints.UI")
                                           ),
                                           withSpinner(uiOutput("VlnAssays.UI"), proxy.height = "10px"),
@@ -260,7 +260,7 @@ explorer_body_ui <- function(tab_list){
                                           h5(icon("database"), "Data Selection", style = "color: #3b82f6; margin-bottom: 10px; font-size: 14px; font-weight: 600;"),
                                           textAreaInput("DotGeneSymbol", "Gene Symbols:", value = "", height = '80px', resize = "vertical"),
                                           div(
-                                            style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 5px; border-radius: 4px; margin-top: 10px;",
+                                            style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
                                             uiOutput("Dothints.UI")
                                           ),
                                           withSpinner(uiOutput("DotAssays.UI"), proxy.height = "10px"),
@@ -319,7 +319,7 @@ explorer_body_ui <- function(tab_list){
                                           h5(icon("database"), "Data Selection", style = "color: #3b82f6; margin-bottom: 10px; font-size: 14px; font-weight: 600;"),
                                           textAreaInput("HeatmapGeneSymbol", "Gene Symbols:", value = "", height = '80px', resize = "vertical"),
                                           div(
-                                            style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 5px; border-radius: 4px; margin-top: 10px;",
+                                            style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
                                             uiOutput("Heatmaphints.UI")
                                           ),
                                           withSpinner(uiOutput("HeatmapAssays.UI"), proxy.height = "10px"),
@@ -374,7 +374,7 @@ explorer_body_ui <- function(tab_list){
                                           h5(icon("database"), "Data Selection", style = "color: #3b82f6; margin-bottom: 10px; font-size: 14px; font-weight: 600;"),
                                           textAreaInput("AveragedHeatmapGeneSymbol", "Gene Symbols:", value = "", height = '80px', resize = "vertical"),
                                           div(
-                                            style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 5px; border-radius: 4px; margin-top: 10px;",
+                                            style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
                                             uiOutput("AveragedHeatmaphints.UI")
                                           ),
                                           withSpinner(uiOutput("AveragedHeatmapAssays.UI"), proxy.height = "10px")
@@ -421,7 +421,7 @@ explorer_body_ui <- function(tab_list){
                                             h5(icon("database"), "Data Selection", style = "color: #3b82f6; margin-bottom: 10px; font-size: 14px; font-weight: 600;"),
                                             textAreaInput("RidgeplotGeneSymbol", "Gene Symbols:", value = "", height = '80px', resize = "vertical"),
                                             div(
-                                              style = "background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 5px; border-radius: 4px; margin-top: 10px;",
+                                              style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
                                               uiOutput("Ridgeplothints.UI")
                                             ),
                                             withSpinner(uiOutput("RidgeplotAssays.UI"), proxy.height = "10px"),
@@ -1261,7 +1261,7 @@ explorer_body_ui <- function(tab_list){
                                      withSpinner(uiOutput("renameclustersDimensionReduction.UI"), proxy.height = "10px"),
                                      textInput('renameclustersNewClusterName', 'Input Cluster name:', value = "group"),
                                      div(
-                                       style = "background: #eff6ff; border-left: 3px solid #3b82f6; padding: 10px; border-radius: 4px; margin-top: 15px;",
+                                       style = "background: #eff6ff; padding: 10px; border-radius: 4px; margin-top: 15px;",
                                        uiOutput("renameclustersNewClusterNamehints.UI")
                                      ),
                                      div(style = "margin-top: 20px; text-align: center;",
