@@ -882,7 +882,7 @@ readSeurat <- function(path, verbose = FALSE){
 
 updateSeurat <- function(obj, verbose = FALSE){
   # update Seurat object
-  if (class(obj)[[1]] == 'seurat') { # for very old version: seurat object
+  if (inherits(obj, 'seurat')) { # for very old version: seurat object
     if(verbose){message('SeuratExplorer: Update Seurat Object for very old versions!')}
     obj <- suppressMessages(SeuratObject::UpdateSeuratObject(obj))
   }else if(SeuratObject::Version(obj) < utils::packageVersion('SeuratObject')) {

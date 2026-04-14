@@ -18,7 +18,6 @@
 #' @return server side functions related to `explorer_sidebar_ui`
 #'
 explorer_server <- function(input, output, session, data, verbose=FALSE){
-  # temp_dir <- tempdir()
   temp_dir <- file.path(tempdir(), paste0("SeuratExplorer_", session$token)) # temporary directory, for save plots
 
   if (dir.exists(temp_dir)) {
@@ -26,6 +25,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   }
 
   dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
+
+  session$onSessionEnded(function() {
+    if (dir.exists(temp_dir)) {
+      unlink(temp_dir, recursive = TRUE)
+    }
+  })
 
   # to make shinyBS::updateCollapse() runs correctly, refer to: https://github.com/ebailey78/shinyBS/issues/92
   shiny::addResourcePath("sbs", system.file("www", package="shinyBS"))
@@ -2143,7 +2148,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           size = "l"
         ))
       } else {
-        DEGs$degs <- cluster.markers
+        DEGs$degs <- result
         DEGs$degs_ready <- TRUE
         showNotification("✅ Cluster markers calculation completed!", type = "message", duration = 5)
       }
@@ -2236,19 +2241,39 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       } else if(input$DEGsAssay == "SCT") {
         cds <- check_SCT_assay(cds)
       }
-      cluster.markers <- Seurat::FindMarkers(cds,
-                                             ident.1 = input$IntraClusterDEGsCustomizedGroupsCase,
-                                             ident.2 = input$IntraClusterDEGsCustomizedGroupsControl,
-                                             assay = input$DEGsAssay,
-                                             group.by = input$IntraClusterDEGsCustomizedGroups,
-                                             test.use = input$testuse,
-                                             logfc.threshold = input$logfcthreshold,
-                                             min.pct = input$minpct,
-                                             min.diff.pct = if (input$mindiffpct == 0) -Inf else input$mindiffpct)
+      # 用 tryCatch 包裹长时间运算
+      result <- tryCatch({
+        Seurat::FindMarkers(cds,
+                           ident.1 = input$IntraClusterDEGsCustomizedGroupsCase,
+                           ident.2 = input$IntraClusterDEGsCustomizedGroupsControl,
+                           assay = input$DEGsAssay,
+                           group.by = input$IntraClusterDEGsCustomizedGroups,
+                           test.use = input$testuse,
+                           logfc.threshold = input$logfcthreshold,
+                           min.pct = input$minpct,
+                           min.diff.pct = if (input$mindiffpct == 0) -Inf else input$mindiffpct)
+      },
+      error = function(e) {
+        return(e)  # 捕获错误，返回 error 对象
+      })
       removeModal()
-      DEGs$degs <- cluster.markers
-      DEGs$degs_ready <- TRUE
-      showNotification("✅ Intra-cluster DEGs calculation completed!", type = "message", duration = 5)
+      if (inherits(result, "error")) {
+        # 出错：弹窗提示用户
+        showModal(modalDialog(
+          title = "⚠️ Error",
+          tags$div(
+            tags$p("FindMarkers failed:"),
+            tags$pre(style = "color: #dc3545; white-space: pre-wrap;", result$message)
+          ),
+          easyClose = TRUE,
+          footer = modalButton("OK"),
+          size = "l"
+        ))
+      } else {
+        DEGs$degs <- result
+        DEGs$degs_ready <- TRUE
+        showNotification("✅ Intra-cluster DEGs calculation completed!", type = "message", duration = 5)
+      }
     }
   })
 
