@@ -4,7 +4,7 @@ prepare_seurat_object <- function(obj, verbose = FALSE){
   # if the unique counts less than 1/20 of total cells, and not more than 50, in chr or num type columns，will be forced to factor type.
   # possible problem: unique_max_percent = 0.05 may not suitable for a data has 100 cells but more than 5 clusters.
   obj@meta.data <- modify_columns_types(df = obj@meta.data, types_to_check = c("numeric", "character"), unique_max_counts = 50, unique_max_percent = 0.05, verbose = verbose)
-  # for splited object, join layers
+  # for split object, join layers
   if (sum(grepl("^counts",Layers(object = obj))) > 1 | sum(grepl("^data",Layers(object = obj))) > 1) {
     obj <- SeuratObject::JoinLayers(object = obj)
   }
@@ -17,7 +17,7 @@ prepare_seurat_object <- function(obj, verbose = FALSE){
 #' @param assay Assay name
 #' @return Seurat object with joined layers
 join_layers_if_needed <- function(SeuratObj, assay = 'RNA') {
-  if (class(SeuratObj[[assay]])[1] == "Assay5") {
+  if (inherits(SeuratObj[[assay]], "Assay5")) {
     SeuratObj <- JoinLayers(SeuratObj)
   }
   return(SeuratObj)
@@ -29,10 +29,12 @@ join_layers_if_needed <- function(SeuratObj, assay = 'RNA') {
 #' @return A counts matrix
 get_counts_matrix <- function(SeuratObj, assay = 'RNA') {
   SeuratObj <- join_layers_if_needed(SeuratObj, assay)
-  if (class(SeuratObj[[assay]])[1] == "Assay5") {
-    counts <- as.matrix(SeuratObj[[assay]]@layers$counts)
+  if (inherits(SeuratObj[[assay]], "Assay5")) {
+    # counts <- as.matrix(SeuratObj[[assay]]@layers$counts)
+    counts <- SeuratObj[[assay]]@layers$counts
   } else {
-    counts <- as.matrix(SeuratObj[[assay]]$counts)
+    # counts <- as.matrix(SeuratObj[[assay]]$counts)
+    counts <- SeuratObj[[assay]]$counts
   }
   rownames(counts) <- rownames(SeuratObj[[assay]])
   colnames(counts) <- colnames(SeuratObj)
@@ -45,10 +47,12 @@ get_counts_matrix <- function(SeuratObj, assay = 'RNA') {
 #' @return A data matrix
 get_data_matrix <- function(SeuratObj, assay = 'RNA') {
   SeuratObj <- join_layers_if_needed(SeuratObj, assay)
-  if (class(SeuratObj[[assay]])[1] == "Assay5") {
-    data <- as.matrix(SeuratObj[[assay]]@layers$data)
+  if (inherits(SeuratObj[[assay]], "Assay5")) {
+    # data <- as.matrix(SeuratObj[[assay]]@layers$data)
+    data <- SeuratObj[[assay]]@layers$data
   } else {
-    data <- as.matrix(SeuratObj[[assay]]$data)
+    # data <- as.matrix(SeuratObj[[assay]]$data)
+    data <- SeuratObj[[assay]]$data
   }
   rownames(data) <- rownames(SeuratObj[[assay]])
   colnames(data) <- colnames(SeuratObj)
@@ -104,6 +108,10 @@ prepare_assays_slots <- function(obj, verbose = FALSE, data_slot =  c('counts', 
     if (length(slot_names) != 0) {
       assay_slot_list[[i]] <- slot_names
     }
+  }
+  # keep the default assay in the first place
+  if (!is.null(DefaultAssay(obj)) & DefaultAssay(obj) %in% names(assay_slot_list)) {
+    assay_slot_list <- assay_slot_list[c(DefaultAssay(obj), names(assay_slot_list)[names(assay_slot_list) != DefaultAssay(obj)])]
   }
   if(verbose){message("SeuratExplorer: prepare_assays_slots runs successfully!")}
   return(assay_slot_list)
@@ -344,6 +352,7 @@ globalVariables(c("num"))
 #' @param color.choice color choice for fill
 #' @import dplyr
 #' @importFrom dplyr %>%
+#' @importFrom rlang .data
 #' @return a ggplot2 object
 #' @export
 #'
@@ -419,9 +428,9 @@ cellRatioPlot <- function(object = NULL,
 
 
   # plot
-  p <- ggplot2::ggplot(ratio.info, ggplot2::aes_string(x = sample.name, y = "rel_num")) +
-    ggplot2::geom_col( ggplot2::aes_string(fill = celltype.name), width = col.width ) +
-    ggalluvial::geom_flow( ggplot2::aes_string( stratum = celltype.name, alluvium = celltype.name, fill = celltype.name ),
+  p <- ggplot2::ggplot(ratio.info, ggplot2::aes(x = .data[[sample.name]], y = .data[["rel_num"]])) +
+    ggplot2::geom_col( ggplot2::aes(fill = .data[[celltype.name]]), width = col.width ) +
+    ggalluvial::geom_flow( ggplot2::aes(stratum = .data[[celltype.name]], alluvium = .data[[celltype.name]], fill = .data[[celltype.name]]),
       width = col.width,
       alpha = flow.alpha,
       knot.pos = flow.curve) +
@@ -567,7 +576,7 @@ top_accumulated_genes <- function(SeuratObj, top_n = 100, group.by, assay = 'RNA
     }
     results.statics <- Reduce(rbind, results.statics)
   }else{
-    results.statics <- top_accumulated_genes_core(expr_mat = counts.expr, top_n = top_n, celltype = 'AllSetectedCells')
+    results.statics <- top_accumulated_genes_core(expr_mat = counts.expr, top_n = top_n, celltype = 'AllSelectedCells')
   }
   rownames(results.statics) <- NULL
   return(results.statics)
@@ -780,7 +789,7 @@ AverageHeatmap <- function(
     # all genes
     rowGene <- rownames(htdf)
 
-    # tartget gene
+    # target gene
     annoGene <- markGenes
 
     # get target gene index
@@ -837,8 +846,8 @@ AverageHeatmap <- function(
       show_row_dend = TRUE,
       show_column_dend = TRUE,
       name = "Z-score",
-      cluster_columns = FALSE,
-      cluster_rows = FALSE,
+      cluster_columns = cluster_columns,
+      cluster_rows = cluster_rows,
       # column_title = "Clusters",
       right_annotation = right_annotation,
       show_row_names = showRowNames,
@@ -865,9 +874,9 @@ readSeurat <- function(path, verbose = FALSE){
   # read data
   if (tolower(tools::file_ext(path)) == 'qs2') {
     obj <- qs2::qs_read(path)
-  }else(
+  }else{
     obj <- readRDS(path)
-  )
+  }
   return(obj)
 }
 
@@ -891,14 +900,12 @@ updateSeurat <- function(obj, verbose = FALSE){
 # and: https://github.com/satijalab/seurat/pull/8203
 # this bug can affect 'FindAllMarkers' function.
 check_SCT_assay <- function(seu_obj){
-  if (DefaultAssay(seu_obj) == "SCT") {
-    if (length(seu_obj@assays$SCT@SCTModel.list) > 1) {
-      SCT_first_umiassay <- seu_obj@assays$SCT@SCTModel.list[[1]]@umi.assay
-      for (i in 2:length(seu_obj@assays$SCT@SCTModel.list)) {
-        methods::slot(object = seu_obj@assays$SCT@SCTModel.list[[i]], name="umi.assay") <- SCT_first_umiassay
-      }
-      seu_obj <- Seurat::PrepSCTFindMarkers(object = seu_obj)
+  if (length(seu_obj@assays$SCT@SCTModel.list) > 1) {
+    SCT_first_umiassay <- seu_obj@assays$SCT@SCTModel.list[[1]]@umi.assay
+    for (i in 2:length(seu_obj@assays$SCT@SCTModel.list)) {
+      methods::slot(object = seu_obj@assays$SCT@SCTModel.list[[i]], name="umi.assay") <- SCT_first_umiassay
     }
+    seu_obj <- Seurat::PrepSCTFindMarkers(object = seu_obj)
   }
   return(seu_obj)
 }
@@ -907,7 +914,7 @@ check_genes_error <- "None of the input genes can be found!"
 
 # for plot features related functions when none of the input features can be recognized
 empty_plot <- ggplot2::ggplot() +
-  ggplot2::annotate('text', x = 0, y = 0, label = 'Please input correct features!\n Unrecognized features will be removed automatically.\n You can check the features in "Search Features" page.\n Or at leaset select one cluster.', color = 'darkgrey', size = 6)  +
+  ggplot2::annotate('text', x = 0, y = 0, label = 'Please input correct features!\n Unrecognized features will be removed automatically.\n You can check the features in "Search Features" page.\n Or at least select one cluster.', color = 'darkgrey', size = 6)  +
   ggplot2::theme_bw() +
   ggplot2::geom_blank() +
   ggplot2::theme(axis.title = ggplot2::element_blank(),

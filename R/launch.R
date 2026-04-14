@@ -1,8 +1,7 @@
-# launch.R
-## used to launch the shiny app in a web browser.
-
-
 #' Launch shiny app
+#'
+#' @description
+#' used to launch the shiny app in a web browser.
 #'
 #' @param verbose for debug use
 #' @param ReductionKeyWords key words used for prepare Reduction options

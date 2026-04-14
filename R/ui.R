@@ -520,8 +520,6 @@ explorer_body_ui <- function(tab_list){
                                     )
   )
   tab_list[["degs"]] = tabItem(tabName = "degs",
-                               # Initialize shinyjs for this tab
-                               shinyjs::useShinyjs(),
                                # CSS styles for close button hover effect
                                tags$style(type="text/css", "#close_degs_info:hover { color: #059669 !important; }"),
                                # CSS styles for info text
@@ -634,7 +632,6 @@ explorer_body_ui <- function(tab_list){
                                                   style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
                                                   withSpinner(uiOutput("ClusterMarkersClusterResolution.UI"), proxy.height = "10px")
                                                 ),
-                                                shinyjs::useShinyjs(),
                                                 div(style = "text-align: center; margin-top: 25px;",
                                                   actionButton("DEGsClusterMarkersAnalysis",
                                                               icon = shiny::icon("magnifying-glass-chart"),
@@ -754,8 +751,6 @@ explorer_body_ui <- function(tab_list){
                                )  # end of fluidRow containing both Information Box and tabBox
   )  # end of degs tabItem
   tab_list[["topgenes"]] = tabItem(tabName = "topgenes",
-                               # Initialize shinyjs for this tab
-                               shinyjs::useShinyjs(),
                                # CSS styles for close button hover effect
                                tags$style(type="text/css", "#close_topgenes_info:hover { color: #059669 !important; }"),
                                # CSS styles for info text
@@ -883,7 +878,6 @@ explorer_body_ui <- function(tab_list){
                                                   style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
                                                   sliderInput("TopGenesTopPercent", "UMI percentage cutoff(%):", min = 1, max = 10, value = 1, step = 1)
                                                 ),
-                                                shinyjs::useShinyjs(),
                                                 div(style = "text-align: center; margin-top: 25px;",
                                                   actionButton("TopGenesAnalysis",
                                                               icon = shiny::icon("magnifying-glass-chart"),
@@ -939,8 +933,6 @@ explorer_body_ui <- function(tab_list){
                                )
   )
   tab_list[["featuresummary"]] = tabItem(tabName = "featuresummary",
-                               # Initialize shinyjs for this tab
-                               shinyjs::useShinyjs(),
                                # CSS styles for close button hover effect
                                tags$style(type="text/css", "#close_featuresummary_info:hover { color: #059669 !important; }"),
                                # CSS styles for info text
@@ -1034,8 +1026,6 @@ explorer_body_ui <- function(tab_list){
                                )
   )
   tab_list[["featurecorrelation"]] = tabItem(tabName = "featurecorrelation",
-                               # Initialize shinyjs for this tab
-                               shinyjs::useShinyjs(),
                                # CSS styles for close button hover effect
                                tags$style(type="text/css", "#close_featurecorrelation_info:hover { color: #059669 !important; }"),
                                # CSS styles for info text
@@ -1440,6 +1430,7 @@ ui <-  function(){
   tab_list <- explorer_body_ui(tab_list = tab_list)
 
   body <- shinydashboard::dashboardBody(
+    shinyjs::useShinyjs(),
     tags$head(
       tags$style(HTML("
         /* 全局字体优化 */

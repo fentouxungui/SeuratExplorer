@@ -34,7 +34,8 @@ Imports:
     reshape2,
     knitr,
     markdown,
-    shinyjs
+    shinyjs,
+    rlang
 Depends: 
     R (>= 4.1.0),
     shiny

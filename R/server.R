@@ -18,13 +18,15 @@
 #' @return server side functions related to `explorer_sidebar_ui`
 #'
 explorer_server <- function(input, output, session, data, verbose=FALSE){
-  temp_dir <- tempdir() # temporary directory, for save plots
+  # temp_dir <- tempdir()
+  temp_dir <- file.path(tempdir(), paste0("SeuratExplorer_", session$token)) # temporary directory, for save plots
 
   if (dir.exists(temp_dir)) {
     unlink(temp_dir, recursive = TRUE)
   }
 
-  dir.create(temp_dir, showWarnings = FALSE)
+  dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
+
   # to make shinyBS::updateCollapse() runs correctly, refer to: https://github.com/ebailey78/shinyBS/issues/92
   shiny::addResourcePath("sbs", system.file("www", package="shinyBS"))
 
@@ -263,7 +265,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (input$DimPlotMode) {
       sliderInput("DimPlotHWRatio", label = "Adjust Height/Width Ratio", min = 0.1, max = 4, value = 0.9)
     }else{
-      hr()
       div(
         style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
         p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
@@ -291,7 +292,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }
     cds@meta.data[,isolate(input$DimClusterResolution)] <- factor(cds@meta.data[,isolate(input$DimClusterResolution)],
                                                          levels = DimClusterOrder.Safe())
-    if (is.null(DimSplit.Revised())) { # not splited
+    if (is.null(DimSplit.Revised())) { # not split
       p <- Seurat::DimPlot(cds,
                            reduction = input$DimDimensionReduction,
                            label = input$DimShowLabel,
@@ -299,7 +300,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                            label.size = input$DimLabelSize,
                            group.by = isolate(input$DimClusterResolution),
                            cells.highlight = dim_cells_highlighted)
-      }else{ # splited
+      }else{ # split
       plot_numbers <- length(levels(cds@meta.data[,DimSplit.Revised()]))
       p <- Seurat::DimPlot(cds, reduction = input$DimDimensionReduction,
                            label = input$DimShowLabel, pt.size = input$DimPointSize,
@@ -343,7 +344,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloaddimplot <- downloadHandler(
     filename = function(){'dimplot.pdf'},
     content = function(file) {
-      file.copy(paste0(temp_dir,"/dimplot.pdf"), file, overwrite=TRUE)
+      if (file.exists(paste0(temp_dir,"/dimplot.pdf"))) {
+        file.copy(paste0(temp_dir,"/dimplot.pdf"), file, overwrite=TRUE)
+      }
     })
 
   ################################ Feature Plot
@@ -369,11 +372,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$Featurehints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Featurehints.UI...")}
     if (length(data$extra_qc_options) > 10) {
-      colunms_names_show <- c(data$extra_qc_options[1:10], '...')
+      columns_names_show <- c(data$extra_qc_options[1:10], '...')
     }else{
-      colunms_names_show <- data$extra_qc_options
+      columns_names_show <- data$extra_qc_options
     }
-    p(paste0("Also supports: ", paste0(colunms_names_show, collapse = " "),
+    p(paste0("Also supports: ", paste0(columns_names_show, collapse = " "),
             "; you can paste multiple genes from a column in excel."),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
@@ -439,7 +442,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (input$FeaturePlotMode) {
       sliderInput("FeaturePlotHWRatio", label = "Adjust Height/Width Ratio", min = 0.1, max = 4, value = 0.9)
     }else{
-      hr()
       div(
         style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
         p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
@@ -536,9 +538,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   ################################ Violin Plot
   # Track ClustersSelected changes and whether order is ready
-  vlnplot_clustersselectd_state <- reactiveValues(
+  vlnplot_clustersselected_state <- reactiveValues(
     ready = FALSE,
-    current_ClustersSelectd = NULL
+    current_ClustersSelected = NULL
   )
 
   # Update ready state when VlnClusterOrder is ready
@@ -556,9 +558,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (!is.null(actual_order) &&
         !is.null(input$VlnIdentsSelected) &&
         identical(sort(input$VlnIdentsSelected),sort(actual_order))) {
-      if (is.null(vlnplot_clustersselectd_state$VlnIdentsSelected) || vlnplot_clustersselectd_state$current_ClustersSelectd != input$VlnIdentsSelected) {
-        vlnplot_clustersselectd_state$current_ClustersSelectd <- input$VlnIdentsSelected
-        vlnplot_clustersselectd_state$ready <- TRUE
+      if (is.null(vlnplot_clustersselected_state$VlnIdentsSelected) || vlnplot_clustersselected_state$current_ClustersSelected != input$VlnIdentsSelected) {
+        vlnplot_clustersselected_state$current_ClustersSelected <- input$VlnIdentsSelected
+        vlnplot_clustersselected_state$ready <- TRUE
         if(verbose){message("SeuratExplorer: VlnClusterOrder is now ready for clusters selected: ", input$VlnIdentsSelected)}
       }
     }
@@ -593,11 +595,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$Vlnhints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Vlnhints.UI...")}
     if (length(data$extra_qc_options) > 10) {
-      colunms_names_show <- c(data$extra_qc_options[1:10], '...')
+      columns_names_show <- c(data$extra_qc_options[1:10], '...')
     }else{
-      colunms_names_show <- data$extra_qc_options
+      columns_names_show <- data$extra_qc_options
     }
-    p(paste0("Also supports: ", paste0(colunms_names_show, collapse = " "),
+    p(paste0("Also supports: ", paste0(columns_names_show, collapse = " "),
              "; you can paste multiple genes from a column in excel."),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
@@ -633,7 +635,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   # Safe cluster order reactive - waits for order to be ready
   VlnClusterOrder.Safe <- reactive({
-    req(vlnplot_clustersselectd_state$ready, "Waiting for input$VlnIdentsSelected to update...")
+    req(vlnplot_clustersselected_state$ready, "Waiting for input$VlnIdentsSelected to update...")
     if (!is.null(input$VlnClusterOrder) && length(input$VlnClusterOrder) > 0) {
       if(verbose){message("SeuratExplorer: VlnClusterOrder.Safe using user order...")}
       return(input$VlnClusterOrder)
@@ -761,7 +763,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (input$VlnPlotMode) {
       sliderInput("VlnPlotHWRatio", label = "Adjust Height/Width Ratio", min = 0.1, max = 4, value = 0.9)
     }else{
-      hr()
       div(
         style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
         p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
@@ -861,7 +862,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # Track ClustersSelected changes and whether order is ready
   dotplot_clustersselectd_state <- reactiveValues(
     ready = FALSE,
-    current_ClustersSelectd = NULL
+    current_ClustersSelected = NULL
   )
 
   # Update ready state when DotClusterOrder is ready
@@ -879,8 +880,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (!is.null(actual_order) &&
         !is.null(input$DotIdentsSelected) &&
         identical(sort(input$DotIdentsSelected),sort(actual_order))) {
-      if (is.null(dotplot_clustersselectd_state$DotIdentsSelected) || dotplot_clustersselectd_state$current_ClustersSelectd != input$DotIdentsSelected) {
-        dotplot_clustersselectd_state$current_ClustersSelectd <- input$DotIdentsSelected
+      if (is.null(dotplot_clustersselectd_state$DotIdentsSelected) || dotplot_clustersselectd_state$current_ClustersSelected != input$DotIdentsSelected) {
+        dotplot_clustersselectd_state$current_ClustersSelected <- input$DotIdentsSelected
         dotplot_clustersselectd_state$ready <- TRUE
         if(verbose){message("SeuratExplorer: DotClusterOrder is now ready for clusters selected: ", input$DotIdentsSelected)}
       }
@@ -903,11 +904,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$Dothints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Dothints.UI...")}
     if (length(data$extra_qc_options) > 10) {
-      colunms_names_show <- c(data$extra_qc_options[1:10], '...')
+      columns_names_show <- c(data$extra_qc_options[1:10], '...')
     }else{
-      colunms_names_show <- data$extra_qc_options
+      columns_names_show <- data$extra_qc_options
     }
-    p(paste0("Also supports: ", paste0(colunms_names_show, collapse = " "),
+    p(paste0("Also supports: ", paste0(columns_names_show, collapse = " "),
             "; you can paste multiple genes from a column in excel."),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
@@ -1014,7 +1015,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (input$DotPlotMode) {
       sliderInput("DotPlotHWRatio", label = "Adjust Height/Width Ratio", min = 0.1, max = 4, value = 0.9)
     }else{
-      hr()
       div(
         style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
         p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
@@ -1107,7 +1107,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # Track ClustersSelected changes and whether order is ready
   heatmap_clustersselectd_state <- reactiveValues(
     ready = FALSE,
-    current_ClustersSelectd = NULL
+    current_ClustersSelected = NULL
   )
 
   # Update ready state when HeatmapClusterOrder is ready
@@ -1125,8 +1125,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (!is.null(actual_order) &&
         !is.null(input$HeatmapIdentsSelected) &&
         identical(sort(input$HeatmapIdentsSelected),sort(actual_order))) {
-      if (is.null(heatmap_clustersselectd_state$HeatmapIdentsSelected) || heatmap_clustersselectd_state$current_ClustersSelectd != input$HeatmapIdentsSelected) {
-        heatmap_clustersselectd_state$current_ClustersSelectd <- input$HeatmapIdentsSelected
+      if (is.null(heatmap_clustersselectd_state$HeatmapIdentsSelected) || heatmap_clustersselectd_state$current_ClustersSelected != input$HeatmapIdentsSelected) {
+        heatmap_clustersselectd_state$current_ClustersSelected <- input$HeatmapIdentsSelected
         heatmap_clustersselectd_state$ready <- TRUE
         if(verbose){message("SeuratExplorer: HeatmapClusterOrder is now ready for clusters selected: ", input$HeatmapIdentsSelected)}
       }
@@ -1137,11 +1137,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$Heatmaphints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Heatmaphints.UI...")}
     if (length(data$extra_qc_options) > 10) {
-      colunms_names_show <- c(data$extra_qc_options[1:10], '...')
+      columns_names_show <- c(data$extra_qc_options[1:10], '...')
     }else{
-      colunms_names_show <- data$extra_qc_options
+      columns_names_show <- data$extra_qc_options
     }
-    p(paste0("Also supports: ", paste0(colunms_names_show, collapse = " "),
+    p(paste0("Also supports: ", paste0(columns_names_show, collapse = " "),
             "; you can paste multiple genes from a column in excel."),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
@@ -1239,7 +1239,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (input$HeatmapPlotMode) {
       sliderInput("HeatmapPlotHWRatio", label = "Adjust Height/Width Ratio:", min = 0.1, max = 4, value = 0.9, step = 0.1)
     }else{
-      hr()
       div(
         style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
         p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
@@ -1251,6 +1250,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     req(input$HeatmapClusterResolution %in% colnames(data$obj@meta.data))
     req(input$HeatmapSlot)
     req(all(HeatmapClusterOrder.Safe() %in% levels(data$obj@meta.data[,input$HeatmapClusterResolution])))
+    req(input$HeatmapAssay)
 
     if(verbose){message("SeuratExplorer: preparing heatmap...")}
     if (any(is.na(features_heatmap$features_current)) | is.null(HeatmapClusterOrder.Safe())) { # NA
@@ -1325,7 +1325,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # Track ClustersSelected changes and whether order is ready
   averagedheatmap_clustersselectd_state <- reactiveValues(
     ready = FALSE,
-    current_ClustersSelectd = NULL
+    current_ClustersSelected = NULL
   )
 
   # Update ready state when AveragedHeatmapClusterOrder is ready
@@ -1343,8 +1343,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (!is.null(actual_order) &&
         !is.null(input$AveragedHeatmapIdentsSelected) &&
         identical(sort(input$AveragedHeatmapIdentsSelected),sort(actual_order))) {
-      if (is.null(averagedheatmap_clustersselectd_state$AveragedHeatmapIdentsSelected) || averagedheatmap_clustersselectd_state$current_ClustersSelectd != input$AveragedHeatmapIdentsSelected) {
-        averagedheatmap_clustersselectd_state$current_ClustersSelectd <- input$AveragedHeatmapIdentsSelected
+      if (is.null(averagedheatmap_clustersselectd_state$AveragedHeatmapIdentsSelected) || averagedheatmap_clustersselectd_state$current_ClustersSelected != input$AveragedHeatmapIdentsSelected) {
+        averagedheatmap_clustersselectd_state$current_ClustersSelected <- input$AveragedHeatmapIdentsSelected
         averagedheatmap_clustersselectd_state$ready <- TRUE
         if(verbose){message("SeuratExplorer: AveragedHeatmapClusterOrder is now ready for clusters selected: ", input$AveragedHeatmapIdentsSelected)}
       }
@@ -1354,11 +1354,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$AveragedHeatmaphints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing AveragedHeatmaphints.UI...")}
     if (length(data$extra_qc_options) > 10) {
-      colunms_names_show <- c(data$extra_qc_options[1:10], '...')
+      columns_names_show <- c(data$extra_qc_options[1:10], '...')
     }else{
-      colunms_names_show <- data$extra_qc_options
+      columns_names_show <- data$extra_qc_options
     }
-    p(paste0("Also supports: ", paste0(colunms_names_show, collapse = " "),
+    p(paste0("Also supports: ", paste0(columns_names_show, collapse = " "),
             "; you can paste multiple genes from a column in excel."),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
@@ -1445,7 +1445,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (input$AveragedHeatmapPlotMode) {
       sliderInput("AveragedHeatmapPlotHWRatio", label = "Adjust Height/Width Ratio:", min = 0.1, max = 4, value = 0.9, step = 0.1)
     }else{
-      hr()
       div(
         style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
         p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
@@ -1519,7 +1518,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # Track ClustersSelected changes and whether order is ready
   ridgeplot_clustersselectd_state <- reactiveValues(
     ready = FALSE,
-    current_ClustersSelectd = NULL
+    current_ClustersSelected = NULL
   )
 
   # Update ready state when RidgeplotClusterOrder is ready
@@ -1537,8 +1536,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (!is.null(actual_order) &&
         !is.null(input$RidgeplotIdentsSelected) &&
         identical(sort(input$RidgeplotIdentsSelected),sort(actual_order))) {
-      if (is.null(ridgeplot_clustersselectd_state$RidgeplotIdentsSelected) || ridgeplot_clustersselectd_state$current_ClustersSelectd != input$RidgeplotIdentsSelected) {
-        ridgeplot_clustersselectd_state$current_ClustersSelectd <- input$RidgeplotIdentsSelected
+      if (is.null(ridgeplot_clustersselectd_state$RidgeplotIdentsSelected) || ridgeplot_clustersselectd_state$current_ClustersSelected != input$RidgeplotIdentsSelected) {
+        ridgeplot_clustersselectd_state$current_ClustersSelected <- input$RidgeplotIdentsSelected
         ridgeplot_clustersselectd_state$ready <- TRUE
         if(verbose){message("SeuratExplorer: RidgeplotClusterOrder is now ready for clusters selected: ", input$RidgeplotIdentsSelected)}
       }
@@ -1548,11 +1547,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$Ridgeplothints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Ridgeplothints.UI...")}
     if (length(data$extra_qc_options) > 10) {
-      colunms_names_show <- c(data$extra_qc_options[1:10], '...')
+      columns_names_show <- c(data$extra_qc_options[1:10], '...')
     }else{
-      colunms_names_show <- data$extra_qc_options
+      columns_names_show <- data$extra_qc_options
     }
-    p(paste0("Also supports: ", paste0(colunms_names_show, collapse = " "),
+    p(paste0("Also supports: ", paste0(columns_names_show, collapse = " "),
             "; you can paste multiple genes from a column in excel."),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
@@ -1681,7 +1680,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (input$RidgeplotPlotMode) {
       sliderInput("RidgeplotHWRatio", label = "Adjust Height/Width Ratio:", min = 0.1, max = 4, value = 0.9, step = 0.1)
     }else{
-      hr()
       div(
         style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
         p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
@@ -1762,7 +1760,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # Track ClustersSelected changes and whether order is ready
   cellratioplot_clustersselectd_state <- reactiveValues(
     ready = FALSE,
-    current_ClustersSelectd = NULL
+    current_ClustersSelected = NULL
   )
 
   # Update ready state when CellratioFillOrder is ready
@@ -1780,8 +1778,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (!is.null(actual_order) &&
         !any(is.null(input$CellratioIdentsSelected)) &&
         identical(sort(input$CellratioIdentsSelected),sort(actual_order))) {
-      if (is.null(cellratioplot_clustersselectd_state$CellratioIdentsSelected) || cellratioplot_clustersselectd_state$current_ClustersSelectd != input$CellratioIdentsSelected) {
-        cellratioplot_clustersselectd_state$current_ClustersSelectd <- input$CellratioIdentsSelected
+      if (is.null(cellratioplot_clustersselectd_state$CellratioIdentsSelected) || cellratioplot_clustersselectd_state$current_ClustersSelected != input$CellratioIdentsSelected) {
+        cellratioplot_clustersselectd_state$current_ClustersSelected <- input$CellratioIdentsSelected
         cellratioplot_clustersselectd_state$ready <- TRUE
         if(verbose){message("SeuratExplorer: CellratioFillOrder is now ready for clusters selected: ", input$CellratioIdentsSelected)}
       }
@@ -1919,7 +1917,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (input$CellratioMode) {
       sliderInput("CellratioPlotHWRatio", label = "Adjust Height/Width Ratio", min = 0.1, max = 4, value = 0.9)
     }else{
-      hr()
       div(
         style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
         p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
@@ -1934,7 +1931,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     req(input$CellratioXChoice %in% colnames(data$obj@meta.data))
     req(all(CellratioFillOrder.Safe() %in% levels(data$obj@meta.data[,input$CellratioFillChoice])))
     req(all(input$CellratioXOrder %in% levels(data$obj@meta.data[,input$CellratioXChoice])))
-    req(input$CellratioFillChoice != input$CellratioXOrder)
+    req(input$CellratioFillChoice != input$CellratioXChoice)
+    # req(input$CellratioFillChoice != input$CellratioXOrder) # to be deleted
 
     if(verbose){message("SeuratExplorer: preparing cellratioplot...")}
       cds <- data$obj
@@ -2099,29 +2097,56 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         footer = NULL,
         size = "m"
       ))
-      cds <- check_SCT_assay(cds)
-      cluster.markers <- withCallingHandlers({
-        Seurat::FindAllMarkers(cds,
-                              test.use = input$testuse,
-                              assay = input$DEGsAssay,
-                              logfc.threshold = input$logfcthreshold,
-                              group.by = input$ClusterMarkersClusterResolution,
-                              min.pct = input$minpct,
-                              min.diff.pct = ifelse(input$mindiffpct, input$mindiffpct, -Inf),
-                              only.pos = TRUE,
-                              verbose = TRUE)
-        },
-        message = function(m) {
-          # refresh UI
-          shinyjs::html(id = "clustermarkers_log_output", html = paste0( "<br>", m$message), add = TRUE)
-          # auto scroll to bottom to ensure showing the latest messages
-          shinyjs::runjs("var d = document.getElementById('clustermarkers_log_output'); d.scrollTop = d.scrollHeight;")
+      if (is.null(input$DEGsAssay)){
+        if (DefaultAssay(cds) == 'SCT') {
+          cds <- check_SCT_assay(cds)
         }
-      )
+      } else if(input$DEGsAssay == "SCT") {
+        cds <- check_SCT_assay(cds)
+      }
+      # 用 tryCatch 包裹长时间运算
+      result <- tryCatch({
+        cluster.markers <- withCallingHandlers({
+          Seurat::FindAllMarkers(cds,
+                                test.use = input$testuse,
+                                assay = input$DEGsAssay, # when input$DEGsAssay is null, it will use default assay
+                                logfc.threshold = input$logfcthreshold,
+                                group.by = input$ClusterMarkersClusterResolution,
+                                min.pct = input$minpct,
+                                min.diff.pct = if (input$mindiffpct == 0) -Inf else input$mindiffpct,
+                                only.pos = TRUE,
+                                verbose = TRUE)
+          },
+          message = function(m) {
+            # refresh UI
+            shinyjs::html(id = "clustermarkers_log_output", html = paste0( "<br>", m$message), add = TRUE)
+            # auto scroll to bottom to ensure showing the latest messages
+            shinyjs::runjs("var d = document.getElementById('clustermarkers_log_output'); d.scrollTop = d.scrollHeight;")
+          }
+        )
+      },
+      error = function(e) {
+        return(e)  # 捕获错误，返回 error 对象
+      })
       removeModal()
-      DEGs$degs <- cluster.markers
-      DEGs$degs_ready <- TRUE
-      showNotification("✅ Cluster markers calculation completed!", type = "message", duration = 5)
+
+      if (inherits(result, "error")) {
+        # 出错：弹窗提示用户
+        showModal(modalDialog(
+          title = "⚠️ Error",
+          tags$div(
+            tags$p("FindAllMarkers failed:"),
+            tags$pre(style = "color: #dc3545; white-space: pre-wrap;", result$message)
+          ),
+          easyClose = TRUE,
+          footer = modalButton("OK"),
+          size = "l"
+        ))
+      } else {
+        DEGs$degs <- cluster.markers
+        DEGs$degs_ready <- TRUE
+        showNotification("✅ Cluster markers calculation completed!", type = "message", duration = 5)
+      }
     }
   })
 
@@ -2204,7 +2229,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       cds <- data$obj
       Seurat::Idents(cds) <- input$IntraClusterDEGsSubsetCells
       cds <- subset_Seurat(cds, idents = input$IntraClusterDEGsSubsetCellsSelectedClusters)
-      cds <- check_SCT_assay(cds)
+      if (is.null(input$DEGsAssay)){
+        if (DefaultAssay(cds) == 'SCT') {
+          cds <- check_SCT_assay(cds)
+        }
+      } else if(input$DEGsAssay == "SCT") {
+        cds <- check_SCT_assay(cds)
+      }
       cluster.markers <- Seurat::FindMarkers(cds,
                                              ident.1 = input$IntraClusterDEGsCustomizedGroupsCase,
                                              ident.2 = input$IntraClusterDEGsCustomizedGroupsControl,
@@ -2213,7 +2244,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                              test.use = input$testuse,
                                              logfc.threshold = input$logfcthreshold,
                                              min.pct = input$minpct,
-                                             min.diff.pct = ifelse(input$mindiffpct, input$mindiffpct, -Inf))
+                                             min.diff.pct = if (input$mindiffpct == 0) -Inf else input$mindiffpct)
       removeModal()
       DEGs$degs <- cluster.markers
       DEGs$degs_ready <- TRUE
@@ -2309,7 +2340,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       unique_ids <- unique(c(na.omit(selected.db[selected.db[,input$selectsgenetype] == selected.gene,][,'Symbol'])))
       for (id in unique_ids) {
         external_links <- paste0(external_links,
-                                 shiny::a(h4("GeneCards", class = "btn btn-primary" , style = "fontweight:600"),
+                                 shiny::a(h4("GeneCards", class = "btn btn-primary" , style = "font-weight:600"),
                                           target = "_blank",
                                           href = paste0("https://www.genecards.org/cgi-bin/carddisp.pl?gene=", id)))
       }
@@ -2317,7 +2348,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       unique_ids <- unique(c(na.omit(selected.db[selected.db[,input$selectsgenetype] == selected.gene,][,'Ensembl'])))
       for (id in unique_ids) {
         external_links <- paste0(external_links,
-                                 shiny::a(h4("Ensembl", class = "btn btn-primary" , style = "fontweight:600"),
+                                 shiny::a(h4("Ensembl", class = "btn btn-primary" , style = "font-weight:600"),
                                           target = "_blank",
                                           href = paste0("http://www.ensembl.org/Homo_sapiens/geneview?gene=", id)))
       }
@@ -2325,7 +2356,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       unique_ids <- unique(c(na.omit(selected.db[selected.db[,input$selectsgenetype] == selected.gene,][,'HGNC'])))
       for (id in unique_ids) {
         external_links <- paste0(external_links,
-                                 shiny::a(h4("HGNC", class = "btn btn-primary" , style = "fontweight:600"),
+                                 shiny::a(h4("HGNC", class = "btn btn-primary" , style = "font-weight:600"),
                                           target = "_blank",
                                           href = paste0("https://www.genenames.org/data/gene-symbol-report/#!/hgnc_id/", id)))
       }
@@ -2334,14 +2365,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       # MGI
       for (id in unique_ids) {
         external_links <- paste0(external_links,
-                                 shiny::a(h4("MGI", class = "btn btn-primary" , style = "fontweight:600"),
+                                 shiny::a(h4("MGI", class = "btn btn-primary" , style = "font-weight:600"),
                                           target = "_blank",
                                           href = paste0("https://www.informatics.jax.org/marker/", id)))
       }
       # Ensembl
       for (id in unique_ids) {
         external_links <- paste0(external_links,
-                                 shiny::a(h4("Ensembl", class = "btn btn-primary" , style = "fontweight:600"),
+                                 shiny::a(h4("Ensembl", class = "btn btn-primary" , style = "font-weight:600"),
                                           target = "_blank",
                                           href = paste0("http://www.ensembl.org/Mus_musculus/geneview?gene=", id)))
       }
@@ -2350,14 +2381,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       # flybase
       for (id in unique_ids) {
         external_links <- paste0(external_links,
-                                 shiny::a(h4("FlyBase", class = "btn btn-primary" , style = "fontweight:600"),
+                                 shiny::a(h4("FlyBase", class = "btn btn-primary" , style = "font-weight:600"),
                                           target = "_blank",
                                           href = paste0("https://flybase.org/reports/", id)))
       }
       # Ensembl
       for (id in unique_ids) {
         external_links <- paste0(external_links,
-                                 shiny::a(h4("Ensembl", class = "btn btn-primary" , style = "fontweight:600"),
+                                 shiny::a(h4("Ensembl", class = "btn btn-primary" , style = "font-weight:600"),
                                           target = "_blank",
                                           href = paste0("https://www.ensembl.org/Drosophila_melanogaster/Gene/Summary?db=core;g=", id)))
       }
@@ -2366,7 +2397,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     unique_ids <- unique(c(na.omit(selected.db[selected.db[,input$selectsgenetype] == selected.gene, 'EntrezID'])))
     for (id in unique_ids) {
       external_links <- paste0(external_links,
-                               shiny::a(h4("NCBI", class = "btn btn-primary" , style = "fontweight:600"),
+                               shiny::a(h4("NCBI", class = "btn btn-primary" , style = "font-weight:600"),
                                         target = "_blank",
                                         href = paste0("https://www.ncbi.nlm.nih.gov/gene/?term=", id)))
     }
@@ -2374,7 +2405,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     unique_ids <- unique(c(na.omit(selected.db[selected.db[,input$selectsgenetype] == selected.gene, 'UniProt'])))
     for (id in unique_ids) {
       external_links <- paste0(external_links,
-                               shiny::a(h4("UniProt", class = "btn btn-primary" , style = "fontweight:600"),
+                               shiny::a(h4("UniProt", class = "btn btn-primary" , style = "font-weight:600"),
                                         target = "_blank",
                                         href = paste0("https://www.uniprot.org/uniprotkb/", id, "/entry")))
     }
@@ -2699,8 +2730,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         FeatureCorrelation$summary_ready <- TRUE
         showNotification("✅ Most correlated genes calculated successfully!", type = "message", duration = 5)
       }else{
-        showModal(modalDialog(title = "Error",
-                              "No gene paris are found, probably for some genes has very low expression value.",
+        showModal(modalDialog(title = "⚠️ Error",
+                              tags$div(
+                                tags$p('No gene paris are found!'),
+                                tags$small(style = "color: #6c757d;", "Probably for some genes has very low expression values.")
+                              ),
                               footer= modalButton("Dismiss"),
                               easyClose = TRUE,
                               size = "l"))
@@ -2850,7 +2884,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else if (!all(sapply(cell_annotation_df()$New_Name, check_allowed_chars))) {
       error_names <- cell_annotation_df()$New_Name[!sapply(cell_annotation_df()$New_Name, check_allowed_chars)]
-      showModal(modalDialog(title = "Error:",
+      showModal(modalDialog(title = "⚠️ Error",
                             HTML(paste(c("Unsupported character found in New_Name! only support letters, numbers, whitespace, - and _. Please check names bellow:", error_names),
                                   collapse = '<br>')),
                             footer= modalButton("Dismiss"),
@@ -3133,8 +3167,11 @@ server <- function(input, output, session) {
         data$assays_options <- prepare_assays_options(Alist = data$assays_slots_options,
                                                       verbose = getOption('SeuratExplorerVerbose'))
 
-        data$assay_default <- ifelse(data$assay_default %in% data$assays_options,data$assay_default,
-                                     data$assays_options[1]) # update the default assay
+        # data$assay_default <- ifelse(data$assay_default %in% data$assays_options,data$assay_default,
+        #                              data$assays_options[1]) # update the default assay
+
+        data$assay_default <- ifelse(is.null(DefaultAssay(data$obj)), data$assays_options[1],
+                                     DefaultAssay(data$obj)) # keep the raw default assay
 
         data$cluster_options <- prepare_cluster_options(df = data$obj@meta.data,
                                                         verbose = getOption('SeuratExplorerVerbose'))
