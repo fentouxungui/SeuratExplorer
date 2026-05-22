@@ -376,14 +376,18 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # inform extra qc options for Gene symbol input
   output$Featurehints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Featurehints.UI...")}
-    if (length(data$extra_qc_options) > 10) {
-      columns_names_show <- c(data$extra_qc_options[1:10], '...')
-    }else{
-      columns_names_show <- data$extra_qc_options
+    if (length(data$extra_qc_options) == 0) {
+      p("You can paste multiple genes from a column in excel.",
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else if(length(data$extra_qc_options) > 10){
+      p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "),
+               "; you can paste multiple genes from a column in excel."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else{
+      p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " "),
+               "; you can paste multiple genes from a column in excel."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
     }
-    p(paste0("Also supports: ", paste0(columns_names_show, collapse = " "),
-            "; you can paste multiple genes from a column in excel."),
-      style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
 
@@ -599,14 +603,18 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # inform extra qc options for Gene symbol input
   output$Vlnhints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Vlnhints.UI...")}
-    if (length(data$extra_qc_options) > 10) {
-      columns_names_show <- c(data$extra_qc_options[1:10], '...')
-    }else{
-      columns_names_show <- data$extra_qc_options
+    if (length(data$extra_qc_options) == 0) {
+      p("You can paste multiple genes from a column in excel.",
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else if(length(data$extra_qc_options) > 10){
+      p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "),
+               "; you can paste multiple genes from a column in excel."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else{
+      p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " "),
+               "; you can paste multiple genes from a column in excel."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
     }
-    p(paste0("Also supports: ", paste0(columns_names_show, collapse = " "),
-             "; you can paste multiple genes from a column in excel."),
-      style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
   # define the idents used
@@ -908,14 +916,18 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # inform extra qc options for Gene symbol input
   output$Dothints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Dothints.UI...")}
-    if (length(data$extra_qc_options) > 10) {
-      columns_names_show <- c(data$extra_qc_options[1:10], '...')
-    }else{
-      columns_names_show <- data$extra_qc_options
+    if (length(data$extra_qc_options) == 0) {
+      p("You can paste multiple genes from a column in excel.",
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else if(length(data$extra_qc_options) > 10){
+      p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "),
+               "; you can paste multiple genes from a column in excel."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else{
+      p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " "),
+               "; you can paste multiple genes from a column in excel."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
     }
-    p(paste0("Also supports: ", paste0(columns_names_show, collapse = " "),
-            "; you can paste multiple genes from a column in excel."),
-      style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
   # define the idents used
@@ -1141,14 +1153,18 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # inform extra qc options for Gene symbol input
   output$Heatmaphints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Heatmaphints.UI...")}
-    if (length(data$extra_qc_options) > 10) {
-      columns_names_show <- c(data$extra_qc_options[1:10], '...')
-    }else{
-      columns_names_show <- data$extra_qc_options
+    if (length(data$extra_qc_options) == 0) {
+      p("You can paste multiple genes from a column in excel.",
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else if(length(data$extra_qc_options) > 10){
+      p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "),
+               "; you can paste multiple genes from a column in excel."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else{
+      p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " "),
+               "; you can paste multiple genes from a column in excel."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
     }
-    p(paste0("Also supports: ", paste0(columns_names_show, collapse = " "),
-            "; you can paste multiple genes from a column in excel."),
-      style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
   # define slot Choice UI
@@ -1358,14 +1374,18 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$AveragedHeatmaphints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing AveragedHeatmaphints.UI...")}
-    if (length(data$extra_qc_options) > 10) {
-      columns_names_show <- c(data$extra_qc_options[1:10], '...')
-    }else{
-      columns_names_show <- data$extra_qc_options
+    if (length(data$extra_qc_options) == 0) {
+      p("You can paste multiple genes from a column in excel.",
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else if(length(data$extra_qc_options) > 10){
+      p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "),
+               "; you can paste multiple genes from a column in excel."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else{
+      p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " "),
+               "; you can paste multiple genes from a column in excel."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
     }
-    p(paste0("Also supports: ", paste0(columns_names_show, collapse = " "),
-            "; you can paste multiple genes from a column in excel."),
-      style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
   # only render plot when the inputs are really changed
@@ -1551,14 +1571,18 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$Ridgeplothints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Ridgeplothints.UI...")}
-    if (length(data$extra_qc_options) > 10) {
-      columns_names_show <- c(data$extra_qc_options[1:10], '...')
-    }else{
-      columns_names_show <- data$extra_qc_options
+    if (length(data$extra_qc_options) == 0) {
+      p("You can paste multiple genes from a column in excel.",
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else if(length(data$extra_qc_options) > 10){
+      p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "),
+               "; you can paste multiple genes from a column in excel."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else{
+      p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " "),
+               "; you can paste multiple genes from a column in excel."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
     }
-    p(paste0("Also supports: ", paste0(columns_names_show, collapse = " "),
-            "; you can paste multiple genes from a column in excel."),
-      style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
   # define slot Choice UI
@@ -2053,19 +2077,19 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   # Close button for Information Box
   observeEvent(input$close_degs_info, {
-    shinyjs::hide(id = "degs-info-box", anim = TRUE, animType = "fade")
+    shinyjs::hide("degs-info-box", anim = TRUE, animType = "fade")
   })
 
   observeEvent(input$close_topgenes_info, {
-    shinyjs::hide(id = "topgenes-info-box", anim = TRUE, animType = "fade")
+    shinyjs::hide("topgenes-info-box", anim = TRUE, animType = "fade")
   })
 
   observeEvent(input$close_featuresummary_info, {
-    shinyjs::hide(id = "featuresummary-info-box", anim = TRUE, animType = "fade")
+    shinyjs::hide("featuresummary-info-box", anim = TRUE, animType = "fade")
   })
 
   observeEvent(input$close_featurecorrelation_info, {
-    shinyjs::hide(id = "featurecorrelation-info-box", anim = TRUE, animType = "fade")
+    shinyjs::hide("featurecorrelation-info-box", anim = TRUE, animType = "fade")
   })
 
   DEGs <- reactiveValues(degs = NULL, degs_ready = FALSE)
@@ -2081,7 +2105,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   observeEvent(input$DEGsClusterMarkersAnalysis, {
     if(verbose){message("SeuratExplorer: preparing DEGsClusterMarkersAnalysis...")}
     cds <- data$obj
-    if (length(levels(cds@meta.data[,input$ClusterMarkersClusterResolution])) < 2) {
+    all_clusters <- levels(cds@meta.data[,input$ClusterMarkersClusterResolution])
+    total_clusters <- length(all_clusters)
+    if (total_clusters < 2) {
       showModal(modalDialog(
         title = "⚠️ Error",
         tags$div(
@@ -2097,7 +2123,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = "⏳ Calculating Cluster Markers",
         tags$div(
           tags$p("Please wait a moment!"),
-          div(id = 'clustermarkers_log_output')
+          div(id = 'clustermarkers_log_output'),
+          shinyWidgets::progressBar(id = "clustermarkers_progress", value = 0, total = total_clusters,
+                                  status = "success", striped = TRUE),
+          tags$p(id = "clustermarkers_progress_text", align = "center", style = "margin-top: 10px;")
         ),
         footer = NULL,
         size = "m"
@@ -2123,10 +2152,19 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                 verbose = TRUE)
           },
           message = function(m) {
-            # refresh UI
-            shinyjs::html(id = "clustermarkers_log_output", html = paste0( "<br>", m$message), add = TRUE)
-            # auto scroll to bottom to ensure showing the latest messages
-            shinyjs::runjs("var d = document.getElementById('clustermarkers_log_output'); d.scrollTop = d.scrollHeight;")
+            # # refresh UI
+            # shinyjs::html(id = "clustermarkers_log_output", html = paste0( "<br>", m$message), add = FALSE)
+            # # auto scroll to bottom to ensure showing the latest messages
+            # shinyjs::runjs("var d = document.getElementById('clustermarkers_log_output'); d.scrollTop = d.scrollHeight;")
+            current_cluster <- gsub('\n', '', gsub('Calculating cluster ', '', m$message, fixed = TRUE),fixed = TRUE)
+            cluster_num <- match(current_cluster, all_clusters)
+            print(paste0('Current cluster: ', m$message))
+            # Update progress bar
+            updateProgressBar(session, id = "clustermarkers_progress", value = cluster_num, total = total_clusters)
+            # Update progress text
+            progress_text <- paste0("Processing cluster: ", current_cluster, " (",
+                                    round(cluster_num / total_clusters * 100, 1), "%)")
+            shinyjs::html(id = "clustermarkers_progress_text", html = progress_text)
           }
         )
       },
