@@ -3077,7 +3077,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$dataset_features <- DT::renderDT(server=TRUE,{
     req(input$FeaturesDataframeAssay)
     # Show data
-    DT::datatable(data$gene_annotions_list[[input$FeaturesDataframeAssay]],
+    DT::datatable(data$gene_annotations_list[[input$FeaturesDataframeAssay]],
                   extensions = 'Buttons',
                   options = list(scrollX=TRUE,
                                  paging = TRUE, searching = TRUE,
@@ -3239,7 +3239,7 @@ server <- function(input, output, session) {
         data$cluster_options <- prepare_cluster_options(df = data$obj@meta.data,
                                                         verbose = getOption('SeuratExplorerVerbose'))
 
-        data$gene_annotions_list <- prepare_gene_annotations(obj = data$obj,
+        data$gene_annotations_list <- prepare_gene_annotations(obj = data$obj,
                                                              verbose = getOption('SeuratExplorerVerbose'))
 
         data$split_options <- prepare_split_options(df = data$obj@meta.data,
