@@ -2109,7 +2109,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     total_clusters <- length(all_clusters)
     if (total_clusters < 2) {
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Please select a cluster resolution with more than one group!"),
           tags$small(style = "color: #6c757d;", "The selected resolution must have at least 2 clusters.")
@@ -2120,7 +2120,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       ))
     }else{
       showModal(modalDialog(
-        title = "⏳ Calculating Cluster Markers",
+        title = tagList(icon("hourglass-start", class = "fa-spin"), " Calculating Cluster Markers"),
         tags$div(
           tags$p("Please wait a moment!"),
           div(id = 'clustermarkers_log_output'),
@@ -2138,7 +2138,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       } else if(input$DEGsAssay == "SCT") {
         cds <- check_SCT_assay(cds)
       }
-      # 用 tryCatch 包裹长时间运算
+      # Use tryCatch to wrap long operations
       result <- tryCatch({
         cluster.markers <- withCallingHandlers({
           Seurat::FindAllMarkers(cds,
@@ -2169,14 +2169,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         )
       },
       error = function(e) {
-        return(e)  # 捕获错误，返回 error 对象
+        return(e)  # Capture errors and return error objects
       })
       removeModal()
 
       if (inherits(result, "error")) {
-        # 出错：弹窗提示用户
+        # Error: Pop-up window prompts user
         showModal(modalDialog(
-          title = "⚠️ Error",
+          title = tagList(icon("exclamation-triangle"), "Error"),
           tags$div(
             tags$p("FindAllMarkers failed:"),
             tags$pre(style = "color: #dc3545; white-space: pre-wrap;", result$message)
@@ -2188,7 +2188,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       } else {
         DEGs$degs <- result
         DEGs$degs_ready <- TRUE
-        showNotification("✅ Cluster markers calculation completed!", type = "message", duration = 5)
+        showNotification(  ui = tagList(
+          icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+          "Cluster markers calculation completed!"
+        ),  type = "message", duration = 5)
       }
     }
   })
@@ -2253,7 +2256,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
             is.null(input$IntraClusterDEGsCustomizedGroupsControl),
             is.null(input$IntraClusterDEGsSubsetCellsSelectedClusters))) {
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Please specify the case & control samples and clusters used."),
           tags$small(style = "color: #6c757d;", "All fields are required for DEGs analysis.")
@@ -2264,7 +2267,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       ))
     }else{
       showModal(modalDialog(
-        title = "⏳ Calculating DEGs",
+        title = tagList(icon("hourglass-start", class = "fa-spin"), " alculating DEGs"),
         tags$p("Please wait for a few minutes!"),
         footer = NULL,
         size = "m"
@@ -2279,7 +2282,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       } else if(input$DEGsAssay == "SCT") {
         cds <- check_SCT_assay(cds)
       }
-      # 用 tryCatch 包裹长时间运算
       result <- tryCatch({
         Seurat::FindMarkers(cds,
                            ident.1 = input$IntraClusterDEGsCustomizedGroupsCase,
@@ -2292,13 +2294,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                            min.diff.pct = if (input$mindiffpct == 0) -Inf else input$mindiffpct)
       },
       error = function(e) {
-        return(e)  # 捕获错误，返回 error 对象
+        return(e)
       })
       removeModal()
       if (inherits(result, "error")) {
-        # 出错：弹窗提示用户
         showModal(modalDialog(
-          title = "⚠️ Error",
+          title = tagList(icon("exclamation-triangle"), "Error"),
           tags$div(
             tags$p("FindMarkers failed:"),
             tags$pre(style = "color: #dc3545; white-space: pre-wrap;", result$message)
@@ -2310,7 +2311,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       } else {
         DEGs$degs <- result
         DEGs$degs_ready <- TRUE
-        showNotification("✅ Intra-cluster DEGs calculation completed!", type = "message", duration = 5)
+        showNotification(  ui = tagList(
+          icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+          "Intra-cluster DEGs calculation completed!"
+        ), type = "message", duration = 5)
       }
     }
   })
@@ -2332,7 +2336,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     # Show data
     if (nrow(DEGs$degs) == 0 | is.null(DEGs$degs)) {
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("None of DEGs found."),
           tags$small(style = "color: #6c757d;", "Try changing the default Assay in 'Custom Parameters' page or contact technician for details.")
@@ -2508,7 +2512,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   observeEvent(input$TopGenesAnalysis, {
     if(verbose){message("SeuratExplorer: preparing TopGenesAnalysis...")}
     showModal(modalDialog(
-      title = "⏳ Calculating Top Genes at Cell Level",
+      title = tagList(icon("hourglass-start", class = "fa-spin"), " Calculating Top Genes at Cell Level"),
       tags$p("Please wait for a few minutes!"),
       footer = NULL,
       size = "m"
@@ -2532,10 +2536,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     removeModal()
     if (nrow(TopGenes$topgenes) > 0) {
       TopGenes$topgenes_ready <- TRUE
-      showNotification("✅ Top genes analysis completed!", type = "message", duration = 5)
+      showNotification(  ui = tagList(
+        icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+        "Top genes analysis completed!"
+      ), type = "message", duration = 5)
     }else{
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("No genes found."),
           tags$small(style = "color: #6c757d;", "Please check the parameters.")
@@ -2550,7 +2557,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   observeEvent(input$TopAccumulatedGenesAnalysis, {
     if(verbose){message("SeuratExplorer: preparing TopAccumulatedGenesAnalysis...")}
     showModal(modalDialog(
-      title = "⏳ Calculating Accumulated Top Genes",
+      title = tagList(icon("hourglass-start", class = "fa-spin"), " Calculating Accumulated Top Genes"),
       tags$p("Please wait for a few minutes!"),
       footer = NULL,
       size = "m"
@@ -2572,10 +2579,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     removeModal()
     if (nrow(TopGenes$topgenes) > 0) {
       TopGenes$topgenes_ready <- TRUE
-      showNotification("✅ Accumulated top genes analysis completed!", type = "message", duration = 5)
+      showNotification(  ui = tagList(
+        icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+        "Accumulated top genes analysis completed!"
+      ), type = "message", duration = 5)
     }else{
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("No genes found."),
           tags$small(style = "color: #6c757d;", "Please check the parameters.")
@@ -2639,7 +2649,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }
     if (any(is.na(GeneRevised))) {
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p(check_genes_error),
           tags$small(style = "color: #6c757d;", "Please check the gene symbols and try again.")
@@ -2650,7 +2660,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       ))
     }else{
       showModal(modalDialog(
-        title = "⏳ Summarizing Features",
+        title = tagList(icon("hourglass-start", class = "fa-spin"), " Summarizing Features"),
         tags$p("Please wait for a few minutes!"),
         footer = NULL,
         size = "m"
@@ -2671,7 +2681,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
       removeModal()
       FeatureSummary$summary_ready <- TRUE
-      showNotification("✅ Feature summary completed!", type = "message", duration = 5)
+      showNotification(  ui = tagList(
+        icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+        "Feature summary completed!",
+      ), type = "message", duration = 5)
     }
   })
 
@@ -2729,7 +2742,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   observeEvent(input$TopCorrelationAnalysis, {
     if(verbose){message("SeuratExplorer: preparing TopCorrelationAnalysis...")}
     showModal(modalDialog(
-      title = "⏳ Calculating Top Correlations",
+      title = tagList(icon("hourglass-start", class = "fa-spin"), " Calculating Top Correlations"),
       tags$p("Calculate top correlated gene pairs, which usually takes longer..."),
       footer = NULL,
       size = "m"
@@ -2743,10 +2756,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     removeModal()
     if (nrow(FeatureCorrelation$summary) > 0) {
       FeatureCorrelation$summary_ready <- TRUE
-      showNotification("✅ Top correlations calculated successfully!", type = "message", duration = 5)
+      showNotification(  ui = tagList(
+        icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+        "Top correlations calculated successfully!"
+      ), type = "message", duration = 5)
     }else{
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("No gene pairs found."),
           tags$small(style = "color: #6c757d;", "Some genes may have very low expression values. Try different genes.")
@@ -2765,7 +2781,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                   GeneLibrary = rownames(data$obj[[input$FeatureCorrelationAssay]]))
     if(is.na(feature.revised)){
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("The input gene cannot be found."),
           tags$small(style = "color: #6c757d;", "Please check the gene symbol and try again.")
@@ -2776,7 +2792,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       ))
     }else{
       showModal(modalDialog(
-        title = "⏳ Calculating",
+        title = tagList(icon("hourglass-start", class = "fa-spin"), " Calculating"),
         tags$p("Calculate the most correlated genes for the input gene, which usually takes longer..."),
         footer = NULL,
         size = "m"
@@ -2791,9 +2807,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       removeModal()
       if (nrow(FeatureCorrelation$summary) > 0) {
         FeatureCorrelation$summary_ready <- TRUE
-        showNotification("✅ Most correlated genes calculated successfully!", type = "message", duration = 5)
+        showNotification(  ui = tagList(
+          icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+          "Most correlated genes calculated successfully!"
+        ), type = "message", duration = 5)
       }else{
-        showModal(modalDialog(title = "⚠️ Error",
+        showModal(modalDialog(title = tagList(icon("exclamation-triangle"), "Error"),
                               tags$div(
                                 tags$p('No gene paris are found!'),
                                 tags$small(style = "color: #6c757d;", "Probably for some genes has very low expression values.")
@@ -2815,7 +2834,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }
     if (any(is.na(GeneRevised))) {
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p(check_genes_error),
           tags$small(style = "color: #6c757d;", "Please check the gene symbols.")
@@ -2826,7 +2845,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       ))
     }else if(length(GeneRevised) < 2){
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Please input at least two genes!"),
           tags$small(style = "color: #6c757d;", "Correlation analysis requires multiple genes.")
@@ -2837,7 +2856,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       ))
     }else{
       showModal(modalDialog(
-        title = "⏳ Calculating",
+        title = tagList(icon("hourglass-start", class = "fa-spin"), " Calculating"),
         tags$p("Calculate the correlation for the specified gene list..."),
         footer = NULL,
         size = "m"
@@ -2852,10 +2871,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       removeModal()
       if (nrow(FeatureCorrelation$summary) > 0) {
         FeatureCorrelation$summary_ready <- TRUE
-        showNotification("✅ Gene correlation calculated successfully!", type = "message", duration = 5)
+        showNotification(  ui = tagList(
+          icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+          "Gene correlation calculated successfully!"
+        ), type = "message", duration = 5)
       }else{
         showModal(modalDialog(
-          title = "⚠️ Error",
+          title = tagList(icon("exclamation-triangle"), "Error"),
           tags$div(
             tags$p("No gene pairs found."),
             tags$small(style = "color: #6c757d;", "Some genes may have very low expression values.")
@@ -2923,7 +2945,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     # check input format
     if ('-' %in% cell_annotation_df()$New_Name) {
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("'-' found in cluster names."),
           tags$small(style = "color: #6c757d;", "Please edit all levels and remove '-' characters.")
@@ -2935,7 +2957,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else if('' %in% trimws(cell_annotation_df()$New_Name)){
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("New cluster names cannot be empty!"),
           tags$small(style = "color: #6c757d;", "Please provide names for all clusters.")
@@ -2947,7 +2969,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else if (!all(sapply(cell_annotation_df()$New_Name, check_allowed_chars))) {
       error_names <- cell_annotation_df()$New_Name[!sapply(cell_annotation_df()$New_Name, check_allowed_chars)]
-      showModal(modalDialog(title = "⚠️ Error",
+      showModal(modalDialog(title = tagList(icon("exclamation-triangle"), "Error"),
                             HTML(paste(c("Unsupported character found in New_Name! only support letters, numbers, whitespace, - and _. Please check names bellow:", error_names),
                                   collapse = '<br>')),
                             footer= modalButton("Dismiss"),
@@ -2956,7 +2978,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       output$renameclusterscheck_OK <- reactive(FALSE)
     } else  if (!check_allowed_chars(input$renameclustersNewClusterName, allowed_characters = "[^a-zA-Z0-9_]")) {
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Unsupported character found in cluster name."),
           tags$small(style = "color: #6c757d;", paste0("Only letters, numbers, and underscore are supported. Found in: ", input$renameclustersNewClusterName))
@@ -2970,7 +2992,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       # check cluster name duplicates
       if (input$renameclustersNewClusterName %in% colnames(data$obj@meta.data)) {
           showModal(modalDialog(
-            title = "⚠️ Error",
+            title = tagList(icon("exclamation-triangle"), "Error"),
             tags$div(
               tags$p("Duplicated cluster name found."),
               tags$small(style = "color: #6c757d;", "Please change the cluster name to a unique one.")
@@ -3012,7 +3034,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
     if (new_anno_mapping_list$NewClusterName == ''){
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Please run Check before submitting!"),
           tags$small(style = "color: #6c757d;", "Validate your changes first.")
@@ -3023,7 +3045,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       ))
     }else if(new_anno_mapping_list$NewClusterName %in% colnames(data$obj@meta.data)){
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Duplicated labels found."),
           tags$small(style = "color: #6c757d;", "Do not resubmit existing cluster names.")
@@ -3047,7 +3069,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                                   verbose = getOption('SeuratExplorerVerbose'))
       data$version <- data$version + 1
       showModal(modalDialog(
-        title = "✅ Success",
+        title = tagList(
+          icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+          "Success"
+        ),
         tags$div(
           tags$p("New annotation added!"),
           tags$small(style = "color: #6c757d;", "Your changes have been saved.")
@@ -3056,7 +3081,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         easyClose = TRUE,
         size = "m"
       ))
-      showNotification("✅ Cluster renamed successfully!", type = "message", duration = 5)
+      showNotification(  ui = tagList(
+        icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+        "Cluster renamed successfully!"
+      ), type = "message", duration = 5)
     }
   })
 
@@ -3171,7 +3199,7 @@ server <- function(input, output, session) {
     # validate + need: check file name post-fix, in not rds or qs2, will throw an error
     if (!(tolower(ext) %in% c("qs2",'rds'))) {
       showModal(modalDialog(
-        title = "⚠️ Error",
+        title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Invalid file format."),
           tags$small(style = "color: #6c757d;", "Please upload a file with the extension .rds or .qs2!")
@@ -3190,7 +3218,7 @@ server <- function(input, output, session) {
       # validate Seurat object
       if (is.logical(obj) && obj == FALSE) {
         showModal(modalDialog(
-          title = "⚠️ Error",
+          title = tagList(icon("exclamation-triangle"), "Error"),
           tags$div(
             tags$p("Read file failed!"),
             tags$small(style = "color: #6c757d;", "Please check the file format and try again.")
@@ -3203,7 +3231,7 @@ server <- function(input, output, session) {
 
       } else if (!all(validObject(obj), inherits(obj, "Seurat"))) {
         showModal(modalDialog(
-          title = "⚠️ Error",
+          title = tagList(icon("exclamation-triangle"), "Error"),
           tags$div(
             tags$p("Invalid object type."),
             tags$small(style = "color: #6c757d;", paste0("The submitted data is a ", class(obj)[[1]], " object, not a Seurat object!"))
@@ -3290,7 +3318,7 @@ server <- function(input, output, session) {
     # Simple display with HTML
     HTML(paste0(
       '<div style="padding: 20px; background: #f8f9fa; border-radius: 8px; margin: 20px 0;">',
-      '<h4 style="color: #495057; margin-bottom: 15px;">📊 Data Overview</h4>',
+      '<h4 style="color: #495057; margin-bottom: 15px;"><i class="fa fa-chart-bar" style="margin-right: 5px;"></i> Data Overview</h4>',
       '<div style="display: flex; gap: 30px; flex-wrap: wrap;">',
       '<div><strong style="color: #3b82f6;">Total Cells:</strong> ', format(total_cells, big.mark = ","), '</div>',
       '<div><strong style="color: #10b981;">Total Genes:</strong> ', format(total_genes, big.mark = ","), '</div>',

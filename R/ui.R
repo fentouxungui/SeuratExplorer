@@ -527,7 +527,7 @@ explorer_body_ui <- function(tab_list){
 
                                # Modernized tab styling - ONLY for DEGs page
                                tags$style("
-                                   /* 确保 DEGs 页面的两个主容器完全对齐 */
+                                   /* Make sure the two main containers of the DEGs page are perfectly aligned */
                                    #degstabbox-container {
                                      padding-left: 0 !important;
                                      padding-right: 0 !important;
@@ -582,7 +582,7 @@ explorer_body_ui <- function(tab_list){
 
                                # Single fluidRow containing both Information Box and tabBox
                                fluidRow(id = "degs-main-row",
-                                 # Information Box - 白色背景+绿色边框 (top, full width)
+                                 # Information Box - White background + green border (top, full width)
                                  div(
                                    id = "degs-info-box",
                                    class = "col-xs-12",
@@ -693,7 +693,7 @@ explorer_body_ui <- function(tab_list){
                                    condition = "output.DEGs_ready",
                                    div(style = "margin-top: 15px; margin-left: 15px; margin-right: 15px;",
                                      fluidRow(
-                                       # Analysis Results - 自定义样式 (左列，占8/12)
+                                       # Analysis Results - Custom style (left column, accounting for 8/12)
                                        div(
                                          class = "col-md-8",
                                          div(
@@ -715,7 +715,7 @@ explorer_body_ui <- function(tab_list){
                                            )
                                          )
                                        ),
-                                       # External Links - 自定义样式 (右列，占4/12)
+                                       # External Links - Custom styles (right column, accounting for 4/12)
                                        div(
                                          class = "col-md-4",
                                          conditionalPanel(
@@ -812,7 +812,7 @@ explorer_body_ui <- function(tab_list){
 
                                # Single fluidRow containing both Information Box and Settings/Analysis
                                fluidRow(id = "topgenes-main-row",
-                                 # Information Box - 白色背景+绿色边框 (top, full width)
+                                 # Information Box - White background + green border (top, full width)
                                  div(
                                    id = "topgenes-info-box",
                                    class = "col-xs-12",
@@ -845,7 +845,7 @@ explorer_body_ui <- function(tab_list){
                                    )
                                  ),
 
-                                 # Step1: Common Settings (左列，占3/12)
+                                 # Step1: Common Settings (Left column, accounting for 3/12)
                                  div(
                                    class = "col-md-3",
                                    style = "margin-bottom: 10px;",
@@ -861,7 +861,7 @@ explorer_body_ui <- function(tab_list){
                                    )
                                  ),
 
-                                 # Step2: Calculate Top Genes (右列，占9/12)
+                                 # Step2: Calculate Top Genes (Right column, accounting for 9/12)
                                  div(
                                    class = "col-md-9",
                                    style = "margin-bottom: 10px;",
@@ -940,7 +940,7 @@ explorer_body_ui <- function(tab_list){
 
                                # Single fluidRow containing both Information Box and Settings/Analysis
                                fluidRow(id = "featuresummary-main-row",
-                                 # Information Box - 白色背景+绿色边框
+                                 # Information Box - White background + green border
                                  div(
                                    id = "featuresummary-info-box",
                                    class = "col-xs-12",
@@ -973,7 +973,7 @@ explorer_body_ui <- function(tab_list){
                                    )
                                  ),
 
-                                 # Settings (左列，占3/12)
+                                 # Settings (Left column, accounting for 3/12)
                                  div(
                                    class = "col-md-3",
                                    style = "margin-bottom: 10px;",
@@ -997,7 +997,7 @@ explorer_body_ui <- function(tab_list){
                                    )
                                  ),
 
-                                 # Gene Short Summary (右列，占9/12)
+                                 # Gene Short Summary (Right column, accounting for 9/12)
                                  div(
                                    class = "col-md-9",
                                    style = "margin-bottom: 10px;",
@@ -1087,7 +1087,7 @@ explorer_body_ui <- function(tab_list){
 
                                # Single fluidRow containing both Information Box and Settings/Analysis
                                fluidRow(id = "featurecorrelation-main-row",
-                                 # Information Box - 白色背景+绿色边框
+                                 # Information Box - White background + green border
                                  div(
                                    id = "featurecorrelation-info-box",
                                    class = "col-xs-12",
@@ -1120,7 +1120,7 @@ explorer_body_ui <- function(tab_list){
                                    )
                                  ),
 
-                                 # Step 1: Common Settings (左列，占3/12)
+                                 # Step 1: Common Settings(Left column, accounting for 3/12)
                                  div(
                                    class = "col-md-3",
                                    style = "margin-bottom: 10px;",
@@ -1134,7 +1134,7 @@ explorer_body_ui <- function(tab_list){
                                    )
                                  ),
 
-                                 # Step 2: Calculate Correlation (右列，占9/12)
+                                 # Step 2: Calculate Correlation (Right column, accounting for 9/12)
                                  div(
                                    class = "col-md-9",
                                    style = "margin-bottom: 10px;",
@@ -1212,7 +1212,7 @@ explorer_body_ui <- function(tab_list){
   )
   tab_list[["renameclusters"]] = tabItem(tabName = "renameclusters",
                                fluidRow(id = "renameclusters-main-row",
-                                 # Rename Clusters Table (左列，占9/12)
+                                 # Rename Clusters Table (Left column, accounting for 9/12)
                                  div(
                                    class = "col-md-9",
                                    div(
@@ -1241,7 +1241,7 @@ explorer_body_ui <- function(tab_list){
                                    )
                                  ),
 
-                                 # Settings (右列，占3/12)
+                                 # Settings (Right column, accounting for 3/12)
                                  div(
                                    class = "col-md-3",
                                    div(
@@ -1433,12 +1433,12 @@ ui <-  function(){
     shinyjs::useShinyjs(),
     tags$head(
       tags$style(HTML("
-        /* 全局字体优化 */
+        /* Global font optimization */
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
 
-        /* 优化box样式 - 保持默认背景 */
+        /* Optimize box style - keep default background */
         .box {
           border-radius: 6px;
           box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -1453,7 +1453,7 @@ ui <-  function(){
           font-weight: 600;
         }
 
-        /* 优化按钮样式 */
+        /* Optimize button style */
         .btn {
           border-radius: 6px;
           font-weight: 500;
@@ -1490,7 +1490,7 @@ ui <-  function(){
           font-weight: 500;
         }
 
-        /* 响应式优化 */
+        /* Responsive optimization */
         @media (max-width: 768px) {
           .content-wrapper {
             padding: 10px;

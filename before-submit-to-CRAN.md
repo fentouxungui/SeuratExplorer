@@ -29,7 +29,15 @@ Remove files bellow:
 
 Remove 'About' UI page and related server codes.
 
-## 4. Check and Build the package
+## 4. Remove genes.db and related codes
+
+UI.R seruver.R data.R
+
+## 5. change package version
+
+
+
+## 6. Check and Build the package
 
 Check and solve all errors, warnnings and notes.
 

@@ -24,7 +24,7 @@ launchSeuratExplorer(
 In-browser Shiny Application launch
 }
 \description{
-Launch shiny app
+used to launch the shiny app in a web browser.
 }
 \examples{
 if(interactive()){launchSeuratExplorer()}
