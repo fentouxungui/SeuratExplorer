@@ -4,6 +4,10 @@ prepare_seurat_object <- function(obj, verbose = FALSE){
   # if the unique counts less than 1/20 of total cells, and not more than 50, in chr or num type columns，will be forced to factor type.
   # possible problem: unique_max_percent = 0.05 may not suitable for a data has 100 cells but more than 5 clusters.
   obj@meta.data <- modify_columns_types(df = obj@meta.data, types_to_check = c("numeric", "character"), unique_max_counts = 50, unique_max_percent = 0.05, verbose = verbose)
+  # remove zero count levels
+  obj@meta.data[] <- lapply(obj@meta.data, function(x) {
+    if (is.factor(x)) droplevels(x) else x
+  })
   # for split object, join layers
   if (sum(grepl("^counts",Layers(object = obj))) > 1 | sum(grepl("^data",Layers(object = obj))) > 1) {
     obj <- SeuratObject::JoinLayers(object = obj)
@@ -68,7 +72,7 @@ modify_columns_types <- function(df, types_to_check = c("numeric", "character"),
   factor_columns_names <- colnames(df)[sapply(df, class) %in% 'factor']
   factor_columns_names_not_ok <- factor_columns_names[sapply(df[,factor_columns_names], function(x)length(levels(x))) > nrow(df) * 0.1]
   if (length(factor_columns_names_not_ok) != 0) {
-    df[,factor_columns_names_not_ok] <- lapply(df[,factor_columns_names_not_ok], as.character)
+    df[,factor_columns_names_not_ok] <- lapply(df[,factor_columns_names_not_ok,drop = FALSE], as.character)
   }
   # then for types_to_check types
   # unique values counts should less than (total cells)*0.05, for 100 cells has 5 clusters at most. and for 10000 cells has 50 clusters at most.

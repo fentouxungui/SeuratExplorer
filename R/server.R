@@ -3211,7 +3211,8 @@ server <- function(input, output, session) {
       shinyjs::reset('dataset_file')
     }else{
       obj <- tryCatch({
-        readSeurat(path = input$dataset_file$datapath, verbose = getOption('SeuratExplorerVerbose'))
+        updateSeurat(readSeurat(path = input$dataset_file$datapath, verbose = getOption('SeuratExplorerVerbose')),
+                     verbose = getOption('SeuratExplorerVerbose'))
       }, error = function(e) {
         return(FALSE)
       })
@@ -3244,7 +3245,7 @@ server <- function(input, output, session) {
       } else {
         data$Path <- input$dataset_file$datapath
 
-        data$obj <- prepare_seurat_object(obj = updateSeurat(obj, verbose = getOption('SeuratExplorerVerbose')),
+        data$obj <- prepare_seurat_object(obj = obj,
                                           verbose = getOption('SeuratExplorerVerbose'))
 
         data$reduction_options <- prepare_reduction_options(obj = data$obj,

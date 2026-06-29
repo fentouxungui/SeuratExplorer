@@ -12,6 +12,9 @@ Remotes:
     bioc::release/limma,
     bioc::release/DESeq2
 # may be also need to remove Suggests part for non-CRAN packages.
+
+# 删除：
+LazyData: true
 ```
 
 Hopefully add doi info to DESCRIPTION.
@@ -23,6 +26,12 @@ Remove files bellow:
 ```
 # 1. this file: before-submit-to-CRAN.md
 # 2. CITATION.cff
+# 3. README.md
+# 4. LICENSE.md
+# 5. 整个inst目录
+# 6. 整个data目录
+# 7. data.R
+# 8. 整个tutorials目录
 ```
 
 ## 3. Remove About page
@@ -31,11 +40,11 @@ Remove 'About' UI page and related server codes.
 
 ## 4. Remove genes.db and related codes
 
-UI.R seruver.R data.R
+修改UI.R seruver.R 
 
 ## 5. change package version
 
-
+update package version
 
 ## 6. Check and Build the package
 
