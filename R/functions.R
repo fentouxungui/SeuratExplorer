@@ -935,6 +935,50 @@ check_allowed_chars <- function(text_string, allowed_characters = "[^a-z A-Z0-9_
 
 
 # create_resizable_plot_ui is a function created by Claude code
+#' Create a collapsible parameter group for Plot Settings
+#'
+#' @description
+#' Creates a styled, collapsible parameter group for the Plot Settings sidebar.
+#' Clicking the header toggles visibility of the content area.
+#' The group preserves the existing color-coded left border styling.
+#'
+#' @param id A unique identifier for the collapse target (used as the div ID).
+#' @param title Character string for the group header title.
+#' @param icon_name Character string passed to `shiny::icon()`.
+#' @param color Hex color string for the left border and title accent. Default: "#3b82f6".
+#' @param ... UI elements to place inside the collapsible content area.
+#'   Groups always start expanded.
+#'
+#' @import shiny
+#' @return A `shiny.tag` div representing the collapsible parameter group.
+#' @export
+param_group_collapse <- function(id, title, icon_name, color = "#3b82f6", ...) {
+  # Pre-compute style strings
+  border_css <- sprintf("background: #f8f9fa; border: 1px solid %s; border-left: 4px solid %s; padding: 12px; border-radius: 6px; margin-bottom: 15px;", color, color)
+  summary_css <- sprintf("list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; color: %s; outline: none;", color)
+  title_css <- sprintf("color: %s; font-size: 14px; font-weight: 600;", color)
+
+  details_args <- list(
+    open = "open",
+    style = border_css,
+    tags$summary(
+      style = summary_css,
+      tags$span(
+        style = "display: flex; align-items: center; gap: 8px;",
+        icon(icon_name),
+        tags$span(title, style = title_css)
+      ),
+      tags$span(
+        class = "param-group-chevron",
+        icon("chevron-down"),
+        style = "transition: transform 0.3s ease; display: inline-block;"
+      )
+    ),
+    tags$div(style = "margin-top: 10px;", ...)
+  )
+  do.call(tags$details, details_args)
+}
+
 create_resizable_plot_ui <- function(plot_id, initial_width = 800, initial_height = 720) {
   div(
     id = paste0(plot_id, "_wrapper"),
