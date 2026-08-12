@@ -22,24 +22,24 @@ explorer_sidebar_ui <- function(){
   conditionalPanel(
     condition = "output.file_loaded",
     sidebarMenu(menuItem(text = "Explorer", tabName = "explorer", icon = shiny::icon("dashboard"), startExpanded = TRUE,
-                         menuSubItem(text = "Dimensional Reduction Plot", tabName = "dimplot", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Feature Plot", tabName = "featureplot", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Violin Plot", tabName = "vlnplot", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Dot Plot", tabName = "dotplot", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Heatmap Cell Level", tabName = "heatmap", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Heatmap Group Averaged", tabName = "averagedheatmap", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Ridge Plot", tabName = "ridgeplot", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Cell Percentage Plot", tabName = "cellratioplot", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "DEGs Analysis", tabName = "degs", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Top Expressed Features", tabName = "topgenes", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Feature Summary", tabName = "featuresummary", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Feature Correlation", tabName = "featurecorrelation", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Rename Clusters", tabName = "renameclusters", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Gene Based Cluster", tabName = "geneclusters", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Search Features", tabName = "featuresdf", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Cells Metadata", tabName = "cellmetadata", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "Object Structure", tabName = "objectstructure", icon = shiny::icon("angle-double-right")),
-                         menuSubItem(text = "About", tabName = "about", icon = shiny::icon("angle-double-right"))
+                         menuSubItem(text = span("Dim Reduction Plot", tags$small(class = "label label-danger", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "HOT")), tabName = "dimplot", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span("Feature Plot", tags$small(class = "label label-danger", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "HOT")), tabName = "featureplot", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span("Violin Plot", tags$small(class = "label label-danger", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "HOT")), tabName = "vlnplot", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Dot Plot", tabName = "dotplot", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Heatmap Cell Level", tabName = "heatmap", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Heatmap Group Averaged", tabName = "averagedheatmap", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Ridge Plot", tabName = "ridgeplot", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Cell Percentage Plot", tabName = "cellratioplot", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span("DEGs Analysis", tags$small(class = "label label-danger", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "HOT")), tabName = "degs", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Top Expressed Features", tabName = "topgenes", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Feature Summary", tabName = "featuresummary", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Feature Correlation", tabName = "featurecorrelation", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Rename Clusters", tabName = "renameclusters", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Gene Based Cluster", tabName = "geneclusters", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Search Features", tabName = "featuresdf", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Cells Metadata", tabName = "cellmetadata", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "Object Structure", tabName = "objectstructure", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = "About", tabName = "about", icon = shiny::icon("angle-right"))
                          )
                 )
     )
@@ -279,6 +279,14 @@ explorer_body_ui <- function(tab_list){
                                                                                      withSpinner(uiOutput("DotClusterOrder.UI"), proxy.height = "10px"),
                                                                                      style = "info", value = "0")),
                                           checkboxInput("DotClusterIdents",label = "Cluster the Clusters", FALSE)
+                                        ),
+
+                                        # Filter Cells
+                                        param_group_collapse(
+                                          id = "dotplot_filter", title = "Filter Cells",
+                                          icon_name = "filter", color = "#8b5cf6",
+                                          withSpinner(uiOutput("IntraClusterDotplotSubsetCells.UI"), proxy.height = "10px"),
+                                          withSpinner(uiOutput("IntraClusterDotplotSubsetCellsSelectedClusters.UI"), proxy.height = "10px")
                                         ),
 
                                         # Plot Options
@@ -1506,6 +1514,12 @@ ui <-  function(){
         /* Global font optimization */
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        /* Sidebar menu: compact spacing */
+        .sidebar-menu .treeview-menu li a {
+          white-space: nowrap;
+          padding: 4px 5px 4px 12px !important;
         }
 
         /* Optimize box style - keep default background */

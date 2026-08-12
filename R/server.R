@@ -967,6 +967,27 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     selectInput("DotSplitBy","Split by:", choices = c("None" = "None", data$split_options))
   })
 
+  # Filter Cells UI for Dot Plot
+  output$IntraClusterDotplotSubsetCells.UI <- renderUI({
+    if(verbose){message("SeuratExplorer: preparing IntraClusterDotplotSubsetCells.UI...")}
+    excluded <- unique(c(input$DotSplitBy, input$DotClusterResolution))
+    excluded <- excluded[!is.null(excluded) & excluded != "None"]
+    selectInput("IntraClusterDotplotSubsetCells","Filter Cells By:",
+                choices = setdiff(data$cluster_options, excluded))
+  })
+
+  output$IntraClusterDotplotSubsetCellsSelectedClusters.UI <- renderUI({
+    req(input$IntraClusterDotplotSubsetCells)
+    if(verbose){message("SeuratExplorer: preparing IntraClusterDotplotSubsetCellsSelectedClusters.UI...")}
+    shinyWidgets::pickerInput(
+      inputId = "IntraClusterDotplotSubsetCellsSelectedClusters",
+      label = "Cells to Keep:",
+      choices = levels(data$obj@meta.data[, input$IntraClusterDotplotSubsetCells]),
+      selected = levels(data$obj@meta.data[, input$IntraClusterDotplotSubsetCells]),
+      options = shinyWidgets::pickerOptions(actionsBox = TRUE, size = 10, selectedTextFormat = "count > 3"),
+      multiple = TRUE)
+  })
+
 
   # Revise Split selection which will be appropriate for DimPlot, FeaturePlot and Vlnplot functions.
   DotSplit.Revised <- reactive({
@@ -1051,6 +1072,15 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       p <- empty_plot # when no symbol or wrong input, show a blank pic.
     }else{
       cds <- data$obj
+      # Apply cell filter if configured
+      if (!is.null(input$IntraClusterDotplotSubsetCells) &&
+          !is.null(input$IntraClusterDotplotSubsetCellsSelectedClusters) &&
+          input$IntraClusterDotplotSubsetCells %in% colnames(cds@meta.data)) {
+        col <- input$IntraClusterDotplotSubsetCells
+        vals <- input$IntraClusterDotplotSubsetCellsSelectedClusters
+        keep_cells <- colnames(cds)[cds@meta.data[, col] %in% vals]
+        if (length(keep_cells) > 0) cds <- subset_Seurat(cds, cells = keep_cells)
+      }
       DefaultAssay(cds) <- input$DotAssay
       Idents(cds) <- isolate(input$DotClusterResolution)
       cds <- subset_Seurat(cds, idents = DotClusterOrder.Safe())
