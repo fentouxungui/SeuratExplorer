@@ -35,6 +35,7 @@ explorer_sidebar_ui <- function(){
                          menuSubItem(text = "Feature Summary", tabName = "featuresummary", icon = shiny::icon("angle-double-right")),
                          menuSubItem(text = "Feature Correlation", tabName = "featurecorrelation", icon = shiny::icon("angle-double-right")),
                          menuSubItem(text = "Rename Clusters", tabName = "renameclusters", icon = shiny::icon("angle-double-right")),
+                         menuSubItem(text = "Gene Based Cluster", tabName = "geneclusters", icon = shiny::icon("angle-double-right")),
                          menuSubItem(text = "Search Features", tabName = "featuresdf", icon = shiny::icon("angle-double-right")),
                          menuSubItem(text = "Cells Metadata", tabName = "cellmetadata", icon = shiny::icon("angle-double-right")),
                          menuSubItem(text = "Object Structure", tabName = "objectstructure", icon = shiny::icon("angle-double-right")),
@@ -1285,6 +1286,75 @@ explorer_body_ui <- function(tab_list){
                                    )
                                  )
                                )
+  )
+  tab_list[["geneclusters"]] = tabItem(tabName = "geneclusters",
+    fluidRow(
+      box(title = "Gene Expression Histogram",
+        plotOutput("geneclusters_histogram"),
+        width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
+      box(title = "Settings", solidHeader = TRUE, status = "primary", width = 3,
+        textInput("geneclustersGeneSymbol", "Gene Symbol:", value = "", width = '100%'),
+        withSpinner(uiOutput("GeneclustersAssays.UI"), proxy.height = "10px"),
+        withSpinner(uiOutput("geneclustersAssaySlots.UI"), proxy.height = "10px"),
+        div(style = "margin-top: 15px;",
+          actionButton("geneclustersPlotHistogram", label = "Generate Histogram",
+            icon = icon("chart-bar"), class = "btn-primary",
+            style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
+        )
+      )
+    ),
+    conditionalPanel(
+      condition = "output.geneclusters_histogram_ready",
+      fluidRow(
+        div(class = "col-xs-12",
+          style = "margin-top: 15px;",
+          div(class = "box", style = "background: white; border: 2px solid #f59e0b; border-radius: 8px;",
+            div(class = "box-body", style = "padding: 20px;",
+              textInput("geneclustersCutoffs", "Cutoff values (comma-separated, e.g. 0.5, 1.0, 2.0):",
+                value = "", width = "100%"),
+              div(style = "margin-top: 10px;",
+                actionButton("geneclustersApplyCutoffs", label = "Apply Cutoffs",
+                  icon = icon("cut"), class = "btn-warning",
+                  style = "padding: 10px 30px; border-radius: 6px; font-weight: 600;")
+              )
+            )
+          )
+        )
+      )
+    ),
+    conditionalPanel(
+      condition = "output.geneclusters_table_ready",
+      fluidRow(style = "margin-top: 15px;",
+        div(class = "col-md-9",
+          div(class = "box", style = "background: white; border: 2px solid #3b82f6; border-radius: 8px;",
+            div(class = "box-header", style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+              h4(icon("table"), "Classification Table", style = "color: #3b82f6; font-weight: 600; margin: 0;")
+            ),
+            div(class = "box-body", style = "padding: 20px;",
+              withSpinner(DT::dataTableOutput('geneclusters_table'))
+            )
+          )
+        ),
+        div(class = "col-md-3",
+          div(style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px;",
+            h4(icon("check"), "Actions", style = "color: #10b981; margin-bottom: 15px; font-weight: 600;"),
+            div(style = "margin-bottom: 15px;",
+              actionButton("geneclustersCheck", label = "Check", icon = icon("check"),
+                class = "btn-primary", style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
+            ),
+            actionButton("geneclustersSubmit", label = "Submit", icon = icon("upload"),
+              class = "btn-success", style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;"),
+            div(style = "margin-top: 15px;",
+              downloadButton("geneclustersDownload", "Download Mapping", icon = icon("file-arrow-down"),
+                class = "btn-warning", style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
+            ),
+            div(style = "background: #fef3c7; border-left: 3px solid #f59e0b; padding: 10px; border-radius: 4px; margin-top: 15px;",
+              p("Tips: Click 'Check' to preview, then 'Submit' to add annotation.", style = "font-size: 12px; margin: 0; color: #92400e;")
+            )
+          )
+        )
+      )
+    )
   )
   tab_list[["featuresdf"]] = tabItem(tabName = "featuresdf",
                                fluidRow(id = "featuresdf-main-row",

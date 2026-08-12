@@ -109,7 +109,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                               'TopGenesAssay' = c('counts'),
                               'FeatureSummaryAssay' = c('data'),
                               'FeatureCorrelationAssay' = c('data'),
-                              'FeaturesDataframeAssay'= isolate(data$assay_slots))
+                              'FeaturesDataframeAssay'= isolate(data$assay_slots),
+                              'GeneclustersAssay' = c('counts', 'data'))
 
   filter_assay <- function(assay_info, allowed_slots){
     # assay_info is a list contains all slot names for each assay
@@ -2981,6 +2982,269 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                                 list(extend = 'csv', title = "feature-correlation"),
                                                 list(extend = 'excel', title = "feature-correlation"))))
   })
+
+  ############################## Gene Based Cluster
+  # Assay slot UI
+  # define slot Choice UI
+  output$geneclustersAssaySlots.UI <- renderUI({
+    req(input$GeneclustersAssay)
+    if(verbose){message("SeuratExplorer: preparing geneclustersAssaySlots.UI...")}
+    slot_choices <- filter_slot(assay_info = data$assays_slots_options,
+                                assay_selected = input$GeneclustersAssay,
+                                allowed_slots = assay_allowed_slots[['GeneclustersAssay']])
+    selectInput("geneclustersSlot", "Slot:",
+                choices = slot_choices,
+                selected = ifelse('data' %in% slot_choices, 'data', slot_choices[1])) # default use data slot
+  })
+
+  # Reactive state
+  geneclusters_expr <- reactiveVal(NULL)
+  geneclusters_expr_gene <- reactiveVal(NULL)
+  geneclusters_cutoffs <- reactiveVal(NULL)
+  geneclusters_table_df <- reactiveVal(data.frame())
+  geneclusters_histogram_ready <- reactiveVal(FALSE)
+  geneclusters_table_ready <- reactiveVal(FALSE)
+
+  output$geneclusters_histogram_ready <- reactive({ geneclusters_histogram_ready() })
+  output$geneclusters_table_ready <- reactive({ geneclusters_table_ready() })
+  outputOptions(output, 'geneclusters_histogram_ready', suspendWhenHidden = FALSE)
+  outputOptions(output, 'geneclusters_table_ready', suspendWhenHidden = FALSE)
+
+  # Default placeholder histogram
+  output$geneclusters_histogram <- renderPlot({
+    ggplot2::ggplot() +
+      ggplot2::annotate('text', x = 0, y = 0, label = 'Enter a gene symbol, select assay/slot,\nthen click "Generate Histogram".',
+                        color = 'darkgrey', size = 6) +
+      ggplot2::theme_void()
+  })
+
+  # Generate histogram
+  observeEvent(input$geneclustersPlotHistogram, {
+    gene <- ReviseGene(Agene = trimws(input$geneclustersGeneSymbol),
+                       GeneLibrary = rownames(data$obj@assays[[input$GeneclustersAssay]]))
+    if (is.na(gene)) {
+      showModal(modalDialog(title = "Error", "Gene not found!", easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+    geneclusters_expr_gene(gene)
+
+    # Extract expression
+    expr_df <- Seurat::FetchData(data$obj, vars = gene,
+                                 assay = input$GeneclustersAssay,
+                                 layer = input$geneclustersSlot)
+    vals <- expr_df[[1]]
+    # Exclude NA
+    vals <- vals[!is.na(vals)]
+    if (length(vals) == 0) {
+      showModal(modalDialog(title = "Error", "All expression values are NA for this gene.", easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+    geneclusters_expr(vals)
+    geneclusters_cutoffs(NULL)
+    geneclusters_table_ready(FALSE)
+
+    output$geneclusters_histogram <- renderPlot({
+      p <- ggplot2::ggplot(data.frame(expr = geneclusters_expr()), ggplot2::aes(x = expr)) +
+        ggplot2::geom_histogram(bins = 50, fill = "#3b82f6", alpha = 0.7, color = "white") +
+        ggplot2::labs(x = gene, y = "Cell Count", title = paste("Expression of", gene)) +
+        ggplot2::theme_bw() +
+        ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"))
+      cuts <- geneclusters_cutoffs()
+      if (!is.null(cuts) && length(cuts) > 0) {
+        for (cval in cuts) {
+          p <- p + ggplot2::geom_vline(xintercept = cval, color = "#dc3545", linetype = "dashed", linewidth = 1)
+        }
+      }
+      p
+    })
+    geneclusters_histogram_ready(TRUE)
+  })
+
+  # Apply cutoffs
+  observeEvent(input$geneclustersApplyCutoffs, {
+    req(geneclusters_expr())
+
+    cuts_text <- trimws(unlist(strsplit(input$geneclustersCutoffs, ",")))
+    cuts <- suppressWarnings(as.numeric(cuts_text))
+    cuts <- cuts[!is.na(cuts)]
+    if (length(cuts) == 0) {
+      showModal(modalDialog(title = "Error", "Please enter valid numeric cutoff values separated by commas.", easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+    cuts <- sort(cuts)
+    geneclusters_cutoffs(cuts)
+    n <- length(cuts)
+
+    # Build condition labels
+    conditions <- character(n + 1)
+    if (n == 1) {
+      conditions[1] <- paste0("<= ", cuts[1])
+      conditions[2] <- paste0("> ", cuts[1])
+    } else {
+      conditions[1] <- paste0("<= ", cuts[1])
+      for (i in seq_len(n - 1)) {
+        conditions[i + 1] <- paste0("> ", cuts[i], " & <= ", cuts[i + 1])
+      }
+      conditions[n + 1] <- paste0("> ", cuts[n])
+    }
+
+    df <- data.frame(condition = conditions, name = rep("-", n + 1), stringsAsFactors = FALSE)
+    geneclusters_table_df(df)
+    geneclusters_table_ready(TRUE)
+
+    # Update histogram with cutoff lines
+    gene <- geneclusters_expr_gene()
+    output$geneclusters_histogram <- renderPlot({
+      p <- ggplot2::ggplot(data.frame(expr = geneclusters_expr()), ggplot2::aes(x = expr)) +
+        ggplot2::geom_histogram(bins = 50, fill = "#3b82f6", alpha = 0.7, color = "white") +
+        ggplot2::geom_vline(xintercept = cuts, color = "#dc3545", linetype = "dashed", linewidth = 1) +
+        ggplot2::labs(x = gene, y = "Cell Count", title = paste("Expression of", gene)) +
+        ggplot2::theme_bw() +
+        ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"))
+      p
+    })
+
+    # Render editable table
+    output$geneclusters_table <- DT::renderDataTable({
+      DT::datatable(geneclusters_table_df(),
+        editable = list(target = 'cell', disable = list(columns = 0)),
+        selection = "single",
+        options = list(dom = 'lrtip', lengthChange = FALSE, pageLength = -1,
+          language = list(info = "Double click '-' to start edit. Only letters, numbers, whitespace, - and _ allowed.")),
+        rownames = FALSE)
+    })
+  })
+
+  # Track table edits
+  observeEvent(input$geneclusters_table_cell_edit, {
+    info <- input$geneclusters_table_cell_edit
+    new_df <- geneclusters_table_df()
+    new_df[info$row, info$col + 1] <- trimws(info$value)
+    geneclusters_table_df(new_df)
+  })
+
+  # Check / Validate
+  geneclusters_check_ok <- reactiveVal(FALSE)
+  geneclusters_new_anno <- reactiveVal(NULL)
+
+  observeEvent(input$geneclustersCheck, {
+    req(geneclusters_expr(), geneclusters_cutoffs(), geneclusters_expr_gene())
+    df <- geneclusters_table_df()
+    gene <- geneclusters_expr_gene()
+    new_col_name <- paste0(gene, "_cluster")
+
+    if ('-' %in% df$name) {
+      showModal(modalDialog(title = "Error", "'-' found in names. Please edit all levels.", easyClose = TRUE, footer = modalButton("OK")))
+      geneclusters_check_ok(FALSE)
+      return()
+    }
+    if ('' %in% trimws(df$name)) {
+      showModal(modalDialog(title = "Error", "Names cannot be empty!", easyClose = TRUE, footer = modalButton("OK")))
+      geneclusters_check_ok(FALSE)
+      return()
+    }
+    if (!all(sapply(df$name, check_allowed_chars))) {
+      err_names <- df$name[!sapply(df$name, check_allowed_chars)]
+      showModal(modalDialog(title = "Error",
+        HTML(paste(c("Unsupported characters found:", err_names), collapse = '<br>')),
+        easyClose = TRUE, footer = modalButton("OK"), size = "l"))
+      geneclusters_check_ok(FALSE)
+      return()
+    }
+    if (new_col_name %in% colnames(data$obj@meta.data)) {
+      showModal(modalDialog(title = "Error",
+        paste0("Column '", new_col_name, "' already exists in metadata. Please use a different gene or rename the existing column first."),
+        easyClose = TRUE, footer = modalButton("OK")))
+      geneclusters_check_ok(FALSE)
+      return()
+    }
+
+    # Classify cells
+    vals <- geneclusters_expr()
+    cuts <- geneclusters_cutoffs()
+    n <- length(cuts)
+
+    # Get cell names (non-NA expression)
+    expr_df <- Seurat::FetchData(data$obj, vars = gene,
+                                 assay = input$GeneclustersAssay,
+                                 layer = input$geneclustersSlot)
+    all_cells <- colnames(data$obj)
+    cell_has_expr <- !is.na(expr_df[[1]])
+    expr_cells <- all_cells[cell_has_expr]
+    expr_vals <- expr_df[[1]][cell_has_expr]
+
+    groups <- rep(NA_character_, length(expr_vals))
+    groups[expr_vals <= cuts[1]] <- df$name[1]
+    if (n >= 2) {
+      for (i in seq_len(n - 1)) {
+        idx <- expr_vals > cuts[i] & expr_vals <= cuts[i + 1]
+        groups[idx] <- df$name[i + 1]
+      }
+    }
+    groups[expr_vals > cuts[n]] <- df$name[n + 1]
+
+    # Store for submit
+    geneclusters_new_anno(list(
+      col_name = new_col_name,
+      cells = expr_cells,
+      groups = groups,
+      mapping_df = df
+    ))
+    geneclusters_check_ok(TRUE)
+    showModal(modalDialog(title = "Check Passed",
+      paste0("Column '", new_col_name, "' will be added with ", n+1, " groups."),
+      easyClose = TRUE, footer = modalButton("OK")))
+  })
+
+  # Submit / Add annotation
+  observeEvent(input$geneclustersSubmit, {
+    anno <- geneclusters_new_anno()
+    if (is.null(anno)) {
+      showModal(modalDialog(title = "Error", "Please run Check first.", easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+    if (anno$col_name %in% colnames(data$obj@meta.data)) {
+      showModal(modalDialog(title = "Error", "Column already exists. Do not submit twice.", easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+
+    cds <- data$obj
+    new_col <- rep(NA_character_, ncol(cds))
+    names(new_col) <- colnames(cds)
+    new_col[anno$cells] <- anno$groups
+    cds@meta.data[, anno$col_name] <- new_col
+    cds@meta.data[, anno$col_name] <- factor(cds@meta.data[, anno$col_name],
+                                              levels = anno$mapping_df$name)
+
+    data$obj <- cds
+    data$cluster_options <- prepare_cluster_options(df = data$obj@meta.data,
+                                                    verbose = getOption('SeuratExplorerVerbose'))
+    data$split_options <- prepare_split_options(df = data$obj@meta.data,
+                                                max.level = data$split_maxlevel,
+                                                verbose = getOption('SeuratExplorerVerbose'))
+    data$version <- data$version + 1
+
+    showModal(modalDialog(title = "Success",
+      paste0("Annotation '", anno$col_name, "' added to metadata!"),
+      easyClose = TRUE, footer = modalButton("Continue")))
+    showNotification(ui = tagList(icon("check-circle"), "Gene-based clusters added!"),
+      type = "message", duration = 5)
+  })
+
+  # Download
+  output$geneclustersDownload <- downloadHandler(
+    filename = function() { "gene_cluster_mapping.csv" },
+    content = function(file) {
+      anno <- geneclusters_new_anno()
+      if (is.null(anno)) {
+        write.csv(data.frame(), file, row.names = FALSE)
+      } else {
+        df <- anno$mapping_df
+        colnames(df) <- c("condition", anno$col_name)
+        write.csv(df, file, row.names = FALSE)
+      }
+    }
+  )
 
   ############################## Rename Clusters
   cell_annotation_df <- reactiveVal(data.frame())
