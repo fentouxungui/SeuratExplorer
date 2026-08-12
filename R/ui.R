@@ -644,10 +644,10 @@ explorer_body_ui <- function(tab_list){
                                             div(
                                               style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 25px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.1);",
                                               h4(icon("filter"), "Step 1: Filter Cells (Optional)", style = "color: #3b82f6; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
-                                              p("Modify parameters below if you want to filter cells before the comparison, otherwise ignore it.", style = "color: #6c757d; margin-bottom: 8px;"),
-                                              p("Only the selected cells will be kept for Step 2, and all cells will be kept by default.", style = "color: #6c757d; margin-bottom: 15px;"),
-                                              withSpinner(uiOutput("IntraClusterDEGsSubsetCells.UI"), proxy.height = "10px"),
-                                              withSpinner(uiOutput("IntraClusterDEGsSubsetCellsSelectedClusters.UI"), proxy.height = "10px")
+                                              p("Click the + button to add multiple filter conditions. Cells matching ALL conditions (intersection) will be kept.", style = "color: #6c757d; margin-bottom: 8px;"),
+                                              p("If no filters are modified, all cells will be kept by default.", style = "color: #6c757d; margin-bottom: 15px;"),
+                                              withSpinner(uiOutput("IntraClusterDEGsFilterRows.UI"), proxy.height = "10px"),
+                                              uiOutput("IntraClusterDEGsAddFilter.UI")
                                             ),
                                             # Step 2 - Set Comparison
                                             div(

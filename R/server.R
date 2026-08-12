@@ -2094,6 +2094,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   DEGs <- reactiveValues(degs = NULL, degs_ready = FALSE)
 
+  # Dynamic filter counter for multi-filter in Step 1 (DEGs for two groups)
+  degFilterState <- reactiveValues(count = 1)
+
   output$DEGs_ready <- reactive({
     return(DEGs$degs_ready)
   })
@@ -2197,35 +2200,94 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   # Part-2: Find DEGs for two groups
-  # define Cluster Annotation choice
-  output$IntraClusterDEGsSubsetCells.UI <- renderUI({
-    # req(input$IntraClusterDEGsCustomizedGroups)
-    if(verbose){message("SeuratExplorer: preparing IntraClusterDEGsSubsetCells.UI...")}
-    selectInput("IntraClusterDEGsSubsetCells","Filter Cells By:",
-                # choices = setdiff(data$cluster_options, input$IntraClusterDEGsCustomizedGroups))
-                choices = data$cluster_options)
+  # "+" button to add more filter rows (hidden when max reached)
+  observeEvent(input$IntraClusterDEGsAddFilter, {
+    degFilterState$count <- degFilterState$count + 1
+  }, ignoreInit = TRUE)
+
+  output$IntraClusterDEGsAddFilter.UI <- renderUI({
+    max_filters <- length(data$cluster_options) - 1L
+    if (degFilterState$count < max_filters) {
+      div(style = "margin-top: 8px;",
+        actionLink("IntraClusterDEGsAddFilter", label = NULL, icon = icon("plus-circle"),
+          style = "color: #3b82f6; font-size: 16px;"),
+        tags$span("Add filter condition", style = "color: #6c757d; font-size: 13px; margin-left: 4px;")
+      )
+    }
   })
 
-  # define Cluster Annotation choice
-  output$IntraClusterDEGsSubsetCellsSelectedClusters.UI <- renderUI({
-    # req(input$IntraClusterDEGsCustomizedGroups)
-    req(input$IntraClusterDEGsSubsetCells)
-    if(verbose){message("SeuratExplorer: preparing IntraClusterDEGsSubsetCellsSelectedClusters.UI...")}
-    shinyWidgets::pickerInput(inputId = "IntraClusterDEGsSubsetCellsSelectedClusters", label = "Cells to Keep:",
-                              choices = levels(data$obj@meta.data[,input$IntraClusterDEGsSubsetCells]),
-                              selected = levels(data$obj@meta.data[,input$IntraClusterDEGsSubsetCells]),
-                              options = shinyWidgets::pickerOptions(actionsBox = TRUE,
-                                                                    size = 10,
-                                                                    selectedTextFormat = "count > 3"),
-                              multiple = TRUE)
+  # Pre-create remove button observers for rows 2-10
+  lapply(2:10, function(ii) {
+    observeEvent(input[[paste0("IntraClusterDEGsRemoveFilter_", ii)]], {
+      if (ii <= degFilterState$count) {
+        degFilterState$count <- degFilterState$count - 1
+      }
+    }, ignoreInit = TRUE)
   })
+
+  # Pre-create column-change observers for rows 1-10 (updates value picker choices)
+  lapply(1:10, function(ii) {
+    observeEvent(input[[paste0("IntraClusterDEGsSubsetCells_", ii)]], {
+      col <- input[[paste0("IntraClusterDEGsSubsetCells_", ii)]]
+      if (!is.null(col) && col %in% colnames(data$obj@meta.data)) {
+        shinyWidgets::updatePickerInput(session,
+          inputId = paste0("IntraClusterDEGsSubsetCellsValues_", ii),
+          choices = levels(data$obj@meta.data[, col]),
+          selected = levels(data$obj@meta.data[, col]))
+      }
+    }, ignoreInit = FALSE, ignoreNULL = TRUE)
+  })
+
+  # renderUI only depends on count — preserve existing selections via isolate()
+  output$IntraClusterDEGsFilterRows.UI <- renderUI({
+    if(verbose){message("SeuratExplorer: preparing IntraClusterDEGsFilterRows.UI...")}
+    n <- degFilterState$count
+    if (!is.numeric(n) || length(n) != 1 || n < 0) n <- 1
+    lapply(seq_len(n), function(i) {
+      # Preserve current selections when count changes (add/remove rows)
+      cur_col <- isolate(input[[paste0("IntraClusterDEGsSubsetCells_", i)]])
+      cur_vals <- isolate(input[[paste0("IntraClusterDEGsSubsetCellsValues_", i)]])
+      # Determine choices for picker based on current (or default) column
+      eff_col <- if (!is.null(cur_col) && cur_col %in% colnames(data$obj@meta.data)) cur_col else data$cluster_options[1]
+      picker_choices <- levels(data$obj@meta.data[, eff_col])
+      picker_selected <- if (!is.null(cur_vals)) cur_vals else picker_choices
+
+      fluidRow(
+        column(5, selectInput(
+          paste0("IntraClusterDEGsSubsetCells_", i),
+          label = if (i == 1) "Filter Cells By:" else paste0("Filter ", i, " By:"),
+          choices = data$cluster_options,
+          selected = cur_col
+        )),
+        column(5, shinyWidgets::pickerInput(
+          inputId = paste0("IntraClusterDEGsSubsetCellsValues_", i),
+          label = "Keep:",
+          choices = picker_choices,
+          selected = picker_selected,
+          multiple = TRUE,
+          options = shinyWidgets::pickerOptions(actionsBox = TRUE, size = 10, selectedTextFormat = "count > 3")
+        )),
+        column(2, if (i > 1) actionLink(
+          paste0("IntraClusterDEGsRemoveFilter_", i),
+          label = NULL, icon = icon("times-circle"),
+          style = "color: #dc3545; font-size: 16px; margin-top: 25px;"
+        ))
+      )
+    })
+  })
+
 
   # define Cluster Annotation choice
   output$IntraClusterDEGsCustomizedGroups.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing IntraClusterDEGsCustomizedGroups.UI...")}
+    n <- degFilterState$count
+    if (!is.numeric(n) || length(n) != 1 || n < 0) n <- 1
+    filter_cols <- unique(unlist(lapply(seq_len(n), function(i) {
+      input[[paste0("IntraClusterDEGsSubsetCells_", i)]]
+    })))
+    filter_cols <- filter_cols[!is.null(filter_cols)]
     selectInput("IntraClusterDEGsCustomizedGroups","Group Cells By:",
-                choices = setdiff(data$cluster_options, input$IntraClusterDEGsSubsetCells))
-                # choices = data$cluster_options)
+                choices = setdiff(data$cluster_options, filter_cols))
   })
 
   # define the idents used
@@ -2252,9 +2314,18 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # compare two groups, support subset clusters before comparison
   observeEvent(input$IntraClusterDEGssAnalysis, {
     if(verbose){message("SeuratExplorer: calculate DEGs...")}
+    # Check filter readiness
+    n <- degFilterState$count
+    if (!is.numeric(n) || length(n) != 1 || n < 0) n <- 1
+    filter_ready <- TRUE
+    for (i in seq_len(n)) {
+      if (is.null(input[[paste0("IntraClusterDEGsSubsetCellsValues_", i)]])) {
+        filter_ready <- FALSE; break
+      }
+    }
     if (any(is.null(input$IntraClusterDEGsCustomizedGroupsCase),
             is.null(input$IntraClusterDEGsCustomizedGroupsControl),
-            is.null(input$IntraClusterDEGsSubsetCellsSelectedClusters))) {
+            !filter_ready)) {
       showModal(modalDialog(
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
@@ -2273,8 +2344,15 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         size = "m"
       ))
       cds <- data$obj
-      Seurat::Idents(cds) <- input$IntraClusterDEGsSubsetCells
-      cds <- subset_Seurat(cds, idents = input$IntraClusterDEGsSubsetCellsSelectedClusters)
+      # Apply all filter conditions as intersection
+      for (i in seq_len(n)) {
+        col <- input[[paste0("IntraClusterDEGsSubsetCells_", i)]]
+        vals <- input[[paste0("IntraClusterDEGsSubsetCellsValues_", i)]]
+        if (!is.null(col) && !is.null(vals) && col %in% colnames(cds@meta.data)) {
+          keep_cells <- colnames(cds)[cds@meta.data[, col] %in% vals]
+          cds <- subset_Seurat(cds, cells = keep_cells)
+        }
+      }
       if (is.null(input$DEGsAssay)){
         if (DefaultAssay(cds) == 'SCT') {
           cds <- check_SCT_assay(cds)
