@@ -110,7 +110,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                               'FeatureSummaryAssay' = c('data'),
                               'FeatureCorrelationAssay' = c('data'),
                               'FeaturesDataframeAssay'= isolate(data$assay_slots),
-                              'GeneclustersAssay' = c('counts', 'data'))
+                              'GeneclustersAssay' = c('counts', 'data'),
+                              'ModuleScoreAssay' = c('counts', 'data'))
 
   filter_assay <- function(assay_info, allowed_slots){
     # assay_info is a list contains all slot names for each assay
@@ -917,18 +918,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # inform extra qc options for Gene symbol input
   output$Dothints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Dothints.UI...")}
-    if (length(data$extra_qc_options) == 0) {
-      p("You can paste multiple genes from a column in excel.",
-        style = "font-size: 12px; margin: 0; color: #004085;")
-    } else if(length(data$extra_qc_options) > 10){
-      p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "),
-               "; you can paste multiple genes from a column in excel."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
-    } else{
-      p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " "),
-               "; you can paste multiple genes from a column in excel."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
-    }
+    p("You can paste multiple genes from a column in excel.",
+      style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
   # define the idents used
@@ -1184,18 +1175,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # inform extra qc options for Gene symbol input
   output$Heatmaphints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Heatmaphints.UI...")}
-    if (length(data$extra_qc_options) == 0) {
-      p("You can paste multiple genes from a column in excel.",
-        style = "font-size: 12px; margin: 0; color: #004085;")
-    } else if(length(data$extra_qc_options) > 10){
-      p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "),
-               "; you can paste multiple genes from a column in excel."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
-    } else{
-      p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " "),
-               "; you can paste multiple genes from a column in excel."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
-    }
+    p("You can paste multiple genes from a column in excel.",
+      style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
   # define slot Choice UI
@@ -1405,18 +1386,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$AveragedHeatmaphints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing AveragedHeatmaphints.UI...")}
-    if (length(data$extra_qc_options) == 0) {
-      p("You can paste multiple genes from a column in excel.",
-        style = "font-size: 12px; margin: 0; color: #004085;")
-    } else if(length(data$extra_qc_options) > 10){
-      p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "),
-               "; you can paste multiple genes from a column in excel."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
-    } else{
-      p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " "),
-               "; you can paste multiple genes from a column in excel."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
-    }
+    p("You can paste multiple genes from a column in excel.",
+      style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
   # only render plot when the inputs are really changed
@@ -3275,6 +3246,153 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
     }
   )
+
+  ############################## Module Score
+  # Reactive state
+  modulescore_valid_genes <- reactiveVal(NULL)
+  modulescore_checked <- reactiveVal(FALSE)
+
+  # Name input and submit button (shown after gene check passes)
+  output$ModuleScoreName.UI <- renderUI({
+    if (!modulescore_checked()) return(NULL)
+    div(style = "margin-top: 15px;",
+      textInput("ModuleScoreName", "Score Name:", value = "",
+        placeholder = "e.g. T_cell_signature",
+        width = '100%'),
+      div(style = "background: #e9ecef; padding: 5px; border-radius: 4px; margin-top: 4px;",
+        p("Only letters, numbers, and underscore allowed.", style = "font-size: 11px; margin: 0; color: #6c757d;"))
+    )
+  })
+
+  output$ModuleScoreSubmit.UI <- renderUI({
+    if (!modulescore_checked()) return(NULL)
+    div(style = "margin-top: 10px;",
+      actionButton("ModuleScoreCompute", label = "Compute Module Score",
+        icon = icon("calculator"), class = "btn-success",
+        style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
+    )
+  })
+
+  output$ModuleScoreResult.UI <- renderUI({ NULL })
+
+  # Gene check
+  observeEvent(input$ModuleScoreCheckGenes, {
+    req(input$ModuleScoreFeatures, input$ModuleScoreAssay)
+    gene_lib <- rownames(data$obj@assays[[input$ModuleScoreAssay]])
+    input_genes <- trimws(unlist(strsplit(input$ModuleScoreFeatures, "\n")))
+    input_genes <- input_genes[input_genes != ""]
+    if (length(input_genes) == 0) {
+      showModal(modalDialog(title = "Error", "Please enter at least one gene symbol.",
+        easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+    # Check each gene individually
+    matched <- sapply(input_genes, function(g) ReviseGene(g, gene_lib))
+    found_mask <- !is.na(matched)
+    found_genes <- unique(unname(matched[found_mask]))
+    missing_genes <- input_genes[!found_mask]
+
+    if (length(found_genes) == 0) {
+      showModal(modalDialog(title = "Error",
+        "None of the input genes were found in the selected assay.",
+        easyClose = TRUE, footer = modalButton("OK")))
+      modulescore_checked(FALSE)
+    } else if (length(missing_genes) > 0) {
+      showModal(modalDialog(
+        title = "Partial Match",
+        tagList(
+          p(paste0(length(found_genes), " gene(s) found, ", length(missing_genes), " gene(s) not found.")),
+          p(strong("Not found:"), paste(head(missing_genes, 10), collapse = ", "),
+            if (length(missing_genes) > 10) paste0(" ... and ", length(missing_genes) - 10, " more")),
+          p("Continue with the found genes?")
+        ),
+        footer = tagList(
+          actionButton("ModuleScoreContinue", "Continue", class = "btn-primary"),
+          modalButton("Cancel")
+        ),
+        easyClose = TRUE, size = "m"
+      ))
+      modulescore_valid_genes(found_genes)
+    } else {
+      modulescore_valid_genes(found_genes)
+      modulescore_checked(TRUE)
+      showNotification("All genes found! Enter a name and click Compute.", type = "message", duration = 5)
+    }
+  })
+
+  # Continue after partial match
+  observeEvent(input$ModuleScoreContinue, {
+    removeModal()
+    modulescore_checked(TRUE)
+    showNotification("Enter a name and click Compute Module Score.", type = "message", duration = 5)
+  }, ignoreInit = TRUE)
+
+  # Compute module score
+  observeEvent(input$ModuleScoreCompute, {
+    req(modulescore_valid_genes(), input$ModuleScoreName)
+    name <- trimws(input$ModuleScoreName)
+    genes <- modulescore_valid_genes()
+
+    # Validate name
+    if (name == "") {
+      showModal(modalDialog(title = "Error", "Score name cannot be empty.", easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+    if (!check_allowed_chars(name, allowed_characters = "[^a-zA-Z0-9_]")) {
+      showModal(modalDialog(title = "Error",
+        "Name contains invalid characters. Only letters, numbers, and underscore allowed.",
+        easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+    full_col_name <- paste0(name, "1")
+    if (name %in% colnames(data$obj@meta.data)) {
+      showModal(modalDialog(title = "Error",
+        paste0("Column '", name, "' already exists. Choose a different name."),
+        easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+
+    showModal(modalDialog(title = "Calculating", "Computing module score...", footer = NULL, size = "m"))
+    result <- tryCatch({
+      cds <- data$obj
+      Seurat::AddModuleScore(object = cds, features = list(genes),
+                             name = name, assay = input$ModuleScoreAssay)
+    }, error = function(e) { return(e) })
+    removeModal()
+
+    if (inherits(result, "error")) {
+      showModal(modalDialog(title = "Error",
+        tagList(p("AddModuleScore failed:"), tags$pre(result$message)),
+        easyClose = TRUE, footer = modalButton("OK"), size = "l"))
+    } else {
+      # Rename column from {name}1 to {name}
+      colnames(result@meta.data)[colnames(result@meta.data) == full_col_name] <- name
+      data$obj <- result
+
+      # Update options
+      data$extra_qc_options <- prepare_qc_options(df = data$obj@meta.data,
+                                                  types = c("double","integer","numeric"),
+                                                  verbose = getOption('SeuratExplorerVerbose'))
+      data$version <- data$version + 1
+
+      showModal(modalDialog(
+        title = tagList(icon("check-circle", style = "color: #28a745;"), "Success"),
+        tagList(
+          p(paste0("Module score '", name, "' computed successfully!")),
+          p("You can now explore this score in:",
+            tags$ul(
+              tags$li("Feature Plot — enter '", tags$b(name), "' in Gene Symbol"),
+              tags$li("Violin Plot — enter '", tags$b(name), "' in Gene Symbol"),
+              tags$li("Ridge Plot — enter '", tags$b(name), "' in Gene Symbol")
+            ))
+        ),
+        easyClose = TRUE, footer = modalButton("OK"), size = "m"
+      ))
+      modulescore_checked(FALSE)
+      modulescore_valid_genes(NULL)
+      shinyjs::reset("ModuleScoreFeatures")
+    }
+  })
 
   ############################## Rename Clusters
   cell_annotation_df <- reactiveVal(data.frame())

@@ -25,7 +25,7 @@ explorer_sidebar_ui <- function(){
                          menuSubItem(text = span("Dim Reduction Plot", tags$small(class = "label label-danger", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "HOT")), tabName = "dimplot", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span("Feature Plot", tags$small(class = "label label-danger", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "HOT")), tabName = "featureplot", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span("Violin Plot", tags$small(class = "label label-danger", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "HOT")), tabName = "vlnplot", icon = shiny::icon("angle-right")),
-                         menuSubItem(text = "Dot Plot", tabName = "dotplot", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span("Dot Plot", tags$small(class = "label label-success", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "UPDATED")), tabName = "dotplot", icon = shiny::icon("angle-right")),
                          menuSubItem(text = "Heatmap Cell Level", tabName = "heatmap", icon = shiny::icon("angle-right")),
                          menuSubItem(text = "Heatmap Group Averaged", tabName = "averagedheatmap", icon = shiny::icon("angle-right")),
                          menuSubItem(text = "Ridge Plot", tabName = "ridgeplot", icon = shiny::icon("angle-right")),
@@ -35,7 +35,8 @@ explorer_sidebar_ui <- function(){
                          menuSubItem(text = "Feature Summary", tabName = "featuresummary", icon = shiny::icon("angle-right")),
                          menuSubItem(text = "Feature Correlation", tabName = "featurecorrelation", icon = shiny::icon("angle-right")),
                          menuSubItem(text = "Rename Clusters", tabName = "renameclusters", icon = shiny::icon("angle-right")),
-                         menuSubItem(text = "Gene Based Cluster", tabName = "geneclusters", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span("Gene Based Cluster", tags$small(class = "label label-info", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "geneclusters", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span("Module Score", tags$small(class = "label label-info", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "addmodulescore", icon = shiny::icon("angle-right")),
                          menuSubItem(text = "Search Features", tabName = "featuresdf", icon = shiny::icon("angle-right")),
                          menuSubItem(text = "Cells Metadata", tabName = "cellmetadata", icon = shiny::icon("angle-right")),
                          menuSubItem(text = "Object Structure", tabName = "objectstructure", icon = shiny::icon("angle-right")),
@@ -1363,6 +1364,25 @@ explorer_body_ui <- function(tab_list){
         )
       )
     )
+  )
+  tab_list[["addmodulescore"]] = tabItem(tabName = "addmodulescore",
+    fluidRow(
+      box(title = "Add Module Score", solidHeader = TRUE, status = "primary", width = 12,
+        textAreaInput("ModuleScoreFeatures", "Gene Symbols:",
+          value = "", height = '100px', resize = "vertical",
+          placeholder = "Paste gene symbols, one per line or comma-separated"),
+        withSpinner(uiOutput("ModuleScoreAssays.UI"), proxy.height = "10px"),
+        div(style = "margin-top: 15px;",
+          actionButton("ModuleScoreCheckGenes", label = "Check Genes",
+            icon = icon("check"), class = "btn-primary",
+            style = "padding: 10px 30px; border-radius: 6px; font-weight: 600;")
+        ),
+        hr(),
+        uiOutput("ModuleScoreName.UI"),
+        uiOutput("ModuleScoreSubmit.UI")
+      )
+    ),
+    uiOutput("ModuleScoreResult.UI")
   )
   tab_list[["featuresdf"]] = tabItem(tabName = "featuresdf",
                                fluidRow(id = "featuresdf-main-row",
