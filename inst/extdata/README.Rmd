@@ -116,7 +116,7 @@ launchSeuratExplorer(
 
 You can deploy this app on a Shiny Server, which allows users to visualize their data through a web interface by uploading the data to the server.
 
-**Live Demo**: Upload an `.rds` or `.qs2` file (up to 20GB) to the [Demo Site](http://www.nibs.ac.cn:666/SeuratExplorer/). You can download sample demo data from [GitHub](https://github.com/fentouxungui/SeuratExplorerServer/blob/main/inst/extdata/source-data/fly/Rds-file/G101_PC20res04.rds).
+**Live Demo**: Upload an `.rds` or `.qs2` file (up to 20GB) to the [Demo Site](http://netinfo.nibs.ac.cn:666/SeuratExplorer/). You can download sample demo data from [GitHub](https://github.com/fentouxungui/SeuratExplorerServer/blob/main/inst/extdata/source-data/fly/Rds-file/G101_PC20res04.rds).
 
 ```{r eval=FALSE}
 # app.R

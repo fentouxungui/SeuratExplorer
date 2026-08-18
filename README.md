@@ -127,7 +127,7 @@ visualize their data through a web interface by uploading the data to
 the server.
 
 **Live Demo**: Upload an `.rds` or `.qs2` file (up to 20GB) to the [Demo
-Site](http://www.nibs.ac.cn:666/SeuratExplorer/). You can download
+Site](http://netinfo.nibs.ac.cn:666/SeuratExplorer/). You can download
 sample demo data from
 [GitHub](https://github.com/fentouxungui/SeuratExplorerServer/blob/main/inst/extdata/source-data/fly/Rds-file/G101_PC20res04.rds).
 
@@ -758,8 +758,8 @@ palettes for custom visualizations.
   Satija Lab at NYGC. SeuratExplorer builds upon Seurat’s powerful
   analysis capabilities to provide interactive visualization.
 
-- [rstudio/shiny](https://shiny.rstudio.com/): Shiny is an R package
-  that makes it easy to build interactive web apps straight from R.
+- [rstudio/shiny](https://shiny.posit.co/): Shiny is an R package that
+  makes it easy to build interactive web apps straight from R.
   SeuratExplorer uses Shiny to create its interactive dashboard.
 
 ### Visualization Dependencies
