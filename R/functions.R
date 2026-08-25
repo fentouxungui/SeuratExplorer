@@ -898,6 +898,24 @@ updateSeurat <- function(obj, verbose = FALSE){
   return(obj)
 }
 
+check_data <- function(data, key_paramaters = c('reduction_options', 'cluster_options', 'assays_options', 'assays_slots_options', 'split_options')){
+  zero_length_parameters <- names(data)[unname(unlist(lapply(data, function(x){length(x) == 0})))]
+  zero_length_parameters <- zero_length_parameters[zero_length_parameters %in% key_paramaters]
+  if (length(zero_length_parameters) != 0) {
+    showModal(modalDialog(
+      title = tagList(icon("triangle-exclamation"), "Warnning"),
+      tags$div(
+        tags$p(paste0("Key parameters found with zero length: ", paste0(zero_length_parameters, collapse = ', '), '.')),
+        tags$small(style = "color: #6c757d;", "Related functions will not work properly!")
+      ),
+      easyClose = TRUE,
+      footer = modalButton("Continue"),
+      size = "m"
+     )
+    )
+  }
+}
+
 
 # > SCT assay related bug:
 # https://github.com/satijalab/seurat/issues/8235; 2025.03.26, may be Seurat Package will solve this bug in future.
@@ -927,9 +945,9 @@ empty_plot <- ggplot2::ggplot() +
 
 
 
-check_allowed_chars <- function(text_string, allowed_characters = "[^a-z A-Z0-9_-]") {
+check_allowed_chars <- function(text_string, allowed_characters = "[^a-z A-Z0-9_+-]") {
   # Returns TRUE if NO forbidden characters are found (meaning only allowed chars are present)
-  # allows for letters, numbers, whitespace, -, and _
+  # allows for letters, numbers, whitespace, -, +, and _
   !grepl(allowed_characters, text_string)
 }
 

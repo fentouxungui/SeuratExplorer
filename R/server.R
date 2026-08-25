@@ -3111,7 +3111,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         editable = list(target = 'cell', disable = list(columns = 0)),
         selection = "single",
         options = list(dom = 'lrtip', lengthChange = FALSE, pageLength = -1,
-          language = list(info = "Double click '-' to start edit. Only letters, numbers, whitespace, - and _ allowed.")),
+          language = list(info = "Double click '-' to start edit. Only letters, numbers, whitespace, -, + and _ allowed.")),
         rownames = FALSE)
     })
   })
@@ -3410,7 +3410,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                   editable = list(target = 'cell', disable = list(columns = 0)), # Disables columns 1
                   selection = "single",
                   options = list(dom = 'lrtip', lengthChange = FALSE, pageLength = -1,
-                                 language = list(info = "Double click '-' to start edit, only support letters, numbers, whitespace, - and _.")),
+                                 language = list(info = "Double click '-' to start edit, only support letters, numbers, whitespace, -, + and _.")),
                   rownames = FALSE
                   )
   })
@@ -3460,7 +3460,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else if (!all(sapply(cell_annotation_df()$New_Name, check_allowed_chars))) {
       error_names <- cell_annotation_df()$New_Name[!sapply(cell_annotation_df()$New_Name, check_allowed_chars)]
       showModal(modalDialog(title = tagList(icon("exclamation-triangle"), "Error"),
-                            HTML(paste(c("Unsupported character found in New_Name! only support letters, numbers, whitespace, - and _. Please check names bellow:", error_names),
+                            HTML(paste(c("Unsupported character found in New_Name! only support letters, numbers, whitespace, -, + and _. Please check names bellow:", error_names),
                                   collapse = '<br>')),
                             footer= modalButton("Dismiss"),
                             easyClose = TRUE,
@@ -3514,7 +3514,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$renameclustersNewClusterNamehints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing renameclustersNewClusterNamehints.UI...")}
-    p(paste0("Avoid using already existed column names in meta data. And only support letters, numbers, -, whitespace, _, whitespace at botch ends will be removed automatically!"),
+    p(paste0("Avoid using already existed column names in meta data. And only support letters, numbers, whitespace, -, +, _; Whitespace at botch ends will be removed automatically!"),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
@@ -3674,7 +3674,10 @@ server <- function(input, output, session) {
                         assay_default = 'RNA',
                         cluster_options = NULL,
                         cluster_default = NULL,
+                        gene_annotations_list = NULL,
                         assay_slots = c('counts', 'data', 'scale.data'),
+                        assays_options = NULL,
+                        assays_slots_options = NULL,
                         split_maxlevel = getOption("SeuratExplorerSplitOptionMaxLevel"),
                         split_options = NULL,
                         extra_qc_options = NULL,
@@ -3768,6 +3771,8 @@ server <- function(input, output, session) {
         data$extra_qc_options <- prepare_qc_options(df = data$obj@meta.data,
                                                     types = c("double","integer","numeric"),
                                                     verbose = getOption('SeuratExplorerVerbose'))
+
+        check_data(data = data)
       }
 
     }

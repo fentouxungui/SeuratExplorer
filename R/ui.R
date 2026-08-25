@@ -886,7 +886,7 @@ explorer_body_ui <- function(tab_list){
                                        tabPanel("Find Top Genes by Cell",
                                                 div(
                                                   style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
-                                                  sliderInput("TopGenesTopPercent", "UMI percentage cutoff(%):", min = 1, max = 10, value = 1, step = 1)
+                                                  sliderInput("TopGenesTopPercent", "UMI percentage cutoff(%):", min = 1, max = 50, value = 1, step = 1,  width = "100%")
                                                 ),
                                                 div(style = "text-align: center; margin-top: 25px;",
                                                   actionButton("TopGenesAnalysis",
@@ -898,7 +898,7 @@ explorer_body_ui <- function(tab_list){
                                        tabPanel("Find Top Genes by Accumulated UMI Counts",
                                                 div(
                                                   style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
-                                                  sliderInput("TopGenesTopN", "Top n:", min = 100, max = 1000, value = 100, step = 100)
+                                                  sliderInput("TopGenesTopN", "Top n:", min = 10, max = 1000, value = 100, step = 10,  width = "100%")
                                                 ),
                                                 div(style = "text-align: center; margin-top: 25px;",
                                                   actionButton("TopAccumulatedGenesAnalysis",
