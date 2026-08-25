@@ -3394,6 +3394,186 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }
   })
 
+  ############################## Combination Based Cluster
+  # First cluster resolution selector
+  output$CombinedClusterResolution.UI <- renderUI({
+    if(verbose){message("SeuratExplorer: preparing CombinedClusterResolution.UI...")}
+    selectInput("CombinedClusterResolution", "First Cluster:",
+                choices = data$cluster_options)
+  })
+
+  # Second cluster resolution selector (exclude the first selection)
+  output$CombinedClusterResolutionSecond.UI <- renderUI({
+    req(input$CombinedClusterResolution)
+    if(verbose){message("SeuratExplorer: preparing CombinedClusterResolutionSecond.UI...")}
+    selectInput("CombinedClusterResolutionSecond", "Second Cluster:",
+                choices = setdiff(data$cluster_options, input$CombinedClusterResolution))
+  })
+
+  # Reactive state
+  combinedclusters_df <- reactiveVal(data.frame())
+  combinedclusters_generated <- reactiveVal(FALSE)
+  combinedclusters_new_col <- reactiveVal("")
+
+  # Default empty table (shown before Generate)
+  output$combinedclusters_table <- DT::renderDataTable({
+    DT::datatable(combinedclusters_df(),
+      editable = list(target = 'cell', disable = list(columns = c(0, 1, 2))),
+      selection = "single",
+      options = list(dom = 'lrtip', lengthChange = FALSE, pageLength = -1,
+        language = list(info = "Double click the NewName column to edit.")),
+      rownames = FALSE)
+  })
+
+  # Name input + submit UI (shown after generate)
+  output$combinedclustersName.UI <- renderUI({
+    if (!combinedclusters_generated()) return(NULL)
+    default_name <- paste0(gsub("[^a-zA-Z0-9_]", "", input$CombinedClusterResolution),
+                           "_",
+                           gsub("[^a-zA-Z0-9_]", "", input$CombinedClusterResolutionSecond))
+    div(style = "margin-top: 15px;",
+      textInput("combinedclustersNewName", "New Cluster Name:",
+        value = default_name, width = '100%'),
+      div(style = "background: #e9ecef; padding: 5px; border-radius: 4px; margin-top: 4px;",
+        p("Only letters, numbers, and underscore allowed.", style = "font-size: 11px; margin: 0; color: #6c757d;"))
+    )
+  })
+
+  output$combinedclustersSubmit.UI <- renderUI({
+    if (!combinedclusters_generated()) return(NULL)
+    div(style = "margin-top: 10px;",
+      actionButton("combinedclustersSubmit", label = "Submit",
+        icon = icon("upload"), class = "btn-success",
+        style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;"),
+      div(style = "margin-top: 10px;",
+        downloadButton("combinedclustersDownload", "Download Mapping",
+          icon = icon("file-arrow-down"), class = "btn-warning",
+          style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
+      )
+    )
+  })
+
+  # Generate combination table
+  observeEvent(input$combinedclustersGenerate, {
+    req(input$CombinedClusterResolution, input$CombinedClusterResolutionSecond)
+    res1 <- input$CombinedClusterResolution
+    res2 <- input$CombinedClusterResolutionSecond
+    if (res1 == res2) {
+      showModal(modalDialog(title = "Error", "The two clusters must be different.",
+        easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+
+    meta <- data$obj@meta.data
+    lev1 <- levels(meta[, res1])
+    lev2 <- levels(meta[, res2])
+
+    # All combinations in order (res1 slowest, res2 fastest)
+    combos <- expand.grid(lev1, lev2, stringsAsFactors = FALSE)
+    colnames(combos) <- c("V1", "V2")
+
+    # Count cells for each combination
+    res1_vals <- as.character(meta[, res1])
+    res2_vals <- as.character(meta[, res2])
+    cell_counts <- mapply(function(a, b) {
+      sum(res1_vals == a & res2_vals == b, na.rm = TRUE)
+    }, combos$V1, combos$V2)
+
+    connector <- input$CombinedClusterConnector
+    new_names <- paste0(combos$V1, connector, combos$V2)
+
+    df <- data.frame(
+      Cluster1 = combos$V1,
+      Cluster2 = combos$V2,
+      CellCount = cell_counts,
+      NewName = new_names,
+      stringsAsFactors = FALSE
+    )
+    # Keep only non-empty combinations
+    df <- df[df$CellCount > 0, ]
+
+    combinedclusters_df(df)
+    combinedclusters_generated(TRUE)
+    combinedclusters_new_col(paste0(res1, "_", res2))
+  })
+
+  # Track table edits (NewName column)
+  observeEvent(input$combinedclusters_table_cell_edit, {
+    info <- input$combinedclusters_table_cell_edit
+    new_df <- combinedclusters_df()
+    new_df[info$row, info$col + 1] <- trimws(info$value)
+    combinedclusters_df(new_df)
+  })
+
+  # Submit — validate and add annotation
+  observeEvent(input$combinedclustersSubmit, {
+    req(combinedclusters_generated())
+    new_col_name <- trimws(input$combinedclustersNewName)
+
+    if (new_col_name == "") {
+      showModal(modalDialog(title = "Error", "Cluster name cannot be empty.",
+        easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+    if (!check_allowed_chars(new_col_name, allowed_characters = "[^a-zA-Z0-9_]")) {
+      showModal(modalDialog(title = "Error",
+        "Name contains invalid characters. Only letters, numbers, and underscore allowed.",
+        easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+    if (new_col_name %in% colnames(data$obj@meta.data)) {
+      showModal(modalDialog(title = "Error",
+        paste0("Column '", new_col_name, "' already exists in metadata."),
+        easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
+
+    df <- combinedclusters_df()
+    res1 <- input$CombinedClusterResolution
+    res2 <- input$CombinedClusterResolutionSecond
+    connector <- input$CombinedClusterConnector
+
+    cds <- data$obj
+    meta <- cds@meta.data
+    res1_vals <- as.character(meta[, res1])
+    res2_vals <- as.character(meta[, res2])
+
+    # Build mapping: original combo -> new name
+    old_combo <- paste0(res1_vals, connector, res2_vals)
+    # NewName was auto-generated as old_combo; user may have edited
+    mapping <- setNames(df$NewName, paste0(df$Cluster1, connector, df$Cluster2))
+
+    new_annotation <- mapping[old_combo]
+    new_annotation[is.na(new_annotation)] <- NA_character_
+    cds@meta.data[, new_col_name] <- factor(new_annotation, levels = df$NewName)
+
+    data$obj <- cds
+    data$cluster_options <- prepare_cluster_options(df = data$obj@meta.data,
+                                                    verbose = getOption('SeuratExplorerVerbose'))
+    data$split_options <- prepare_split_options(df = data$obj@meta.data,
+                                                max.level = data$split_maxlevel,
+                                                verbose = getOption('SeuratExplorerVerbose'))
+    data$version <- data$version + 1
+
+    showModal(modalDialog(
+      title = tagList(icon("check-circle", style = "color: #28a745;"), "Success"),
+      paste0("Annotation '", new_col_name, "' added to metadata!"),
+      easyClose = TRUE, footer = modalButton("Continue")))
+    showNotification(ui = tagList(icon("check-circle"), "Combination clusters added!"),
+      type = "message", duration = 5)
+  })
+
+  # Download mapping
+  output$combinedclustersDownload <- downloadHandler(
+    filename = function() { "combination_cluster_mapping.csv" },
+    content = function(file) {
+      df <- combinedclusters_df()
+      colnames(df) <- c(input$CombinedClusterResolution, input$CombinedClusterResolutionSecond,
+                        "CellCount", "NewName")
+      write.csv(df, file, row.names = FALSE)
+    }
+  )
+
   ############################## Rename Clusters
   cell_annotation_df <- reactiveVal(data.frame())
 

@@ -36,6 +36,7 @@ explorer_sidebar_ui <- function(){
                          menuSubItem(text = "Feature Correlation", tabName = "featurecorrelation", icon = shiny::icon("angle-right")),
                          menuSubItem(text = "Rename Clusters", tabName = "renameclusters", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span("Gene Based Cluster", tags$small(class = "label label-info", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "geneclusters", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span("Combination Based Cluster", tags$small(class = "label label-info", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "combinedclusters", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span("Module Score", tags$small(class = "label label-info", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "addmodulescore", icon = shiny::icon("angle-right")),
                          menuSubItem(text = "Search Features", tabName = "featuresdf", icon = shiny::icon("angle-right")),
                          menuSubItem(text = "Cells Metadata", tabName = "cellmetadata", icon = shiny::icon("angle-right")),
@@ -1383,6 +1384,27 @@ explorer_body_ui <- function(tab_list){
       )
     ),
     uiOutput("ModuleScoreResult.UI")
+  )
+  tab_list[["combinedclusters"]] = tabItem(tabName = "combinedclusters",
+    fluidRow(
+      box(title = "Combination Table",
+        DT::dataTableOutput('combinedclusters_table'),
+        width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
+      box(title = "Settings", solidHeader = TRUE, status = "primary", width = 3,
+        withSpinner(uiOutput("CombinedClusterResolution.UI"), proxy.height = "10px"),
+        withSpinner(uiOutput("CombinedClusterResolutionSecond.UI"), proxy.height = "10px"),
+        selectInput("CombinedClusterConnector", "Connector:",
+          choices = c("-" = "-", "+" = "+", "_" = "_"), selected = "_"),
+        div(style = "margin-top: 15px;",
+          actionButton("combinedclustersGenerate", label = "Generate",
+            icon = icon("table"), class = "btn-primary",
+            style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
+        ),
+        hr(),
+        uiOutput("combinedclustersName.UI"),
+        uiOutput("combinedclustersSubmit.UI")
+      )
+    )
   )
   tab_list[["featuresdf"]] = tabItem(tabName = "featuresdf",
                                fluidRow(id = "featuresdf-main-row",
