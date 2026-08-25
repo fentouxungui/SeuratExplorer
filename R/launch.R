@@ -22,6 +22,9 @@ launchSeuratExplorer <- function(verbose = FALSE,
   options(SeuratExplorerReductionKeyWords = ReductionKeyWords)
   options(SeuratExplorerSplitOptionMaxLevel = SplitOptionMaxLevel)
   options(shiny.maxRequestSize = MaxInputFileSize)
+  # Suppress the `as.list.reactivevalues()` deprecation warning emitted by
+  # shinydashboard 0.7.3 (and other older deps) on newer Shiny versions.
+  options(shiny.deprecation.messages = FALSE)
 
   shinyApp(ui, server)
 }
