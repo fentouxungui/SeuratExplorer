@@ -14,7 +14,7 @@
 #' if(interactive()){launchSeuratExplorer()}
 #' @export
 launchSeuratExplorer <- function(verbose = FALSE,
-                                 ReductionKeyWords = c("umap","tsne"),
+                                 ReductionKeyWords = c("umap","tsne","pca"),
                                  SplitOptionMaxLevel = 12,
                                  MaxInputFileSize = 20*1024^3 # default 20GB
                                  ){
