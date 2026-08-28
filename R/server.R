@@ -130,6 +130,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output_assay <- lapply(1:nrow(assay_df), function(i){
     output[[assay_df$Element[i]]] <- renderUI({
+      req(data$assays_slots_options)
       if(verbose){message(paste0("SeuratExplorer: preparing ", assay_df$Element[i], "..."))}
       assays_options <- filter_assay(assay_info = data$assays_slots_options,
                                      allowed_slots = assay_allowed_slots[[assay_df$UIID[i]]])
@@ -409,6 +410,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   features_dimplot <- reactiveValues(features_current = NA, features_last = NA)
 
   observeEvent(input$FeatureGeneSymbol,{
+    req(data$obj, input$FeatureAssay)
     features_input <- CheckGene(InputGene = input$FeatureGeneSymbol,
                                 GeneLibrary =  c(rownames(data$obj@assays[[input$FeatureAssay]]),
                                                  data$extra_qc_options))
@@ -593,6 +595,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   features_vlnplot <- reactiveValues(features_current = NA, features_last = NA)
 
   observeEvent(input$VlnGeneSymbol,{
+    req(data$obj, input$VlnAssay)
     features_input <- CheckGene(InputGene = input$VlnGeneSymbol,
                                 GeneLibrary =  c(rownames(data$obj@assays[[input$VlnAssay]]),
                                                  data$extra_qc_options))
@@ -907,6 +910,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   features_dotplot <- reactiveValues(features_current = NA, features_last = NA)
 
   observeEvent(input$DotGeneSymbol,{
+    req(data$obj, input$DotAssay)
     features_input <- CheckGene(InputGene = input$DotGeneSymbol,
                                 GeneLibrary =  rownames(data$obj@assays[[input$DotAssay]]))
     if (!identical(sort(features_dotplot$features_current), sort(features_input))) {
@@ -1196,6 +1200,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   features_heatmap <- reactiveValues(features_current = NA, features_last = NA)
 
   observeEvent(input$HeatmapGeneSymbol,{
+    req(data$obj, input$HeatmapAssay)
     features_input <- CheckGene(InputGene = input$HeatmapGeneSymbol,
                                 GeneLibrary =  rownames(data$obj@assays[[input$HeatmapAssay]]))
     if (!identical(sort(features_heatmap$features_current), sort(features_input))) {
@@ -1395,6 +1400,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
 
   observeEvent(input$AveragedHeatmapGeneSymbol,{
+    req(data$obj, input$AveragedHeatmapAssay)
     features_input <- CheckGene(InputGene = input$AveragedHeatmapGeneSymbol,
                                 GeneLibrary = rownames(data$obj@assays[[input$AveragedHeatmapAssay]]))
     if (!identical(sort(features_heatmap_averaged$features_current), sort(features_input))) {
@@ -1603,6 +1609,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   features_ridgeplot <- reactiveValues(features_current = NA, features_last = NA)
 
   observeEvent(input$RidgeplotGeneSymbol,{
+    req(data$obj, input$RidgeplotAssay)
     features_input <- CheckGene(InputGene = input$RidgeplotGeneSymbol,
                                 GeneLibrary = c(rownames(data$obj@assays[[input$RidgeplotAssay]]),
                                                 data$extra_qc_options))
