@@ -51,6 +51,9 @@ capable of common visualizations for single cell RNA-seq.
   and multi-omics data
 - **Flexible Analysis**: Find markers, explore correlations, and
   summarize features interactively
+- **Interactive Annotation**: Rename clusters, define
+  gene-expression-based clusters, combine cluster annotations, and
+  compute module scores — all from the browser
 - **Publication-Ready Plots**: Download high-quality PDF figures
   directly from the app
 - **Batch Processing**: Analyze multiple genes/clusters simultaneously
@@ -187,14 +190,15 @@ Different visualization features support different assay slots:
 - **Feature Plot**: Supports `counts`, `data`, `scale.data`
 - **Violin Plot**: Supports `counts`, `data`, `scale.data`
 - **Dot Plot**: Supports `data` slot
-- **Heatmap (Cell Level)**: Supports any available slot
-- **Heatmap (Group Level)**: Supports `data`, `scale.data`
+- **Heatmap (Cell Level)**: Supports `data`, `scale.data`
+- **Heatmap (Group Level)**: Supports `data`
 - **Ridge Plot**: Supports `counts`, `data`, `scale.data`
 - **DEGs Analysis**: Supports `counts`, `data`
-- **Top Expressed Features**: Supports `counts` (by accumulation) or any
-  slot (by cell)
+- **Top Expressed Features**: Supports `counts`
 - **Feature Summary**: Supports `data`
 - **Feature Correlation**: Supports `data`
+- **Gene Based Cluster**: Supports `counts`, `data`
+- **Module Score**: Supports `counts`, `data`
 
 ## Introduction
 
@@ -242,6 +246,13 @@ Different visualization features support different assay slots:
 - Supports **split** plots
 
 - Supports customizing colors for lowest and highest expression levels
+
+- Supports setting minimum/maximum expression cutoff (percentile) to
+  trim outliers
+
+- Supports showing cluster labels and adjusting label size
+
+- Supports adjusting point transparency (alpha)
 
 - Supports adjusting the height/width ratio of the plot
 
@@ -317,12 +328,12 @@ Different visualization features support different assay slots:
 
 - Supports selection of **cluster resolutions** and reordering clusters
 
-- Supports adjusting font size and rotation angle of cluster labels, and
-  flipping coordinates
+- Supports adjusting font size, horizontal/vertical justification and
+  rotation angle of cluster labels
 
 - Supports adjusting the height of group bars
 
-- Supports adjusting the gap size between groups
+- Supports adjusting the line width of group bars
 
 - Supports adjusting the font size of gene names
 
@@ -330,7 +341,8 @@ Different visualization features support different assay slots:
 
 - Supports downloading plots in PDF format (WYSIWYG)
 
-- Supports assay switching
+- Supports switching between assays containing the `data` or
+  `scale.data` slots
 
 **Example plots:**
 
@@ -345,14 +357,15 @@ Different visualization features support different assay slots:
 
 - Supports adjusting font size and rotation angle of cluster labels
 
+- Supports clustering clusters (columns) and clustering features (rows)
+
 - Supports adjusting the font size of gene names
 
 - Supports adjusting the height/width ratio of the plot
 
 - Supports downloading plots in PDF format (WYSIWYG)
 
-- Supports switching between assays containing any of the following
-  slots: `data`, `scale.data`
+- Supports switching between assays containing the `data` slot
 
 **Example plots:**
 
@@ -407,11 +420,31 @@ Results can be downloaded in `csv` format.
   cluster
 
 - **Calculate DEGs for custom groups**: Compare differential expression
-  between two user-defined groups. You can subset cells before
-  calculating DEGs between groups. By default, all cells from both
-  groups are used
+  between two user-defined groups. You can subset cells (with one or
+  more filter conditions, combined as an intersection) before
+  calculating DEGs between groups, then choose the group column and the
+  case/control levels. By default, all cells from both groups are used
 
-You can modify calculation parameters before starting the analysis.
+#### Custom parameters
+
+Before running the analysis you can adjust the following parameters (in
+the **Custom Parameters** tab):
+
+- **Logfc Threshold**: minimum log fold-change (default `0.1`)
+- **Test Use**: `wilcox`, `wilcox_limma`, `t`, `negbinom`, `poisson`,
+  `LR`, `MAST` (requires `MAST`), or `DESeq2` (requires `DESeq2`)
+- **Min Pct**: minimum expression percentage for a gene to be tested
+  (default `0.01`)
+- **Min Diff Pct**: minimum expression-percentage difference between
+  groups (default `0`)
+
+#### External gene annotation links (Only avaliable for github version)
+
+After results are shown, selecting a row in the results table reveals
+links to external gene databases. For **Human**, **Mouse** and **Fly**,
+links to GeneCards, Ensembl, HGNC, MGI, FlyBase, NCBI and UniProt are
+provided based on the selected feature type (Symbol, Ensembl ID, or
+Entrez ID).
 
 - Supports switching between assays containing any of the following
   slots: `counts`, `data`
@@ -432,7 +465,7 @@ You can modify calculation parameters before starting the analysis.
 > on the test used (test.use)). The following columns are always
 > present:
 >
-> avg_logFC: log fold-chage of the average expression between the two
+> avg_logFC: log fold-change of the average expression between the two
 > groups. Positive values indicate that the gene is more highly
 > expressed in the first group
 >
@@ -494,10 +527,11 @@ UMI percentage in those highly expressed cells.
 - `cut.pct.median`: Median expression percentage in highly expressed
   cells
 
-#### 2. Find Top Genes by Mean UMI counts
+#### 2. Find Top Genes by Accumulated UMI Counts
 
-For each cluster, calculate the `top n` highly expressed genes by mean
-UMI counts. Clusters with fewer than 3 cells will be skipped.
+For each cluster, calculate the `top n` highly expressed genes by
+accumulated UMI counts. Clusters with fewer than 3 cells will be
+skipped.
 
 - Supports switching between assays containing the `counts` slot
 
@@ -505,7 +539,7 @@ UMI counts. Clusters with fewer than 3 cells will be skipped.
 
 #### Output description
 
-- `CellType`: The cluster name as defined by
+- `celltype`: The cluster name as defined by
   `Choose A Cluster Resolution`
 
 - `total.cells`: Total number of cells in this cluster
@@ -531,7 +565,7 @@ percentage and mean/median expression levels.
 
 #### Output description
 
-- `celltype`: The cluster name as defined by
+- `CellType`: The cluster name as defined by
   `Choose A Cluster Resolution`
 
 - `TotalCells`: Total number of cells in this cluster
@@ -556,11 +590,11 @@ cluster. Supports both Pearson and Spearman correlation methods.
 - `Find Top Correlated Gene Pairs`: Identifies the top 1000 correlated
   gene pairs
 
-- `Find Correlated Genes for A Gene`: Finds the most correlated genes
-  for user-specified genes
+- `Find Top Correlated Genes for A Gene`: Finds the most correlated
+  genes for a user-specified gene
 
-- `Calculate Correlation for A Gene List`: Calculates correlation values
-  for all pairs in a user-provided gene list
+- `Calculate Correlation of All Pairs in A Gene List`: Calculates
+  correlation values for all pairs in a user-provided gene list
 
 <img src="./inst/extdata/www/featurecorrelation.jpg" alt="" width="100%" />
 
@@ -585,6 +619,57 @@ However, the original Seurat object file is never modified. Once you
 close the session, the new annotations will be lost. You can download a
 mapping file of old names to new names and send it to a bioinformatician
 to request permanent changes to the Seurat object.
+
+To rename clusters: select a cluster resolution, edit the `New_Name`
+column in the table, then click **Check** to preview the re-colored
+dimension-reduction plot, and finally **Update** to add the new
+annotation. You can download the old-to-new name mapping.
+
+### Gene Based Cluster (BETA)
+
+Group cells into new clusters based on a single gene’s expression level
+using user-defined cutoffs.
+
+1.  Enter a gene symbol, select the assay/slot, and click **Generate
+    Histogram** to plot the expression distribution.
+2.  Enter comma-separated cutoff values and click **Apply Cutoffs** to
+    define expression intervals.
+3.  Edit the group names in the classification table, then click
+    **Check** to validate names.
+4.  Click **Submit** to add a new factor column (named `<gene>_cluster`)
+    to the cell metadata.
+
+- Supports switching between assays containing the `counts` or `data`
+  slots
+
+### Combination Based Cluster (BETA)
+
+Combine two existing cluster annotations into a single new grouping.
+
+1.  Select a first and second cluster resolution and a connector (`-`,
+    `+`, or `_`), then click **Generate**.
+2.  Review the combination table (with cell counts), optionally edit the
+    `NewName` column.
+3.  Click **Submit** to add the combined annotation as a new factor
+    column in the cell metadata.
+
+A mapping file can be downloaded for permanent changes to the Seurat
+object.
+
+### Module Score (BETA)
+
+Score each cell with a gene set using Seurat’s `AddModuleScore`.
+
+1.  Paste gene symbols and click **Check Genes** to validate them
+    (matched genes are kept, missing genes are reported).
+2.  Enter a score name (letters, numbers and underscore only) and click
+    **Compute Module Score**.
+3.  The resulting numeric score is added to the cell metadata and can be
+    explored in Feature Plot, Violin Plot, or Ridge Plot by entering the
+    score name as a feature.
+
+- Supports switching between assays containing the `counts` or `data`
+  slots
 
 ### Search Features
 
@@ -812,7 +897,7 @@ If you use SeuratExplorer in your research, please cite:
   author = {Zhang, Yongchao},
   year = {2025},
   url = {https://github.com/fentouxungui/SeuratExplorer},
-  note = {R package version 0.1.3}
+  note = {R package version 0.1.7}
 }
 ```
 
