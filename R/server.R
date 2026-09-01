@@ -10,9 +10,9 @@
 #' @param data the Seurat object and related parameters
 #'
 #' @import Seurat SeuratObject
-#' @importFrom utils str
+#' @importFrom utils str head
 #' @importFrom grDevices dev.off pdf
-#' @importFrom stats na.omit
+#' @importFrom stats na.omit setNames
 #' @importFrom shinyjs hide html runjs
 #' @export
 #' @return server side functions related to `explorer_sidebar_ui`
@@ -2247,7 +2247,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }, ignoreInit = FALSE, ignoreNULL = TRUE)
   })
 
-  # renderUI only depends on count — preserve existing selections via isolate()
+  # renderUI only depends on count - preserve existing selections via isolate()
   output$IntraClusterDEGsFilterRows.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing IntraClusterDEGsFilterRows.UI...")}
     n <- degFilterState$count
@@ -3388,9 +3388,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           p(paste0("Module score '", name, "' computed successfully!")),
           p("You can now explore this score in:",
             tags$ul(
-              tags$li("Feature Plot — enter '", tags$b(name), "' in Gene Symbol"),
-              tags$li("Violin Plot — enter '", tags$b(name), "' in Gene Symbol"),
-              tags$li("Ridge Plot — enter '", tags$b(name), "' in Gene Symbol")
+              tags$li("Feature Plot - enter '", tags$b(name), "' in Gene Symbol"),
+              tags$li("Violin Plot - enter '", tags$b(name), "' in Gene Symbol"),
+              tags$li("Ridge Plot - enter '", tags$b(name), "' in Gene Symbol")
             ))
         ),
         easyClose = TRUE, footer = modalButton("OK"), size = "m"
@@ -3512,7 +3512,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     combinedclusters_df(new_df)
   })
 
-  # Submit — validate and add annotation
+  # Submit - validate and add annotation
   observeEvent(input$combinedclustersSubmit, {
     req(combinedclusters_generated())
     new_col_name <- trimws(input$combinedclustersNewName)

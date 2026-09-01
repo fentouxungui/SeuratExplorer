@@ -30,23 +30,21 @@ Remove files bellow:
 # 4. LICENSE.md
 # 5. 整个inst目录
 # 6. 整个data目录
-# 7. data.R
+# 7. R/data.R
 # 8. 整个tutorials目录
 ```
 
 ## 3. Remove About page
 
 Remove 'About' UI page and related server codes.
+comment the tab_list[["about"]] in UI.R
+comment the SeuratExplorer::GenesDB and output$ExternalLinks.UI in server.R
 
-## 4. Remove genes.db and related codes
-
-修改UI.R seruver.R 
-
-## 5. change package version
+## 4. change package version
 
 update package version
 
-## 6. Check and Build the package
+## 5. Check and Build the package
 
 Check and solve all errors, warnnings and notes.
 
