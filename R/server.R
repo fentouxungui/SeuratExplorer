@@ -47,10 +47,19 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     output[[dimension_reduction_df$Element[i]]] <- renderUI({
       req(data$obj)
       if(verbose){message(paste0("SeuratExplorer: preparing ", dimension_reduction_df$Element[i], "..."))}
-      selectInput(dimension_reduction_df$UIID[i],
-                  'Dimension Reduction:',
-                  choices = data$reduction_options,
-                  selected = data$reduction_default) # set default reduction
+      if (length(data$reduction_options) == 0) {
+        div(
+          style = "background-color: #fdf2f8; border: 1px solid #ec4899; border-left: 4px solid #ec4899; padding: 10px; border-radius: 4px; color: #92400e;",
+          tags$strong("No dimensionality reduction found."),
+          tags$p("This Seurat object has no reduction matching the configured keywords. See the loading warning for details.",
+                 style = "margin-top: 6px; margin-bottom: 0; font-size: 12px;")
+        )
+      } else {
+        selectInput(dimension_reduction_df$UIID[i],
+                    'Dimension Reduction:',
+                    choices = data$reduction_options,
+                    selected = data$reduction_default) # set default reduction
+      }
     })
   })
 
@@ -287,6 +296,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         input$DimPointSize)
     req(input$DimClusterResolution %in% colnames(data$obj@meta.data))
 
+    if (length(data$reduction_options) == 0) {
+      return(empty_plot_no_reduction)
+    }
+
     if(verbose){
       message("SeuratExplorer: preparing dimplot...")
     }
@@ -322,7 +335,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       p <- p & NoLegend()
     }
     if (input$DimPlotMode) {
-      ggplot2::ggsave(paste0(temp_dir,"/dimplot.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "dimplot.pdf"),
                       p,
                       width = session$clientData$output_dimplot_width,
                       height = session$clientData$output_dimplot_width * input$DimPlotHWRatio,
@@ -330,7 +343,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                       scale = 5,
                       limitsize = FALSE)
     }else{
-      ggplot2::ggsave(paste0(temp_dir,"/dimplot.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "dimplot.pdf"),
                       p,
                       width = dimplot_dims$width,
                       height = dimplot_dims$height,
@@ -352,8 +365,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloaddimplot <- downloadHandler(
     filename = function(){'dimplot.pdf'},
     content = function(file) {
-      if (file.exists(paste0(temp_dir,"/dimplot.pdf"))) {
-        file.copy(paste0(temp_dir,"/dimplot.pdf"), file, overwrite=TRUE)
+      if (file.exists(file.path(temp_dir, "dimplot.pdf"))) {
+        file.copy(file.path(temp_dir, "dimplot.pdf"), file, overwrite=TRUE)
       }
     })
 
@@ -465,6 +478,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$featureplot <- renderPlot({
     req(input$FeatureSlot)
     if(verbose){message("SeuratExplorer: preparing featureplot...")}
+    if (length(data$reduction_options) == 0) {
+      return(empty_plot_no_reduction)
+    }
     if(input$FeatureMinCutoff == 0){
       expr_min_cutoff <- NA
     }else{
@@ -515,7 +531,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
     }
     if (input$FeaturePlotMode) {
-      ggplot2::ggsave(paste0(temp_dir,"/featureplot.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "featureplot.pdf"),
                       p,
                       width = session$clientData$output_featureplot_width,
                       height = session$clientData$output_featureplot_width * input$FeaturePlotHWRatio,
@@ -523,7 +539,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                       scale = 5,
                       limitsize = FALSE)
     }else{
-      ggplot2::ggsave(paste0(temp_dir,"/featureplot.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "featureplot.pdf"),
                       p,
                       width = featureplot_dims$width,
                       height = featureplot_dims$height,
@@ -543,9 +559,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloadfeatureplot <- downloadHandler(
     filename = function(){'featureplot.pdf'},
     content = function(file) {
-      if (file.exists(paste0(temp_dir,"/featureplot.pdf"))) {
+      if (file.exists(file.path(temp_dir, "featureplot.pdf"))) {
         # problem: will throw an error when file not exists; or with a uncorrected input, will download the pic of previous corrected input.
-        file.copy(paste0(temp_dir,"/featureplot.pdf"), file, overwrite=TRUE)
+        file.copy(file.path(temp_dir, "featureplot.pdf"), file, overwrite=TRUE)
       }
     })
 
@@ -843,7 +859,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
     }
     if (input$VlnPlotMode) {
-      ggplot2::ggsave(paste0(temp_dir,"/vlnplot.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "vlnplot.pdf"),
                       p,
                       width = session$clientData$output_vlnplot_width,
                       height = session$clientData$output_vlnplot_width * input$VlnPlotHWRatio,
@@ -851,7 +867,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                       scale = 5,
                       limitsize = FALSE)
     }else{
-      ggplot2::ggsave(paste0(temp_dir,"/vlnplot.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "vlnplot.pdf"),
                       p,
                       width = vlnplot_dims$width,
                       height = vlnplot_dims$height,
@@ -871,8 +887,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloadvlnplot <- downloadHandler(
     filename = function(){'vlnplot.pdf'},
     content = function(file) {
-      if (file.exists(paste0(temp_dir,"/vlnplot.pdf"))) {
-        file.copy(paste0(temp_dir,"/vlnplot.pdf"), file, overwrite=TRUE)
+      if (file.exists(file.path(temp_dir, "vlnplot.pdf"))) {
+        file.copy(file.path(temp_dir, "vlnplot.pdf"), file, overwrite=TRUE)
       }
     })
 
@@ -1109,7 +1125,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
     }
     if (input$DotPlotMode) {
-      ggplot2::ggsave(paste0(temp_dir,"/dotplot.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "dotplot.pdf"),
                       p,
                       width = session$clientData$output_dotplot_width,
                       height = session$clientData$output_dotplot_width * input$DotPlotHWRatio,
@@ -1117,7 +1133,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                       scale = 5,
                       limitsize = FALSE)
     }else{
-      ggplot2::ggsave(paste0(temp_dir,"/dotplot.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "dotplot.pdf"),
                       p,
                       width = dotplot_dims$width,
                       height = dotplot_dims$height,
@@ -1139,8 +1155,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloaddotplot <- downloadHandler(
     filename = function(){'dotplot.pdf'},
     content = function(file) {
-      if (file.exists(paste0(temp_dir,"/dotplot.pdf"))) {
-        file.copy(paste0(temp_dir,"/dotplot.pdf"), file, overwrite=TRUE)
+      if (file.exists(file.path(temp_dir, "dotplot.pdf"))) {
+        file.copy(file.path(temp_dir, "dotplot.pdf"), file, overwrite=TRUE)
       }
     })
   # known bugs:
@@ -1323,7 +1339,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
     }
     if (input$HeatmapPlotMode) {
-      ggplot2::ggsave(paste0(temp_dir,"/heatmap.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "heatmap.pdf"),
                       p,
                       width = session$clientData$output_heatmap_width,
                       height = session$clientData$output_heatmap_width * input$HeatmapPlotHWRatio,
@@ -1331,7 +1347,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                       scale = 5,
                       limitsize = FALSE)
     }else{
-      ggplot2::ggsave(paste0(temp_dir,"/heatmap.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "heatmap.pdf"),
                       p,
                       width = heatmap_dims$width,
                       height = heatmap_dims$height,
@@ -1354,8 +1370,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloadheatmap <- downloadHandler(
     filename = function(){'heatmap.pdf'},
     content = function(file) {
-      if (file.exists(paste0(temp_dir,"/heatmap.pdf"))) {
-        file.copy(paste0(temp_dir,"/heatmap.pdf"), file, overwrite=TRUE)
+      if (file.exists(file.path(temp_dir, "heatmap.pdf"))) {
+        file.copy(file.path(temp_dir, "heatmap.pdf"), file, overwrite=TRUE)
       }
     })
 
@@ -1515,11 +1531,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }
     # special case for not use ggsave, because the p is generated by ComplexHeatmap
     if (input$AveragedHeatmapPlotMode) {
-      pdf(file = paste0(temp_dir,"/AveragedHeatmap.pdf"),
+      pdf(file = file.path(temp_dir, "AveragedHeatmap.pdf"),
           width = session$clientData$output_averagedheatmap_width / 96 * 1.5,
           height = session$clientData$output_averagedheatmap_width / 96 * 1.5 * input$AveragedHeatmapPlotHWRatio)
     }else{
-      pdf(file = paste0(temp_dir,"/AveragedHeatmap.pdf"),
+      pdf(file = file.path(temp_dir, "AveragedHeatmap.pdf"),
           width = averagedheatmap_dims$width / 96 * 1.5,
           height = averagedheatmap_dims$height / 96 * 1.5)
     }
@@ -1537,8 +1553,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloadaveragedheatmap <- downloadHandler(
     filename = function(){'AveragedHeatmap.pdf'},
     content = function(file) {
-      if (file.exists(paste0(temp_dir,"/AveragedHeatmap.pdf"))) {
-        file.copy(paste0(temp_dir,"/AveragedHeatmap.pdf"), file, overwrite=TRUE)
+      if (file.exists(file.path(temp_dir, "AveragedHeatmap.pdf"))) {
+        file.copy(file.path(temp_dir, "AveragedHeatmap.pdf"), file, overwrite=TRUE)
       }
     })
 
@@ -1759,7 +1775,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
     }
     if (input$RidgeplotPlotMode) {
-      ggplot2::ggsave(paste0(temp_dir,"/ridgeplot.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "ridgeplot.pdf"),
                       p,
                       width = session$clientData$output_ridgeplot_width,
                       height = session$clientData$output_ridgeplot_width * input$RidgeplotHWRatio,
@@ -1767,7 +1783,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                       scale = 5,
                       limitsize = FALSE)
     }else{
-      ggplot2::ggsave(paste0(temp_dir,"/ridgeplot.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "ridgeplot.pdf"),
                       p,
                       width = ridgeplot_dims$width,
                       height = ridgeplot_dims$height,
@@ -1788,8 +1804,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloadridgeplot <- downloadHandler(
     filename = function(){'ridgeplot.pdf'},
     content = function(file) {
-      if (file.exists(paste0(temp_dir,"/ridgeplot.pdf"))) {
-        file.copy(paste0(temp_dir,"/ridgeplot.pdf"), file, overwrite=TRUE)
+      if (file.exists(file.path(temp_dir, "ridgeplot.pdf"))) {
+        file.copy(file.path(temp_dir, "ridgeplot.pdf"), file, overwrite=TRUE)
       }
     })
 
@@ -2007,7 +2023,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                                                   hjust=1))
     }
     if (input$CellratioMode) {
-      ggplot2::ggsave(paste0(temp_dir,"/cellratioplot.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "cellratioplot.pdf"),
                       p,
                       width = session$clientData$output_cellratioplot_width,
                       height = session$clientData$output_cellratioplot_width * input$CellratioPlotHWRatio,
@@ -2015,7 +2031,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                       scale = 5,
                       limitsize = FALSE)
     }else{
-      ggplot2::ggsave(paste0(temp_dir,"/cellratioplot.pdf"),
+      ggplot2::ggsave(file.path(temp_dir, "cellratioplot.pdf"),
                       p,
                       width = cellratioplot_dims$width,
                       height = cellratioplot_dims$height,
@@ -2036,8 +2052,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloadcellratioplot <- downloadHandler(
     filename = function(){'cellratioplot.pdf'},
     content = function(file) {
-      if (file.exists(paste0(temp_dir,"/cellratioplot.pdf"))) {
-        file.copy(paste0(temp_dir,"/cellratioplot.pdf"), file, overwrite=TRUE)
+      if (file.exists(file.path(temp_dir, "cellratioplot.pdf"))) {
+        file.copy(file.path(temp_dir, "cellratioplot.pdf"), file, overwrite=TRUE)
       }
     })
 
@@ -3286,7 +3302,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   observeEvent(input$ModuleScoreCheckGenes, {
     req(input$ModuleScoreFeatures, input$ModuleScoreAssay)
     gene_lib <- rownames(data$obj@assays[[input$ModuleScoreAssay]])
-    input_genes <- trimws(unlist(strsplit(input$ModuleScoreFeatures, "\n")))
+    input_genes <- trimws(unlist(strsplit(input$ModuleScoreFeatures, "[[:space:],;]+")))
     input_genes <- input_genes[input_genes != ""]
     if (length(input_genes) == 0) {
       showModal(modalDialog(title = "Error", "Please enter at least one gene symbol.",
@@ -3685,9 +3701,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         new_names_mapping <- cell_annotation_df()$New_Name
         names(new_names_mapping) <- cell_annotation_df()$Old_Name
         cds <- Seurat::RenameIdents(cds, new_names_mapping)
-        output$renameclusterdimplot <- renderPlot(Seurat::DimPlot(cds,
-                                                                  reduction = input$renameclustersDimensionReduction,
-                                                                  label = TRUE))
+        if (length(data$reduction_options) == 0) {
+          output$renameclusterdimplot <- renderPlot(empty_plot_no_reduction)
+        } else {
+          output$renameclusterdimplot <- renderPlot(Seurat::DimPlot(cds,
+                                                                    reduction = input$renameclustersDimensionReduction,
+                                                                    label = TRUE))
+        }
         new_anno_mapping$NewClusterName <- input$renameclustersNewClusterName
         new_anno_mapping$OldClusterName = input$renameclustersClusterResolution
         new_anno_mapping$mapping = cell_annotation_df()

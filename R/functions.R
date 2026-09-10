@@ -193,7 +193,8 @@ prepare_qc_options <- function(df, types = c("double","integer","numeric"), verb
 
 # Check the input gene, return the revised gene, which can be used for FeaturePlot, Vlnplot ect.
 CheckGene <- function(InputGene, GeneLibrary, verbose = FALSE){
-  InputGenes <- trimws(unlist(strsplit(InputGene,split = "\n")))
+  # split by any whitespace (space, tab, newline), comma or semicolon
+  InputGenes <- trimws(unlist(strsplit(InputGene, split = "[[:space:],;]+")))
   InputGenes <- InputGenes[InputGenes != ""]
   revised.genes <- sapply(InputGenes, FUN = function(x)ReviseGene(x, GeneLibrary = GeneLibrary))
   revised.genes <- unique(unname(revised.genes[!is.na(revised.genes)]))
@@ -902,17 +903,34 @@ check_data <- function(data, key_paramaters = c('reduction_options', 'cluster_op
   zero_length_parameters <- names(data)[unname(unlist(lapply(data, function(x){length(x) == 0})))]
   zero_length_parameters <- zero_length_parameters[zero_length_parameters %in% key_paramaters]
   if (length(zero_length_parameters) != 0) {
-    showModal(modalDialog(
-      title = tagList(icon("triangle-exclamation"), "Warnning"),
-      tags$div(
-        tags$p(paste0("Key parameters found with zero length: ", paste0(zero_length_parameters, collapse = ', '), '.')),
-        tags$small(style = "color: #6c757d;", "Related functions will not work properly!")
-      ),
-      easyClose = TRUE,
-      footer = modalButton("Continue"),
-      size = "m"
-     )
-    )
+    # give a specific, actionable message when the object has no qualifying dimensionality reduction
+    if ('reduction_options' %in% zero_length_parameters) {
+      reduction_keywords <- getOption("SeuratExplorerReductionKeyWords", default = c("umap", "tsne"))
+      showModal(modalDialog(
+        title = tagList(icon("triangle-exclamation"), "No Dimensionality Reduction Found"),
+        tags$div(
+          tags$p("This Seurat object has no dimensionality reduction matching the keywords:"),
+          tags$pre(paste(reduction_keywords, collapse = ", ")),
+          tags$p("Dim Reduction Plot, Feature Plot and Rename Clusters will not work. Please provide a Seurat object with reductions (e.g. 'umap', 'tsne', 'pca'), or adjust the 'ReductionKeyWords' argument of launchSeuratExplorer() to match your data.")
+        ),
+        easyClose = TRUE,
+        footer = modalButton("OK"),
+        size = "m"
+      ))
+      zero_length_parameters <- setdiff(zero_length_parameters, 'reduction_options')
+    }
+    if (length(zero_length_parameters) != 0) {
+      showModal(modalDialog(
+        title = tagList(icon("triangle-exclamation"), "Warning"),
+        tags$div(
+          tags$p(paste0("Key parameters found with zero length: ", paste0(zero_length_parameters, collapse = ', '), '.')),
+          tags$small(style = "color: #6c757d;", "Related functions will not work properly!")
+        ),
+        easyClose = TRUE,
+        footer = modalButton("Continue"),
+        size = "m"
+      ))
+    }
   }
 }
 
@@ -937,6 +955,18 @@ check_genes_error <- "None of the input genes can be found!"
 # for plot features related functions when none of the input features can be recognized
 empty_plot <- ggplot2::ggplot() +
   ggplot2::annotate('text', x = 0, y = 0, label = 'Please input correct features!\n Unrecognized features will be removed automatically.\n You can check the features in "Search Features" page.\n Or at least select one cluster.', color = 'darkgrey', size = 6)  +
+  ggplot2::theme_bw() +
+  ggplot2::geom_blank() +
+  ggplot2::theme(axis.title = ggplot2::element_blank(),
+                 axis.text = ggplot2::element_blank(),
+                 axis.ticks = ggplot2::element_blank())
+
+
+# for dimension-reduction related plots when the Seurat object has no reductions matching the keywords
+empty_plot_no_reduction <- ggplot2::ggplot() +
+  ggplot2::annotate('text', x = 0, y = 0,
+                    label = 'No dimensionality reduction found!\nThis Seurat object has no reduction matching the configured keywords.\nPlease use an object with "umap" / "tsne" / "pca" reductions,\nor adjust the ReductionKeyWords argument of launchSeuratExplorer().',
+                    color = 'darkgrey', size = 5) +
   ggplot2::theme_bw() +
   ggplot2::geom_blank() +
   ggplot2::theme(axis.title = ggplot2::element_blank(),
