@@ -68,7 +68,7 @@ Install the latest version from github - ***Recommended***:
 
 ``` r
 if(!require(devtools)){install.packages("devtools")}
-install_github("fentouxungui/SeuratExplorer", dependencies = TRUE)
+devtools::install_github("fentouxungui/SeuratExplorer", dependencies = TRUE)
 ```
 
 Or install from CRAN:
@@ -922,12 +922,12 @@ SeuratExplorer is built upon excellent work by:
 
 ## Session Info
 
-    #> R version 4.4.3 (2025-02-28 ucrt)
+    #> R version 4.5.3 (2026-03-11 ucrt)
     #> Platform: x86_64-w64-mingw32/x64
     #> Running under: Windows 11 x64 (build 26200)
     #> 
     #> Matrix products: default
-    #> 
+    #>   LAPACK version 3.12.1
     #> 
     #> locale:
     #> [1] LC_COLLATE=Chinese (Simplified)_China.utf8 
@@ -943,7 +943,7 @@ SeuratExplorer is built upon excellent work by:
     #> [1] stats     graphics  grDevices utils     datasets  methods   base     
     #> 
     #> loaded via a namespace (and not attached):
-    #>  [1] compiler_4.4.3    fastmap_1.2.0     cli_3.6.5         tools_4.4.3      
-    #>  [5] htmltools_0.5.9   otel_0.2.0        rstudioapi_0.17.1 yaml_2.3.12      
-    #>  [9] rmarkdown_2.30    knitr_1.51        xfun_0.55         digest_0.6.39    
-    #> [13] rlang_1.1.6       evaluate_1.0.5
+    #>  [1] compiler_4.5.3    fastmap_1.2.0     cli_3.6.6         tools_4.5.3      
+    #>  [5] htmltools_0.5.9   otel_0.2.0        rstudioapi_0.19.0 yaml_2.3.12      
+    #>  [9] rmarkdown_2.32    knitr_1.52        xfun_0.60         digest_0.6.39    
+    #> [13] rlang_1.3.0       evaluate_1.0.5
