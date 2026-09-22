@@ -16,9 +16,6 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
-      # 明确告知 pak 使用的 Bioconductor 版本，R 4.5.x 对应 Bioconductor 3.21
-      R_BIOC_VERSION: '3.21'
-      # 允许 Suggests 中的包缺失，避免 R CMD check 因找不到 Bioc 包而失败
       _R_CHECK_FORCE_SUGGESTS_: false
 
     steps:
@@ -42,31 +39,28 @@ jobs:
             libgdal-dev libgeos-dev libproj-dev \
             libgsl-dev libhdf5-dev
 
-      # 第一步：只让 pak 解析 CRAN 上的工具包，完全不触碰 Bioconductor 包
-      - name: Set up R dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          dependencies: '"hard"'
-          extra-packages: |
-            any::rcmdcheck
-            any::BiocManager
-          needs: check
-
-      # 第二步：用 BiocManager 手动安装 Bioconductor 包，绕开 pak 的解析
-      - name: Install Bioconductor dependencies
+      # 关键修改：用 remotes + BiocManager 手动安装依赖，完全绕过 pak
+      - name: Install R dependencies
         run: |
+          install.packages(c("remotes", "BiocManager", "rcmdcheck"))
           BiocManager::install(
             c("ComplexHeatmap", "MAST", "limma", "DESeq2"),
-            ask = FALSE,
-            update = FALSE
+            ask = FALSE, update = FALSE
+          )
+          remotes::install_deps(
+            dependencies = TRUE,
+            repos = BiocManager::repositories()
           )
         shell: Rscript {0}
 
       - name: Check Package
-        uses: r-lib/actions/check-r-package@v2
-        with:
-          args: 'c("--no-manual", "--as-cran")'
-          error-on: '"error"'
+        run: |
+          rcmdcheck::rcmdcheck(
+            args = c("--no-manual", "--as-cran"),
+            error_on = "error",
+            check_dir = "check"
+          )
+        shell: Rscript {0}
 
       - name: Upload check results
         if: failure()
