@@ -39,15 +39,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgdal-dev libgeos-dev libproj-dev libgsl-dev libhdf5-dev
 
-      - name: Set up R dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: |
-            any::rcmdcheck
-            any::BiocManager
-          needs: check
-        env:
-          R_BIOC_VERSION: '3.21'
+      - name: Install Bioconductor dependencies
+        run: |
+          BiocManager::install(c("ComplexHeatmap", "MAST", "limma", "DESeq2"), 
+                               ask = FALSE, 
+                               update = FALSE)
+        shell: Rscript {0}
 
       - name: Check Package
         uses: r-lib/actions/check-r-package@v2
