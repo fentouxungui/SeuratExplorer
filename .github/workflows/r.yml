@@ -45,10 +45,9 @@ jobs:
           extra-packages: |
             any::rcmdcheck
             any::BiocManager
-            bioc::MAST
-            bioc::limma
-            bioc::DESeq2
           needs: check
+        env:
+          R_BIOC_VERSION: '3.21'
 
       - name: Check Package
         uses: r-lib/actions/check-r-package@v2
