@@ -37,7 +37,8 @@ jobs:
           sudo apt-get install -y \
             libcurl4-openssl-dev libssl-dev libxml2-dev \
             libgdal-dev libgeos-dev libproj-dev \
-            libgsl-dev libhdf5-dev
+            libgsl-dev libhdf5-dev \
+            libglpk-dev
 
       # 关键修改：用 remotes + BiocManager 手动安装依赖，完全绕过 pak
       - name: Install R dependencies
