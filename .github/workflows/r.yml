@@ -11,39 +11,54 @@ permissions:
 
 jobs:
   R-CMD-check:
-    # 推薦在 Linux (Ubuntu) 上運行，能最大化利用 RSPM 二進制快取，大幅縮短構建時間
     runs-on: ubuntu-latest
-    
+
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      # 明确告知 pak 使用的 Bioconductor 版本，R 4.5.x 对应 Bioconductor 3.21
+      R_BIOC_VERSION: '3.21'
+      # 允许 Suggests 中的包缺失，避免 R CMD check 因找不到 Bioc 包而失败
+      _R_CHECK_FORCE_SUGGESTS_: false
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up HTML/Pandoc (文檔構建必需)
+      - name: Set up HTML/Pandoc
         uses: r-lib/actions/setup-pandoc@v2
 
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:
-          # 關鍵修改：Seurat V5 要求 R >= 4.1.0，推薦直接使用最新的 release 版本
           r-version: 'release'
-          # 啟用 RSPM 以直接下載編譯好的 Linux 二進制生信包，避免從源碼編譯幾小時
           use-public-rspm: true
 
       - name: Install System Dependencies
-        # 許多生信包（如 Seurat 依賴的 sf/gsl/hdf5 等）需要 Ubuntu 系統庫
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgdal-dev libgeos-dev libproj-dev libgsl-dev libhdf5-dev
+          sudo apt-get install -y \
+            libcurl4-openssl-dev libssl-dev libxml2-dev \
+            libgdal-dev libgeos-dev libproj-dev \
+            libgsl-dev libhdf5-dev
 
+      # 第一步：只让 pak 解析 CRAN 上的工具包，完全不触碰 Bioconductor 包
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::rcmdcheck
+            any::BiocManager
+          needs: check
+
+      # 第二步：用 BiocManager 手动安装 Bioconductor 包，绕开 pak 的解析
       - name: Install Bioconductor dependencies
         run: |
-          BiocManager::install(c("ComplexHeatmap", "MAST", "limma", "DESeq2"), 
-                               ask = FALSE, 
-                               update = FALSE)
+          BiocManager::install(
+            c("ComplexHeatmap", "MAST", "limma", "DESeq2"),
+            ask = FALSE,
+            update = FALSE
+          )
         shell: Rscript {0}
 
       - name: Check Package
@@ -52,10 +67,9 @@ jobs:
           args: 'c("--no-manual", "--as-cran")'
           error-on: '"error"'
 
-      - name: Upload check results (如果失敗則上傳日誌)
+      - name: Upload check results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu-r-release-results
           path: check
-
