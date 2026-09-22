@@ -45,7 +45,12 @@ jobs:
           extra-packages: |
             any::rcmdcheck
             any::BiocManager
-          # 自動讀取 DESCRIPTION 文件中的所有依賴（包括 Seurat, ggplot2 等）並安裝
+            bioc::ComplexHeatmap
+            bioc::MAST
+            bioc::limma
+            bioc::DESeq2
+          # 關鍵修改：讓 extra-packages 覆蓋 DESCRIPTION 中的模糊聲明
+          # 幫助 pak 繞過解析錯誤
           needs: check
 
       - name: Check Package
