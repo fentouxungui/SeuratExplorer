@@ -10,7 +10,6 @@ URL: https://CRAN.R-project.org/package=SeuratExplorer, https://github.com/fento
 BugReports: https://github.com/fentouxungui/SeuratExplorer/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Imports:
     utils,
     tools,
@@ -53,3 +52,4 @@ Remotes:
     bioc::release/limma,
     bioc::release/DESeq2
 LazyData: true
+Config/roxygen2/version: 8.1.0

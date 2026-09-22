@@ -1450,8 +1450,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   observeEvent(input$AveragedHeatmapClusterResolution, ({
-    if(verbose){message("SeuratExplorer: updateCollapse for AveragedcollapseHeatmap...")}
-    shinyBS::updateCollapse(session, "AveragedcollapseHeatmap", open = "0")
+    if(verbose){message("SeuratExplorer: updateCollapse for collapseAveragedHeatmap...")}
+    shinyBS::updateCollapse(session, "collapseAveragedHeatmap", open = "0")
   }))
 
   # Store the current plot dimensions

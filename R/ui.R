@@ -420,7 +420,7 @@ explorer_body_ui <- function(tab_list){
                                           icon_name = "layer-group", color = "#10b981",
                                           withSpinner(uiOutput("AveragedHeatmapClusterResolution.UI"), proxy.height = "10px"),
                                           withSpinner(uiOutput("AveragedHeatmapIdentsSelected.UI"), proxy.height = "10px"),
-                                          bsCollapse(id = "collapseHeatmap", open = "0",
+                                          bsCollapse(id = "collapseAveragedHeatmap", open = "0",
                                                             bsCollapsePanel(title = "Change Cluster Order",
                                                                                      withSpinner(uiOutput("AveragedHeatmapClusterOrder.UI"), proxy.height = "10px"),
                                                                                      style = "info", value = "0")),
