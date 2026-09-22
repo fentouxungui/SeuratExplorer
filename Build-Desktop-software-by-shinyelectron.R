@@ -69,7 +69,7 @@ window:
   height: 900
 
 menu:
-  help_url: "https://github.com/fentouxungui/SeuratExplorer"
+  help_url: "https://github.com/fentouxungui/SeuratExplorer/wiki"
 
 icons:
   win: "./icons/ico/emerald.ico"
@@ -92,6 +92,7 @@ dependencies:
     - DT
   r:
     local_packages:
+      - "D:/GitHub_Res/SeuratExplorer_0.1.9.tar.gz"
       - "D:/GitHub_Res/presto-1.1.0.tar.gz"
 updates:
   enabled: true

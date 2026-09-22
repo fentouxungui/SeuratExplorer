@@ -8,7 +8,11 @@ launchSeuratExplorer(
   verbose = FALSE,
   ReductionKeyWords = c("umap", "tsne", "pca"),
   SplitOptionMaxLevel = 12,
-  MaxInputFileSize = 20 * 1024^3
+  MaxInputFileSize = 20 * 1024^3,
+  DemoDataURL =
+    "https://raw.githubusercontent.com/fentouxungui/SeuratExplorerServer/refs/heads/main/inst/extdata/source-data/fly/Rds-file/G101_PC20res04.rds",
+  DemoDataCacheDir = NULL,
+  DemoDataMD5 = "e144cabc42684f037e60a603f74ed4f1"
 )
 }
 \arguments{
@@ -19,6 +23,15 @@ launchSeuratExplorer(
 \item{SplitOptionMaxLevel}{max level cutoff for prepare Split options}
 
 \item{MaxInputFileSize}{set the limited upload file size}
+
+\item{DemoDataURL}{URL of the demo Seurat object downloaded by the
+"Download and Run a demo data" button}
+
+\item{DemoDataCacheDir}{directory used to cache the downloaded demo data;
+if NULL, a per-user cache directory is used}
+
+\item{DemoDataMD5}{expected md5 checksum of the downloaded demo data;
+set to NULL to skip the integrity check}
 }
 \value{
 In-browser Shiny Application launch
