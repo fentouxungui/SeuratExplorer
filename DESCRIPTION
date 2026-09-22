@@ -15,6 +15,7 @@ Imports:
     tools,
     stats,
     methods,
+    curl,
     Seurat (>= 5.4.0),
     SeuratObject (>= 5.3.0),
     ggplot2 (>= 4.0.1),

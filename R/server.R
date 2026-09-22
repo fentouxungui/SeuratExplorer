@@ -157,42 +157,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   do.call(tagList, c(output_dimension_reduction, output_resolution, output_assay))
 
   ############################# Dimension Reduction Plot
-  # Track resolution changes and whether order is ready
-  dimplot_resolution_state <- reactiveValues(
-    ready = FALSE,
-    current_resolution = NULL
-  )
-
-  # Update ready state when DimClusterOrder is ready
-  observe({
-    req(input$DimClusterResolution, input$DimClusterOrder)
-    req(input$DimClusterResolution %in% colnames(data$obj@meta.data))
-    # Check if order matches current resolution
-    expected_levels <- levels(data$obj@meta.data[,input$DimClusterResolution])
-    actual_order <- if (!is.null(input$DimClusterOrder) && length(input$DimClusterOrder) > 0) {
-      input$DimClusterOrder
-    } else {
-      NULL
-    }
-
-    # Order is ready if it's not null and contains expected cluster names (in any order)
-    # One possibility is that the two clusters have identical cluster levels. Could this have any consequences?
-    if (!is.null(actual_order) && identical(sort(actual_order), sort(expected_levels))) {
-      if (is.null(dimplot_resolution_state$current_resolution) || dimplot_resolution_state$current_resolution != input$DimClusterResolution) {
-        dimplot_resolution_state$current_resolution <- input$DimClusterResolution
-        dimplot_resolution_state$ready <- TRUE
-        if(verbose){message("SeuratExplorer: DimClusterOrder is now ready for resolution: ", input$DimClusterResolution)}
-      }
-    }
-  })
-
 
   # define Cluster order
   output$DimClusterOrder.UI <- renderUI({
     req(input$DimClusterResolution %in% colnames(data$obj@meta.data))
     if(verbose){message("SeuratExplorer: preparing DimClusterOrder.UI...")}
-    # Mark as not ready when UI is being rebuilt
-    dimplot_resolution_state$ready <- FALSE
     shinyjqui::orderInput(inputId = 'DimClusterOrder',
                           label = 'Drag to order:',
                           items = levels(data$obj@meta.data[,input$DimClusterResolution]),
@@ -226,19 +195,22 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }
   })
 
-  # Safe cluster order reactive - waits for order to be ready
+  # Safe cluster order reactive - use the user order only when it is valid for the
+  # current data and resolution, otherwise fall back to the current default levels
   DimClusterOrder.Safe <- reactive({
     req(input$DimClusterResolution)
-    req(dimplot_resolution_state$ready, "Waiting for cluster order to update...")
+    req(input$DimClusterResolution %in% colnames(data$obj@meta.data))
+    expected_levels <- levels(data$obj@meta.data[,input$DimClusterResolution])
 
-    if (!is.null(input$DimClusterOrder) && length(input$DimClusterOrder) > 0) {
+    if (!is.null(input$DimClusterOrder) && length(input$DimClusterOrder) > 0 &&
+        identical(sort(as.character(input$DimClusterOrder)), sort(as.character(expected_levels)))) {
       if(verbose){message("SeuratExplorer: DimClusterOrder.Safe using user order...")}
       return(input$DimClusterOrder)
     }
 
     # Fallback to default levels
     if(verbose){message("SeuratExplorer: DimClusterOrder.Safe using default levels...")}
-    levels(data$obj@meta.data[,input$DimClusterResolution])
+    expected_levels
   })
 
   # define Cluster choice for highlight
@@ -419,28 +391,19 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }
   })
 
-  # only render plot when the inputs are really changed
-  features_dimplot <- reactiveValues(features_current = NA, features_last = NA)
+  # refresh the parsed feature cache when the gene input or the loaded data changes
+  features_dimplot <- reactiveValues(features_current = NA)
 
-  observeEvent(input$FeatureGeneSymbol,{
+  observe({
+    input$FeatureGeneSymbol
     req(data$obj, input$FeatureAssay)
     features_input <- CheckGene(InputGene = input$FeatureGeneSymbol,
                                 GeneLibrary =  c(rownames(data$obj@assays[[input$FeatureAssay]]),
                                                  data$extra_qc_options))
-    if (!identical(sort(features_dimplot$features_current), sort(features_input))) {
-      features_dimplot$features_last <- features_dimplot$features_current
+    if (!identical(sort(isolate(features_dimplot$features_current)), sort(features_input))) {
       features_dimplot$features_current <- features_input
     }
   })
-
-  # though none errors show, very slow for Error in Seurat::FeaturePlot: None of the requested features were found: CD8A, CD4, SHANK3 in slot  data
-  # observe({
-  #   features_input <- CheckGene(InputGene = input$FeatureGeneSymbol, GeneLibrary =  c(rownames(data$obj@assays[[input$FeatureAssay]]), data$extra_qc_options))
-  #   if (!identical(sort(features_dimplot$features_current), sort(features_input))) {
-  #     features_dimplot$features_last <- features_dimplot$features_current
-  #     features_dimplot$features_current <- features_input
-  #   }
-  # })
 
   # Store the current plot dimensions
   featureplot_dims <- reactiveValues(width = 800, height = 720)
@@ -495,17 +458,41 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       p <- empty_plot # when all wrong input, show a blank pic.
     }else{
       cds <- data$obj
-      Seurat::Idents(cds) <- input$FeatureClusterResolution
-      Seurat::DefaultAssay(cds) <- input$FeatureAssay
+      feature_cluster <- input$FeatureClusterResolution
+      if (is.null(feature_cluster) || !(feature_cluster %in% colnames(cds@meta.data))) {
+        feature_cluster <- data$cluster_default
+      }
+      if (is.null(feature_cluster) || !(feature_cluster %in% colnames(cds@meta.data))) {
+        feature_cluster <- data$cluster_options[1]
+      }
+      Seurat::Idents(cds) <- feature_cluster
+
+      feature_assay <- input$FeatureAssay
+      if (is.null(feature_assay) || !(feature_assay %in% Seurat::Assays(cds))) {
+        feature_assay <- data$assay_default
+      }
+      if (is.null(feature_assay) || !(feature_assay %in% Seurat::Assays(cds))) {
+        feature_assay <- data$assays_options[1]
+      }
+      Seurat::DefaultAssay(cds) <- feature_assay
+
+      feature_reduction <- input$FeatureDimensionReduction
+      if (is.null(feature_reduction) || !(feature_reduction %in% data$reduction_options)) {
+        feature_reduction <- data$reduction_default
+      }
+      if (is.null(feature_reduction) || !(feature_reduction %in% data$reduction_options)) {
+        feature_reduction <- data$reduction_options[1]
+      }
+
       # check gene again, if all the input symbols not exist in the selected assay, specially case: when switch assay!
-      if(!any(features_dimplot$features_current %in% c(rownames(cds[[input$FeatureAssay]]),data$extra_qc_options))){
+      if(!any(features_dimplot$features_current %in% c(rownames(cds[[feature_assay]]),data$extra_qc_options))){
         p <- empty_plot
       }else{
         if(is.null(FeatureSplit.Revised())) { # not split
           p <- Seurat::FeaturePlot(cds,
                                    features = features_dimplot$features_current,
                                    pt.size = input$FeaturePointSize,
-                                   reduction = input$FeatureDimensionReduction,
+                                   reduction = feature_reduction,
                                    slot = input$FeatureSlot,
                                    cols = c(input$FeaturePlotLowestExprColor,input$FeaturePlotHighestExprColor),
                                    label = input$FeatureShowLabel,
@@ -518,7 +505,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           p <- Seurat::FeaturePlot(cds,
                                    features = features_dimplot$features_current,
                                    pt.size = input$FeaturePointSize,
-                                   reduction = input$FeatureDimensionReduction,
+                                   reduction = feature_reduction,
                                    slot = input$FeatureSlot,
                                    cols =  c(input$FeaturePlotLowestExprColor,input$FeaturePlotHighestExprColor),
                                    split.by = FeatureSplit.Revised(),
@@ -566,34 +553,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     })
 
   ################################ Violin Plot
-  # Track ClustersSelected changes and whether order is ready
-  vlnplot_clustersselected_state <- reactiveValues(
-    ready = FALSE,
-    current_ClustersSelected = NULL
-  )
-
-  # Update ready state when VlnClusterOrder is ready
-  observe({
-    req(input$VlnIdentsSelected, input$VlnClusterOrder)
-    # Check if order matches current clusters selected
-    actual_order <- if (!is.null(input$VlnClusterOrder) && length(input$VlnClusterOrder) > 0) {
-      input$VlnClusterOrder
-    } else {
-      NULL
-    }
-
-    # Order is ready if it's not null and contains expected cluster names (in any order)
-    # One possibility is that the two clusters have identical cluster levels. Could this have any consequences?
-    if (!is.null(actual_order) &&
-        !is.null(input$VlnIdentsSelected) &&
-        identical(sort(input$VlnIdentsSelected),sort(actual_order))) {
-      if (is.null(vlnplot_clustersselected_state$VlnIdentsSelected) || vlnplot_clustersselected_state$current_ClustersSelected != input$VlnIdentsSelected) {
-        vlnplot_clustersselected_state$current_ClustersSelected <- input$VlnIdentsSelected
-        vlnplot_clustersselected_state$ready <- TRUE
-        if(verbose){message("SeuratExplorer: VlnClusterOrder is now ready for clusters selected: ", input$VlnIdentsSelected)}
-      }
-    }
-  })
 
   # define slot Choice UI
   output$VlnAssaySlots.UI <- renderUI({
@@ -607,16 +566,16 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                 selected = ifelse('data' %in% slot_choices, 'data', slot_choices[1]))
   })
 
-  # only render plot when the inputs are really changed
-  features_vlnplot <- reactiveValues(features_current = NA, features_last = NA)
+  # refresh the parsed feature cache when the gene input or the loaded data changes
+  features_vlnplot <- reactiveValues(features_current = NA)
 
-  observeEvent(input$VlnGeneSymbol,{
+  observe({
+    input$VlnGeneSymbol
     req(data$obj, input$VlnAssay)
     features_input <- CheckGene(InputGene = input$VlnGeneSymbol,
                                 GeneLibrary =  c(rownames(data$obj@assays[[input$VlnAssay]]),
                                                  data$extra_qc_options))
-    if (!identical(sort(features_vlnplot$features_current), sort(features_input))) {
-      features_vlnplot$features_last <- features_vlnplot$features_current
+    if (!identical(sort(isolate(features_vlnplot$features_current)), sort(features_input))) {
       features_vlnplot$features_current <- features_input
     }
   })
@@ -667,10 +626,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     shinyBS::updateCollapse(session, "collapseVlnplot", open = "0")
   })
 
-  # Safe cluster order reactive - waits for order to be ready
+  # Safe cluster order reactive - use the user order only when it matches the
+  # currently selected clusters, otherwise fall back to the selected clusters
   VlnClusterOrder.Safe <- reactive({
-    req(vlnplot_clustersselected_state$ready, "Waiting for input$VlnIdentsSelected to update...")
-    if (!is.null(input$VlnClusterOrder) && length(input$VlnClusterOrder) > 0) {
+    req(input$VlnIdentsSelected)
+    if (!is.null(input$VlnClusterOrder) && length(input$VlnClusterOrder) > 0 &&
+        identical(sort(as.character(input$VlnClusterOrder)), sort(as.character(input$VlnIdentsSelected)))) {
       if(verbose){message("SeuratExplorer: VlnClusterOrder.Safe using user order...")}
       return(input$VlnClusterOrder)
     }
@@ -805,27 +766,30 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   output$vlnplot <- renderPlot({
-    req(input$VlnSlot)
-    req(input$VlnClusterResolution %in% colnames(data$obj@meta.data))
-    req(all(input$VlnIdentsSelected %in% levels(data$obj@meta.data[,input$VlnClusterResolution])))
+    req(input$VlnSlot, data$obj)
+    vln_groups <- resolve_plot_inputs(data,
+                                      cluster = input$VlnClusterResolution,
+                                      assay = input$VlnAssay,
+                                      idents = input$VlnIdentsSelected,
+                                      order = VlnClusterOrder.Safe())
 
     if(verbose){message("SeuratExplorer: preparing vlnplot...")}
     if (any(is.na(features_vlnplot$features_current))) { # when NA value
       p <- empty_plot # when no symbol or wrong input, show a blank pic.
     }else{
       cds <- data$obj
-      SeuratObject::Idents(cds) <- isolate(input$VlnClusterResolution)
-      cds <- subset_Seurat(cds, idents = isolate(input$VlnIdentsSelected))
-      SeuratObject::Idents(cds) <- factor(SeuratObject::Idents(cds), levels = VlnClusterOrder.Safe())
+      SeuratObject::Idents(cds) <- vln_groups$cluster
+      cds <- subset_Seurat(cds, idents = vln_groups$idents)
+      SeuratObject::Idents(cds) <- factor(SeuratObject::Idents(cds), levels = vln_groups$order)
 
       # check gene again, if all the input symbols not exist in the selected assay, specially case: when switch assay!
-      if((!any(features_vlnplot$features_current %in% c(rownames(cds[[input$VlnAssay]]),data$extra_qc_options))) | is.null(VlnClusterOrder.Safe())){
+      if((!any(features_vlnplot$features_current %in% c(rownames(cds[[vln_groups$assay]]),data$extra_qc_options))) | is.null(vln_groups$order)){
         p <- empty_plot
       }else{
         if(length(features_vlnplot$features_current) == 1) { # only One Gene
           p <- Seurat::VlnPlot(cds,
                                features = features_vlnplot$features_current,
-                               assay = input$VlnAssay,
+                               assay = vln_groups$assay,
                                layer = input$VlnSlot,
                                split.by = VlnSplit.Revised(),
                                split.plot = input$VlnSplitPlot,
@@ -836,7 +800,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         }else{ # multiple genes
           p <- Seurat::VlnPlot(cds,
                                features = features_vlnplot$features_current,
-                               assay = input$VlnAssay,
+                               assay = vln_groups$assay,
                                layer = input$VlnSlot,
                                split.by = VlnSplit.Revised(),
                                split.plot = input$VlnSplitPlot,
@@ -893,44 +857,16 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     })
 
   ################################ Dot Plot
-  # Track ClustersSelected changes and whether order is ready
-  dotplot_clustersselectd_state <- reactiveValues(
-    ready = FALSE,
-    current_ClustersSelected = NULL
-  )
 
-  # Update ready state when DotClusterOrder is ready
+  # refresh the parsed feature cache when the gene input or the loaded data changes
+  features_dotplot <- reactiveValues(features_current = NA)
+
   observe({
-    req(input$DotIdentsSelected, input$DotClusterOrder)
-    # Check if order matches current clusters selected
-    actual_order <- if (!is.null(input$DotClusterOrder) && length(input$DotClusterOrder) > 0) {
-      input$DotClusterOrder
-    } else {
-      NULL
-    }
-
-    # Order is ready if it's not null and contains expected cluster names (in any order)
-    # One possibility is that the two clusters have identical cluster levels. Could this have any consequences?
-    if (!is.null(actual_order) &&
-        !is.null(input$DotIdentsSelected) &&
-        identical(sort(input$DotIdentsSelected),sort(actual_order))) {
-      if (is.null(dotplot_clustersselectd_state$DotIdentsSelected) || dotplot_clustersselectd_state$current_ClustersSelected != input$DotIdentsSelected) {
-        dotplot_clustersselectd_state$current_ClustersSelected <- input$DotIdentsSelected
-        dotplot_clustersselectd_state$ready <- TRUE
-        if(verbose){message("SeuratExplorer: DotClusterOrder is now ready for clusters selected: ", input$DotIdentsSelected)}
-      }
-    }
-  })
-
-  # only render plot when the inputs are really changed
-  features_dotplot <- reactiveValues(features_current = NA, features_last = NA)
-
-  observeEvent(input$DotGeneSymbol,{
+    input$DotGeneSymbol
     req(data$obj, input$DotAssay)
     features_input <- CheckGene(InputGene = input$DotGeneSymbol,
                                 GeneLibrary =  rownames(data$obj@assays[[input$DotAssay]]))
-    if (!identical(sort(features_dotplot$features_current), sort(features_input))) {
-      features_dotplot$features_last <- features_dotplot$features_current
+    if (!identical(sort(isolate(features_dotplot$features_current)), sort(features_input))) {
       features_dotplot$features_current <- features_input
     }
   })
@@ -1024,10 +960,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }
   })
 
-  # Safe cluster order reactive - waits for order to be ready
+  # Safe cluster order reactive - use the user order only when it matches the
+  # currently selected clusters, otherwise fall back to the selected clusters
   DotClusterOrder.Safe <- reactive({
-    req(dotplot_clustersselectd_state$ready, "Waiting for input$DotIdentsSelected to update...")
-    if (!is.null(input$DotClusterOrder) && length(input$DotClusterOrder) > 0) {
+    req(input$DotIdentsSelected)
+    if (!is.null(input$DotClusterOrder) && length(input$DotClusterOrder) > 0 &&
+        identical(sort(as.character(input$DotClusterOrder)), sort(as.character(input$DotIdentsSelected)))) {
       if(verbose){message("SeuratExplorer: DotClusterOrder.Safe using user order...")}
       return(input$DotClusterOrder)
     }
@@ -1073,13 +1011,15 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   output$dotplot <- renderPlot({
-    req(input$DotClusterResolution %in% colnames(data$obj@meta.data))
-    req(all(input$DotIdentsSelected %in% levels(data$obj@meta.data[,input$DotClusterResolution])))
-    req(input$DotAssay)
-    req(all(DotClusterOrder.Safe() %in% levels(data$obj@meta.data[,input$DotClusterResolution])))
+    req(data$obj)
+    dot_groups <- resolve_plot_inputs(data,
+                                      cluster = input$DotClusterResolution,
+                                      assay = input$DotAssay,
+                                      idents = input$DotIdentsSelected,
+                                      order = DotClusterOrder.Safe())
 
     if(verbose){message("SeuratExplorer: preparing dotplot...")}
-    if (any(is.na(features_dotplot$features_current)) | is.null(DotClusterOrder.Safe())) { # NA
+    if (any(is.na(features_dotplot$features_current)) | is.null(dot_groups$order)) { # NA
       p <- empty_plot # when no symbol or wrong input, show a blank pic.
     }else{
       cds <- data$obj
@@ -1092,17 +1032,17 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         keep_cells <- colnames(cds)[cds@meta.data[, col] %in% vals]
         if (length(keep_cells) > 0) cds <- subset_Seurat(cds, cells = keep_cells)
       }
-      DefaultAssay(cds) <- input$DotAssay
-      Idents(cds) <- isolate(input$DotClusterResolution)
-      cds <- subset_Seurat(cds, idents = DotClusterOrder.Safe())
-      Idents(cds) <- factor(Idents(cds), levels = DotClusterOrder.Safe())
-      if(!any(features_dotplot$features_current %in% rownames(cds[[input$DotAssay]]))){
+      DefaultAssay(cds) <- dot_groups$assay
+      Idents(cds) <- dot_groups$cluster
+      cds <- subset_Seurat(cds, idents = dot_groups$order)
+      Idents(cds) <- factor(Idents(cds), levels = dot_groups$order)
+      if(!any(features_dotplot$features_current %in% rownames(cds[[dot_groups$assay]]))){
         p <- empty_plot
       }else{
         if (is.null(DotSplit.Revised())) {
           p <- Seurat::DotPlot(cds,
                                features = features_dotplot$features_current,
-                               idents = isolate(input$DotIdentsSelected),
+                               idents = dot_groups$idents,
                                split.by = DotSplit.Revised(),
                                cluster.idents = input$DotClusterIdents,
                                dot.scale = input$DotDotScale,
@@ -1111,8 +1051,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           split.levels.length <- length(levels(cds@meta.data[,DotSplit.Revised()]))
           p <- Seurat::DotPlot(cds,
                                features = features_dotplot$features_current,
-                               group.by = isolate(input$DotClusterResolution),
-                               idents = isolate(input$DotIdentsSelected),
+                               group.by = dot_groups$cluster,
+                               idents = dot_groups$idents,
                                split.by = DotSplit.Revised(),
                                cluster.idents = input$DotClusterIdents,
                                dot.scale = input$DotDotScale,
@@ -1163,34 +1103,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # when split by is selected, change cluster order not work!
 
   ################################ Heatmap Cell Level
-  # Track ClustersSelected changes and whether order is ready
-  heatmap_clustersselectd_state <- reactiveValues(
-    ready = FALSE,
-    current_ClustersSelected = NULL
-  )
-
-  # Update ready state when HeatmapClusterOrder is ready
-  observe({
-    req(input$HeatmapIdentsSelected, input$HeatmapClusterOrder)
-    # Check if order matches current clusters selected
-    actual_order <- if (!is.null(input$HeatmapClusterOrder) && length(input$HeatmapClusterOrder) > 0) {
-      input$HeatmapClusterOrder
-    } else {
-      NULL
-    }
-
-    # Order is ready if it's not null and contains expected cluster names (in any order)
-    # One possibility is that the two clusters have identical cluster levels. Could this have any consequences?
-    if (!is.null(actual_order) &&
-        !is.null(input$HeatmapIdentsSelected) &&
-        identical(sort(input$HeatmapIdentsSelected),sort(actual_order))) {
-      if (is.null(heatmap_clustersselectd_state$HeatmapIdentsSelected) || heatmap_clustersselectd_state$current_ClustersSelected != input$HeatmapIdentsSelected) {
-        heatmap_clustersselectd_state$current_ClustersSelected <- input$HeatmapIdentsSelected
-        heatmap_clustersselectd_state$ready <- TRUE
-        if(verbose){message("SeuratExplorer: HeatmapClusterOrder is now ready for clusters selected: ", input$HeatmapIdentsSelected)}
-      }
-    }
-  })
 
   # inform extra qc options for Gene symbol input
   output$Heatmaphints.UI <- renderUI({
@@ -1212,15 +1124,15 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
 
-  # only render plot when the inputs are really changed
-  features_heatmap <- reactiveValues(features_current = NA, features_last = NA)
+  # refresh the parsed feature cache when the gene input or the loaded data changes
+  features_heatmap <- reactiveValues(features_current = NA)
 
-  observeEvent(input$HeatmapGeneSymbol,{
+  observe({
+    input$HeatmapGeneSymbol
     req(data$obj, input$HeatmapAssay)
     features_input <- CheckGene(InputGene = input$HeatmapGeneSymbol,
                                 GeneLibrary =  rownames(data$obj@assays[[input$HeatmapAssay]]))
-    if (!identical(sort(features_heatmap$features_current), sort(features_input))) {
-      features_heatmap$features_last <- features_heatmap$features_current
+    if (!identical(sort(isolate(features_heatmap$features_current)), sort(features_input))) {
       features_heatmap$features_current <- features_input
     }
   })
@@ -1254,10 +1166,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     shinyBS::updateCollapse(session, "collapseHeatmap", open = "0")
   }))
 
-  # Safe cluster order reactive - waits for order to be ready
+  # Safe cluster order reactive - use the user order only when it matches the
+  # currently selected clusters, otherwise fall back to the selected clusters
   HeatmapClusterOrder.Safe <- reactive({
-    req(heatmap_clustersselectd_state$ready, "Waiting for input$HeatmapIdentsSelected to update...")
-    if (!is.null(input$HeatmapClusterOrder) && length(input$HeatmapClusterOrder) > 0) {
+    req(input$HeatmapIdentsSelected)
+    if (!is.null(input$HeatmapClusterOrder) && length(input$HeatmapClusterOrder) > 0 &&
+        identical(sort(as.character(input$HeatmapClusterOrder)), sort(as.character(input$HeatmapIdentsSelected)))) {
       if(verbose){message("SeuratExplorer: HeatmapClusterOrder.Safe using user order...")}
       return(input$HeatmapClusterOrder)
     }
@@ -1301,21 +1215,23 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   output$heatmap <- renderPlot({
-    req(input$HeatmapClusterResolution %in% colnames(data$obj@meta.data))
-    req(input$HeatmapSlot)
-    req(all(HeatmapClusterOrder.Safe() %in% levels(data$obj@meta.data[,input$HeatmapClusterResolution])))
-    req(input$HeatmapAssay)
+    req(input$HeatmapSlot, data$obj)
+    heatmap_groups <- resolve_plot_inputs(data,
+                                          cluster = input$HeatmapClusterResolution,
+                                          assay = input$HeatmapAssay,
+                                          idents = input$HeatmapIdentsSelected,
+                                          order = HeatmapClusterOrder.Safe())
 
     if(verbose){message("SeuratExplorer: preparing heatmap...")}
-    if (any(is.na(features_heatmap$features_current)) | is.null(HeatmapClusterOrder.Safe())) { # NA
+    if (any(is.na(features_heatmap$features_current)) | is.null(heatmap_groups$order)) { # NA
       p <- empty_plot # when no symbol or wrong input, show a blank pic.
     }else{
       cds <- data$obj
-      Idents(cds) <- isolate(input$HeatmapClusterResolution)
-      cds <- subset_Seurat(cds, idents = HeatmapClusterOrder.Safe())
-      Idents(cds) <- factor(Idents(cds), levels = HeatmapClusterOrder.Safe())
+      Idents(cds) <- heatmap_groups$cluster
+      cds <- subset_Seurat(cds, idents = heatmap_groups$order)
+      Idents(cds) <- factor(Idents(cds), levels = heatmap_groups$order)
       # check gene again, if all the input symbols not exist in the selected assay, specially case: when switch assay!
-      if(!any(features_heatmap$features_current %in% rownames(cds[[input$HeatmapAssay]]))){
+      if(!any(features_heatmap$features_current %in% rownames(cds[[heatmap_groups$assay]]))){
         p <- empty_plot
       }else{
         if (!all(features_heatmap$features_current %in% Seurat::VariableFeatures(cds)) &
@@ -1327,7 +1243,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         }
         p <- Seurat::DoHeatmap(object = cds,
                                features = features_heatmap$features_current,
-                               assay = input$HeatmapAssay,
+                               assay = heatmap_groups$assay,
                                slot = input$HeatmapSlot,
                                size = input$HeatmapTextSize,
                                hjust = input$HeatmapTextHjust,
@@ -1376,34 +1292,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     })
 
   ################################ Group Averaged Heatmap
-  # Track ClustersSelected changes and whether order is ready
-  averagedheatmap_clustersselectd_state <- reactiveValues(
-    ready = FALSE,
-    current_ClustersSelected = NULL
-  )
-
-  # Update ready state when AveragedHeatmapClusterOrder is ready
-  observe({
-    req(input$AveragedHeatmapIdentsSelected, input$AveragedHeatmapClusterOrder)
-    # Check if order matches current clusters selected
-    actual_order <- if (!is.null(input$AveragedHeatmapClusterOrder) && length(input$AveragedHeatmapClusterOrder) > 0) {
-      input$AveragedHeatmapClusterOrder
-    } else {
-      NULL
-    }
-
-    # Order is ready if it's not null and contains expected cluster names (in any order)
-    # One possibility is that the two clusters have identical cluster levels. Could this have any consequences?
-    if (!is.null(actual_order) &&
-        !is.null(input$AveragedHeatmapIdentsSelected) &&
-        identical(sort(input$AveragedHeatmapIdentsSelected),sort(actual_order))) {
-      if (is.null(averagedheatmap_clustersselectd_state$AveragedHeatmapIdentsSelected) || averagedheatmap_clustersselectd_state$current_ClustersSelected != input$AveragedHeatmapIdentsSelected) {
-        averagedheatmap_clustersselectd_state$current_ClustersSelected <- input$AveragedHeatmapIdentsSelected
-        averagedheatmap_clustersselectd_state$ready <- TRUE
-        if(verbose){message("SeuratExplorer: AveragedHeatmapClusterOrder is now ready for clusters selected: ", input$AveragedHeatmapIdentsSelected)}
-      }
-    }
-  })
 
   output$AveragedHeatmaphints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing AveragedHeatmaphints.UI...")}
@@ -1411,16 +1299,15 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
-  # only render plot when the inputs are really changed
-  features_heatmap_averaged <- reactiveValues(features_current = NA, features_last = NA)
+  # refresh the parsed feature cache when the gene input or the loaded data changes
+  features_heatmap_averaged <- reactiveValues(features_current = NA)
 
-
-  observeEvent(input$AveragedHeatmapGeneSymbol,{
+  observe({
+    input$AveragedHeatmapGeneSymbol
     req(data$obj, input$AveragedHeatmapAssay)
     features_input <- CheckGene(InputGene = input$AveragedHeatmapGeneSymbol,
                                 GeneLibrary = rownames(data$obj@assays[[input$AveragedHeatmapAssay]]))
-    if (!identical(sort(features_heatmap_averaged$features_current), sort(features_input))) {
-      features_heatmap_averaged$features_last <- features_heatmap_averaged$features_current
+    if (!identical(sort(isolate(features_heatmap_averaged$features_current)), sort(features_input))) {
       features_heatmap_averaged$features_current <- features_input
     }
   })
@@ -1469,10 +1356,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
 
-  # Safe cluster order reactive - waits for order to be ready
+  # Safe cluster order reactive - use the user order only when it matches the
+  # currently selected clusters, otherwise fall back to the selected clusters
   AveragedHeatmapClusterOrder.Safe <- reactive({
-    req(averagedheatmap_clustersselectd_state$ready, "Waiting for input$AveragedHeatmapIdentsSelected to update...")
-    if (!is.null(input$AveragedHeatmapClusterOrder) && length(input$AveragedHeatmapClusterOrder) > 0) {
+    req(input$AveragedHeatmapIdentsSelected)
+    if (!is.null(input$AveragedHeatmapClusterOrder) && length(input$AveragedHeatmapClusterOrder) > 0 &&
+        identical(sort(as.character(input$AveragedHeatmapClusterOrder)), sort(as.character(input$AveragedHeatmapIdentsSelected)))) {
       if(verbose){message("SeuratExplorer: AveragedHeatmapClusterOrder.Safe using user order...")}
       return(input$AveragedHeatmapClusterOrder)
     }
@@ -1502,28 +1391,32 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   output$averagedheatmap <- renderPlot({
-    req(input$AveragedHeatmapClusterResolution %in% colnames(data$obj@meta.data))
-    req(all(AveragedHeatmapClusterOrder.Safe() %in% levels(data$obj@meta.data[,input$AveragedHeatmapClusterResolution])))
+    req(data$obj)
+    averaged_groups <- resolve_plot_inputs(data,
+                                           cluster = input$AveragedHeatmapClusterResolution,
+                                           assay = input$AveragedHeatmapAssay,
+                                           idents = input$AveragedHeatmapIdentsSelected,
+                                           order = AveragedHeatmapClusterOrder.Safe())
 
     if(verbose){message("SeuratExplorer: preparing averagedheatmap...")}
-    if (any(is.na(features_heatmap_averaged$features_current)) | is.null(input$AveragedHeatmapClusterOrder)) { # NA
+    if (any(is.na(features_heatmap_averaged$features_current)) | is.null(averaged_groups$order)) { # NA
       p <- empty_plot # when no symbol or wrong input, show a blank pic.
     }else{
       cds <- data$obj
-      Seurat::DefaultAssay(cds) <- input$AveragedHeatmapAssay
-      Idents(cds) <- isolate(input$AveragedHeatmapClusterResolution)
-      cds <- subset_Seurat(cds, idents = AveragedHeatmapClusterOrder.Safe())
-      Idents(cds) <- factor(Idents(cds), levels = AveragedHeatmapClusterOrder.Safe())
+      Seurat::DefaultAssay(cds) <- averaged_groups$assay
+      Idents(cds) <- averaged_groups$cluster
+      cds <- subset_Seurat(cds, idents = averaged_groups$order)
+      Idents(cds) <- factor(Idents(cds), levels = averaged_groups$order)
       # check gene again, if all the input symbols not exist in the selected assay, specially case: when switch assay!
-      if(!any(features_heatmap_averaged$features_current %in% rownames(cds[[input$AveragedHeatmapAssay]]))){
+      if(!any(features_heatmap_averaged$features_current %in% rownames(cds[[averaged_groups$assay]]))){
         p <- empty_plot
       }else{
         p <- suppressMessages(AverageHeatmap(object = cds,
                                              markerGene = features_heatmap_averaged$features_current,
-                                             group.by = isolate(input$AveragedHeatmapClusterResolution),
+                                             group.by = averaged_groups$cluster,
                                              feature.fontsize = input$AveragedHeatmapFeatureTextSize,
                                              cluster.fontsize = input$AveragedHeatmapClusterTextSize,
-                                             assays = input$AveragedHeatmapAssay,
+                                             assays = averaged_groups$assay,
                                              column_names_rot = input$AveragedHeatmapClusterTextRatateAngle,
                                              cluster_columns = input$AveragedHeatmapClusterClusters,
                                              cluster_rows = input$AveragedHeatmapClusterFeatures))
@@ -1564,34 +1457,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # this error not show in UI
 
   ################################ Ridge Plot
-  # Track ClustersSelected changes and whether order is ready
-  ridgeplot_clustersselectd_state <- reactiveValues(
-    ready = FALSE,
-    current_ClustersSelected = NULL
-  )
-
-  # Update ready state when RidgeplotClusterOrder is ready
-  observe({
-    req(input$RidgeplotIdentsSelected, input$RidgeplotClusterOrder)
-    # Check if order matches current clusters selected
-    actual_order <- if (!is.null(input$RidgeplotClusterOrder) && length(input$RidgeplotClusterOrder) > 0) {
-      input$RidgeplotClusterOrder
-    } else {
-      NULL
-    }
-
-    # Order is ready if it's not null and contains expected cluster names (in any order)
-    # One possibility is that the two clusters have identical cluster levels. Could this have any consequences?
-    if (!is.null(actual_order) &&
-        !is.null(input$RidgeplotIdentsSelected) &&
-        identical(sort(input$RidgeplotIdentsSelected),sort(actual_order))) {
-      if (is.null(ridgeplot_clustersselectd_state$RidgeplotIdentsSelected) || ridgeplot_clustersselectd_state$current_ClustersSelected != input$RidgeplotIdentsSelected) {
-        ridgeplot_clustersselectd_state$current_ClustersSelected <- input$RidgeplotIdentsSelected
-        ridgeplot_clustersselectd_state$ready <- TRUE
-        if(verbose){message("SeuratExplorer: RidgeplotClusterOrder is now ready for clusters selected: ", input$RidgeplotIdentsSelected)}
-      }
-    }
-  })
 
   output$Ridgeplothints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Ridgeplothints.UI...")}
@@ -1621,16 +1486,16 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                 selected = ifelse('data' %in% slot_choices, 'data', slot_choices[1])) # default use data slot
   })
 
-  # only render plot when the inputs are really changed
-  features_ridgeplot <- reactiveValues(features_current = NA, features_last = NA)
+  # refresh the parsed feature cache when the gene input or the loaded data changes
+  features_ridgeplot <- reactiveValues(features_current = NA)
 
-  observeEvent(input$RidgeplotGeneSymbol,{
+  observe({
+    input$RidgeplotGeneSymbol
     req(data$obj, input$RidgeplotAssay)
     features_input <- CheckGene(InputGene = input$RidgeplotGeneSymbol,
                                 GeneLibrary = c(rownames(data$obj@assays[[input$RidgeplotAssay]]),
                                                 data$extra_qc_options))
-    if (!identical(sort(features_ridgeplot$features_current), sort(features_input))) {
-      features_ridgeplot$features_last <- features_ridgeplot$features_current
+    if (!identical(sort(isolate(features_ridgeplot$features_current)), sort(features_input))) {
       features_ridgeplot$features_current <- features_input
     }
   })
@@ -1709,10 +1574,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
 
-  # Safe cluster order reactive - waits for order to be ready
+  # Safe cluster order reactive - use the user order only when it matches the
+  # currently selected clusters, otherwise fall back to the selected clusters
   RidgeplotClusterOrder.Safe <- reactive({
-    req(ridgeplot_clustersselectd_state$ready, "Waiting for input$RidgeplotIdentsSelected to update...")
-    if (!is.null(input$RidgeplotClusterOrder) && length(input$RidgeplotClusterOrder) > 0) {
+    req(input$RidgeplotIdentsSelected)
+    if (!is.null(input$RidgeplotClusterOrder) && length(input$RidgeplotClusterOrder) > 0 &&
+        identical(sort(as.character(input$RidgeplotClusterOrder)), sort(as.character(input$RidgeplotIdentsSelected)))) {
       if(verbose){message("SeuratExplorer: RidgeplotClusterOrder.Safe using user order...")}
       return(input$RidgeplotClusterOrder)
     }
@@ -1742,25 +1609,29 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   output$ridgeplot <- renderPlot({
-    req(input$RidgeplotClusterResolution %in% colnames(data$obj@meta.data))
-    req(all(RidgeplotClusterOrder.Safe() %in% levels(data$obj@meta.data[,input$RidgeplotClusterResolution])))
+    req(data$obj)
+    ridge_groups <- resolve_plot_inputs(data,
+                                        cluster = input$RidgeplotClusterResolution,
+                                        assay = input$RidgeplotAssay,
+                                        idents = input$RidgeplotIdentsSelected,
+                                        order = RidgeplotClusterOrder.Safe())
 
     if(verbose){message("SeuratExplorer: preparing ridgeplot...")}
     if (any(is.na(features_ridgeplot$features_current))) { # NA
       p <- empty_plot # when no symbol or wrong input, show a blank pic.
     }else{
       cds <- data$obj
-      Seurat::DefaultAssay(cds) <- input$RidgeplotAssay
-      Seurat::Idents(cds) <- isolate(input$RidgeplotClusterResolution)
-      cds <- subset_Seurat(cds, idents = RidgeplotClusterOrder.Safe())
-      Seurat::Idents(cds) <- factor(Seurat::Idents(cds), levels = RidgeplotClusterOrder.Safe())
+      Seurat::DefaultAssay(cds) <- ridge_groups$assay
+      Seurat::Idents(cds) <- ridge_groups$cluster
+      cds <- subset_Seurat(cds, idents = ridge_groups$order)
+      Seurat::Idents(cds) <- factor(Seurat::Idents(cds), levels = ridge_groups$order)
       # check gene again, if all the input symbols not exist in the selected assay, specially case: when switch assay!
-      if((!any(features_ridgeplot$features_current %in% c(rownames(cds[[input$RidgeplotAssay]]), data$extra_qc_options))) | is.null(RidgeplotClusterOrder.Safe()) ){
+      if((!any(features_ridgeplot$features_current %in% c(rownames(cds[[ridge_groups$assay]]), data$extra_qc_options))) | is.null(ridge_groups$order) ){
         p <- empty_plot
       }else{
         p <- Seurat::RidgePlot(object = cds,
                                features = features_ridgeplot$features_current,
-                               assay = input$RidgeplotAssay,
+                               assay = ridge_groups$assay,
                                layer = input$RidgeplotSlot,
                                ncol = input$RidgeplotNumberOfColumns,
                                stack = input$RidgeplotStackPlot,
@@ -1810,36 +1681,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     })
 
   ################################ Cell ratio Plot
-  # Track resolution changes and whether order is ready
-  # Track ClustersSelected changes and whether order is ready
-  cellratioplot_clustersselectd_state <- reactiveValues(
-    ready = FALSE,
-    current_ClustersSelected = NULL
-  )
-
-  # Update ready state when CellratioFillOrder is ready
-  observe({
-    req(input$CellratioIdentsSelected, input$CellratioFillOrder)
-    # Check if order matches current clusters selected
-    actual_order <- if (!is.null(input$CellratioFillOrder) && length(input$CellratioFillOrder) > 0) {
-      input$CellratioFillOrder
-    } else {
-      NULL
-    }
-
-    # Order is ready if it's not null and contains expected cluster names (in any order)
-    # One possibility is that the two clusters have identical cluster levels. Could this have any consequences?
-    if (!is.null(actual_order) &&
-        !any(is.null(input$CellratioIdentsSelected)) &&
-        identical(sort(input$CellratioIdentsSelected),sort(actual_order))) {
-      if (is.null(cellratioplot_clustersselectd_state$CellratioIdentsSelected) || cellratioplot_clustersselectd_state$current_ClustersSelected != input$CellratioIdentsSelected) {
-        cellratioplot_clustersselectd_state$current_ClustersSelected <- input$CellratioIdentsSelected
-        cellratioplot_clustersselectd_state$ready <- TRUE
-        if(verbose){message("SeuratExplorer: CellratioFillOrder is now ready for clusters selected: ", input$CellratioIdentsSelected)}
-      }
-    }
-  })
-
 
   # define Fill choices
   output$CellratioFillChoice.UI <- renderUI({
@@ -1874,10 +1715,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                           width = '100%')
   })
 
-  # Safe cluster order reactive - waits for order to be ready
+  # Safe cluster order reactive - use the user order only when it matches the
+  # currently selected clusters, otherwise fall back to the selected clusters
   CellratioFillOrder.Safe <- reactive({
-    req(cellratioplot_clustersselectd_state$ready, "Waiting for CellratioIdentsSelected to update...")
-    if (!is.null(input$CellratioFillOrder) && length(input$CellratioFillOrder) > 0) {
+    req(input$CellratioIdentsSelected)
+    if (!is.null(input$CellratioFillOrder) && length(input$CellratioFillOrder) > 0 &&
+        identical(sort(as.character(input$CellratioFillOrder)), sort(as.character(input$CellratioIdentsSelected)))) {
       if(verbose){message("SeuratExplorer: CellratioFillOrder.Safe using user order...")}
       return(input$CellratioFillOrder)
     }
@@ -3910,80 +3753,70 @@ server <- function(input, output, session) {
       ))
       shinyjs::reset('dataset_file')
     }else{
-      obj <- tryCatch({
-        updateSeurat(readSeurat(path = input$dataset_file$datapath, verbose = getOption('SeuratExplorerVerbose')),
-                     verbose = getOption('SeuratExplorerVerbose'))
-      }, error = function(e) {
-        return(FALSE)
-      })
-      # validate Seurat object
-      if (is.logical(obj) && obj == FALSE) {
-        showModal(modalDialog(
-          title = tagList(icon("exclamation-triangle"), "Error"),
-          tags$div(
-            tags$p("Read file failed!"),
-            tags$small(style = "color: #6c757d;", "Please check the file format and try again.")
-          ),
-          easyClose = TRUE,
-          footer = modalButton("OK"),
-          size = "m"
-        ))
+      loaded <- load_seurat_object(path = input$dataset_file$datapath,
+                                   data = data,
+                                   verbose = getOption('SeuratExplorerVerbose'))
+      if (!loaded) {
         shinyjs::reset('dataset_file')
-
-      } else if (!all(validObject(obj), inherits(obj, "Seurat"))) {
-        showModal(modalDialog(
-          title = tagList(icon("exclamation-triangle"), "Error"),
-          tags$div(
-            tags$p("Invalid object type."),
-            tags$small(style = "color: #6c757d;", paste0("The submitted data is a ", class(obj)[[1]], " object, not a Seurat object!"))
-          ),
-          easyClose = TRUE,
-          footer = modalButton("OK"),
-          size = "m"
-        ))
-        shinyjs::reset('dataset_file')
-      } else {
-        data$Path <- input$dataset_file$datapath
-
-        data$obj <- prepare_seurat_object(obj = obj,
-                                          verbose = getOption('SeuratExplorerVerbose'))
-
-        data$reduction_options <- prepare_reduction_options(obj = data$obj,
-                                                            keywords = getOption("SeuratExplorerReductionKeyWords"),
-                                                            verbose = getOption('SeuratExplorerVerbose'))
-
-        data$assays_slots_options <- prepare_assays_slots(obj = data$obj,
-                                                          data_slot = data$assay_slots,
-                                                          verbose = getOption('SeuratExplorerVerbose'))
-
-        data$assays_options <- prepare_assays_options(Alist = data$assays_slots_options,
-                                                      verbose = getOption('SeuratExplorerVerbose'))
-
-        # data$assay_default <- ifelse(data$assay_default %in% data$assays_options,data$assay_default,
-        #                              data$assays_options[1]) # update the default assay
-
-        data$assay_default <- ifelse(is.null(DefaultAssay(data$obj)), data$assays_options[1],
-                                     DefaultAssay(data$obj)) # keep the raw default assay
-
-        data$cluster_options <- prepare_cluster_options(df = data$obj@meta.data,
-                                                        verbose = getOption('SeuratExplorerVerbose'))
-
-        data$gene_annotations_list <- prepare_gene_annotations(obj = data$obj,
-                                                             verbose = getOption('SeuratExplorerVerbose'))
-
-        data$split_options <- prepare_split_options(df = data$obj@meta.data,
-                                                    max.level = data$split_maxlevel,
-                                                    verbose = getOption('SeuratExplorerVerbose'))
-
-        data$extra_qc_options <- prepare_qc_options(df = data$obj@meta.data,
-                                                    types = c("double","integer","numeric"),
-                                                    verbose = getOption('SeuratExplorerVerbose'))
-
-        check_data(data = data)
       }
-
     }
 
+  })
+
+  observeEvent(input$demo_data, {
+    shinyjs::disable("demo_data")
+    on.exit(shinyjs::enable("demo_data"), add = TRUE)
+    demo_url <- getOption("SeuratExplorerDemoDataURL")
+    demo_md5 <- getOption("SeuratExplorerDemoDataMD5")
+    demo_dest <- file.path(demo_cache_dir(), "G101_PC20res04.rds")
+    used_cache <- file.exists(demo_dest) && file.size(demo_dest) > 0
+    if (used_cache) {
+      showModal(modalDialog(
+        title = tagList(icon("folder-open"), "Demo data found"),
+        tags$div(
+          style = "text-align: center; padding: 20px;",
+          icon("circle-notch", class = "fa-spin fa-3x", style = "color: #3b82f6; margin-bottom: 15px;"),
+          tags$p("A previously downloaded demo data file was found at:"),
+          tags$pre(style = "white-space: pre-wrap; word-break: break-all; margin: 10px 0;", demo_dest),
+          tags$p("Loading the data ...", style = "color: #6c757d;")
+        ),
+        footer = NULL,
+        easyClose = FALSE,
+        size = "m"
+      ))
+    }
+    ok <- tryCatch({
+      if (!used_cache) {
+        withProgress(message = "Downloading demo data ...", value = 0, {
+          download_demo_data(url = demo_url, dest = demo_dest, session = session, expected_md5 = demo_md5)
+        })
+      }
+      TRUE
+    }, error = function(e) {
+      if (file.exists(demo_dest)) {
+        unlink(demo_dest, force = TRUE)
+      }
+      showModal(modalDialog(
+        title = tagList(icon("exclamation-triangle"), "Error"),
+        tags$div(
+          tags$p("Failed to download the demo data."),
+          tags$small(style = "color: #6c757d;", conditionMessage(e))
+        ),
+        easyClose = TRUE,
+        footer = modalButton("OK"),
+        size = "m"
+      ))
+      FALSE
+    })
+    loaded_ok <- FALSE
+    if (ok) {
+      loaded_ok <- load_seurat_object(path = demo_dest,
+                                      data = data,
+                                      verbose = getOption('SeuratExplorerVerbose'))
+    }
+    if (used_cache && isTRUE(loaded_ok)) {
+      removeModal()
+    }
   })
 
   # after data loaded,set loaded to TRUE

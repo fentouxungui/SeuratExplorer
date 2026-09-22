@@ -899,6 +899,240 @@ updateSeurat <- function(obj, verbose = FALSE){
   return(obj)
 }
 
+load_seurat_object <- function(path, data, verbose = FALSE){
+  obj <- tryCatch({
+    updateSeurat(readSeurat(path = path, verbose = verbose),
+                 verbose = verbose)
+  }, error = function(e) {
+    return(FALSE)
+  })
+  if (is.logical(obj) && obj == FALSE) {
+    showModal(modalDialog(
+      title = tagList(icon("exclamation-triangle"), "Error"),
+      tags$div(
+        tags$p("Read file failed!"),
+        tags$small(style = "color: #6c757d;", "Please check the file format and try again.")
+      ),
+      easyClose = TRUE,
+      footer = modalButton("OK"),
+      size = "m"
+    ))
+    return(FALSE)
+  }
+  if (!all(validObject(obj), inherits(obj, "Seurat"))) {
+    showModal(modalDialog(
+      title = tagList(icon("exclamation-triangle"), "Error"),
+      tags$div(
+        tags$p("Invalid object type."),
+        tags$small(style = "color: #6c757d;", paste0("The submitted data is a ", class(obj)[[1]], " object, not a Seurat object!"))
+      ),
+      easyClose = TRUE,
+      footer = modalButton("OK"),
+      size = "m"
+    ))
+    return(FALSE)
+  }
+  data$Path <- path
+
+  data$obj <- prepare_seurat_object(obj = obj,
+                                    verbose = verbose)
+
+  data$reduction_options <- prepare_reduction_options(obj = data$obj,
+                                                      keywords = getOption("SeuratExplorerReductionKeyWords"),
+                                                      verbose = verbose)
+
+  data$assays_slots_options <- prepare_assays_slots(obj = data$obj,
+                                                    data_slot = data$assay_slots,
+                                                    verbose = verbose)
+
+  data$assays_options <- prepare_assays_options(Alist = data$assays_slots_options,
+                                                verbose = verbose)
+
+  data$assay_default <- ifelse(is.null(DefaultAssay(data$obj)), data$assays_options[1],
+                               DefaultAssay(data$obj))
+
+  data$cluster_options <- prepare_cluster_options(df = data$obj@meta.data,
+                                                  verbose = verbose)
+
+  data$gene_annotations_list <- prepare_gene_annotations(obj = data$obj,
+                                                         verbose = verbose)
+
+  data$split_options <- prepare_split_options(df = data$obj@meta.data,
+                                              max.level = data$split_maxlevel,
+                                              verbose = verbose)
+
+  data$extra_qc_options <- prepare_qc_options(df = data$obj@meta.data,
+                                              types = c("double","integer","numeric"),
+                                              verbose = verbose)
+
+  check_data(data = data)
+  return(TRUE)
+}
+
+is_writable_dir <- function(path){
+  tryCatch({
+    created <- dir.create(path, recursive = TRUE, showWarnings = FALSE)
+    if (!created && !dir.exists(path)) {
+      return(FALSE)
+    }
+    probe <- file.path(path, paste0(".SeuratExplorer_write_test_", Sys.getpid()))
+    file.create(probe, showWarnings = FALSE)
+    was_created <- file.exists(probe)
+    if (was_created) {
+      unlink(probe, force = TRUE)
+    }
+    isTRUE(was_created)
+  }, error = function(e) FALSE)
+}
+
+demo_cache_dir <- function(){
+  candidates <- c(
+    getOption("SeuratExplorerDemoCacheDir"),
+    Sys.getenv("SEURATEXPLORER_CACHE_DIR", unset = NA_character_),
+    tryCatch(tools::R_user_dir("SeuratExplorer", which = "cache"), error = function(e) NA_character_)
+  )
+  candidates <- candidates[!is.na(candidates) & nzchar(candidates)]
+  for (candidate in candidates) {
+    if (is_writable_dir(candidate)) {
+      return(candidate)
+    }
+  }
+  fallback <- file.path(tempdir(), "SeuratExplorer-cache")
+  dir.create(fallback, recursive = TRUE, showWarnings = FALSE)
+  fallback
+}
+
+update_demo_progress <- function(session, offset, total){
+  tryCatch(
+    shiny::setProgress(
+      value = offset / total,
+      detail = paste0(round(offset / 1048576, 1), " / ", round(total / 1048576, 1), " MB"),
+      session = session
+    ),
+    error = function(e) NULL
+  )
+}
+
+demo_fetch_range <- function(url, start, end, connecttimeout = 60){
+  handle <- curl::new_handle()
+  curl::handle_setopt(
+    handle,
+    followlocation = TRUE,
+    failonerror = TRUE,
+    connecttimeout = connecttimeout,
+    low_speed_limit = 1,
+    low_speed_time = 120,
+    accept_encoding = "",
+    range = paste0(start, "-", end)
+  )
+  response <- curl::curl_fetch_memory(url = url, handle = handle)
+  if (response$status_code >= 400) {
+    stop("Failed to download the demo data (HTTP ", response$status_code, ").")
+  }
+  total <- NULL
+  header_lines <- strsplit(rawToChar(response$headers), "\r\n")[[1]]
+  content_range <- grep("^content-range:", header_lines, ignore.case = TRUE, value = TRUE)
+  if (length(content_range) > 0) {
+    matched <- regmatches(content_range[1], regexec("/([0-9]+)[[:space:]]*$", trimws(content_range[1])))[[1]]
+    if (length(matched) >= 2) {
+      total <- suppressWarnings(as.numeric(matched[2]))
+    }
+  } else if (start == 0) {
+    total <- length(response$content)
+  }
+  list(content = response$content, total = total)
+}
+
+download_demo_data <- function(url, dest, session = shiny::getDefaultReactiveDomain(), expected_md5 = NULL, chunk_size = 4 * 1024^2){
+  if (!dir.create(dirname(dest), recursive = TRUE, showWarnings = FALSE) && !dir.exists(dirname(dest))) {
+    stop("Cannot create the demo data cache directory.")
+  }
+  tmp <- paste0(dest, ".part")
+  if (file.exists(tmp)) unlink(tmp, force = TRUE)
+
+  first <- demo_fetch_range(url, start = 0, end = chunk_size - 1)
+  if (length(first$content) == 0) {
+    stop("The downloaded demo data file is empty.")
+  }
+  total <- first$total
+
+  con <- file(tmp, "wb")
+  con_open <- TRUE
+  on.exit({
+    if (con_open) try(close(con), silent = TRUE)
+    if (file.exists(tmp)) unlink(tmp, force = TRUE)
+  }, add = TRUE)
+
+  writeBin(first$content, con)
+  offset <- length(first$content)
+
+  if (!is.null(total) && is.finite(total) && total > offset) {
+    update_demo_progress(session, offset, total)
+    while (offset < total) {
+      end <- min(offset + chunk_size - 1, total - 1)
+      chunk <- demo_fetch_range(url, start = offset, end = end)
+      if (length(chunk$content) == 0) {
+        stop("The demo data download stalled before completion.")
+      }
+      writeBin(chunk$content, con)
+      offset <- offset + length(chunk$content)
+      update_demo_progress(session, offset, total)
+      Sys.sleep(0.02)
+    }
+  } else {
+    update_demo_progress(session, offset, max(offset, 1))
+    Sys.sleep(0.02)
+  }
+
+  close(con)
+  con_open <- FALSE
+  if (!file.exists(tmp) || file.size(tmp) == 0) {
+    stop("The downloaded demo data file is empty.")
+  }
+  if (!is.null(total) && is.finite(total) && file.size(tmp) != total) {
+    stop("The downloaded demo data is incomplete.")
+  }
+  if (!is.null(expected_md5) && nzchar(expected_md5)) {
+    actual_md5 <- unname(tools::md5sum(tmp))
+    if (!identical(tolower(actual_md5), tolower(expected_md5))) {
+      stop("The downloaded demo data failed the integrity check (md5 mismatch).")
+    }
+  }
+  file.rename(tmp, dest)
+  invisible(dest)
+}
+
+resolve_plot_inputs <- function(data, cluster = NULL, assay = NULL, idents = NULL, order = NULL){
+  cluster_column <- cluster
+  if (is.null(cluster_column) || !(cluster_column %in% colnames(data$obj@meta.data))) {
+    cluster_column <- data$cluster_default
+  }
+  if (is.null(cluster_column) || !(cluster_column %in% colnames(data$obj@meta.data))) {
+    cluster_column <- data$cluster_options[1]
+  }
+  level_values <- levels(data$obj@meta.data[, cluster_column])
+  if (is.null(level_values)) {
+    level_values <- unique(as.character(data$obj@meta.data[, cluster_column]))
+  }
+  idents_used <- if (is.null(idents)) level_values else intersect(as.character(idents), level_values)
+  if (length(idents_used) == 0) {
+    idents_used <- level_values
+  }
+  order_used <- if (is.null(order)) idents_used else intersect(as.character(order), idents_used)
+  if (length(order_used) == 0) {
+    order_used <- idents_used
+  }
+  assay_name <- assay
+  if (is.null(assay_name) || !(assay_name %in% Seurat::Assays(data$obj))) {
+    assay_name <- data$assay_default
+  }
+  if (is.null(assay_name) || !(assay_name %in% Seurat::Assays(data$obj))) {
+    assay_name <- data$assays_options[1]
+  }
+  list(cluster = cluster_column, levels = level_values, idents = idents_used,
+       order = order_used, assay = assay_name)
+}
+
 check_data <- function(data, key_paramaters = c('reduction_options', 'cluster_options', 'assays_options', 'assays_slots_options', 'split_options')){
   zero_length_parameters <- names(data)[unname(unlist(lapply(data, function(x){length(x) == 0})))]
   zero_length_parameters <- zero_length_parameters[zero_length_parameters %in% key_paramaters]

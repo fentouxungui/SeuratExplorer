@@ -1566,6 +1566,14 @@ ui <-  function(){
                                     # upload a file
                                     box(status = "primary", title = "Upload Data", width = 12, collapsible = TRUE, solidHeader = TRUE,
                                         fileInput("dataset_file", "Choose A rds or qs2 file of Seurat Object:", accept = c('.rds', ".qs2")),
+                                        div(style = "display: flex; align-items: center; text-align: center; color: #6c757d; margin: 15px 0;",
+                                            div(style = "flex: 1; border-bottom: 1px dashed #dee2e6;"),
+                                            span(style = "padding: 0 10px;", "OR"),
+                                            div(style = "flex: 1; border-bottom: 1px dashed #dee2e6;")),
+                                        div(style = "text-align: center;",
+                                            actionButton("demo_data", "Download and Run a demo data", icon = icon("download"), class = "btn-primary"),
+                                            tags$small(style = "display: block; color: #6c757d; margin-top: 8px;",
+                                                       "Downloads a Fly gut demo dataset (~74 MB) and loads it automatically. The file is cached locally for later use.")),
                                         uiOutput("dataOverview"))
                                   )
   )
