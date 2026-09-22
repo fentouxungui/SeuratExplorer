@@ -1,0 +1,63 @@
+name: R-CMD-check
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  R-CMD-check:
+    # 推薦在 Linux (Ubuntu) 上運行，能最大化利用 RSPM 二進制快取，大幅縮短構建時間
+    runs-on: ubuntu-latest
+    
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up HTML/Pandoc (文檔構建必需)
+        uses: r-lib/actions/setup-pandoc@v2
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          # 關鍵修改：Seurat V5 要求 R >= 4.1.0，推薦直接使用最新的 release 版本
+          r-version: 'release'
+          # 啟用 RSPM 以直接下載編譯好的 Linux 二進制生信包，避免從源碼編譯幾小時
+          use-public-rspm: true
+
+      - name: Install System Dependencies
+        # 許多生信包（如 Seurat 依賴的 sf/gsl/hdf5 等）需要 Ubuntu 系統庫
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgdal-dev libgeos-dev libproj-dev libgsl-dev libhdf5-dev
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::rcmdcheck
+            any::BiocManager
+          # 自動讀取 DESCRIPTION 文件中的所有依賴（包括 Seurat, ggplot2 等）並安裝
+          needs: check
+
+      - name: Check Package
+        uses: r-lib/actions/check-r-package@v2
+        with:
+          args: 'c("--no-manual", "--as-cran")'
+          error-on: '"error"'
+
+      - name: Upload check results (如果失敗則上傳日誌)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-r-release-results
+          path: check
+
