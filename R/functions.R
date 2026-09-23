@@ -1051,6 +1051,36 @@ demo_fetch_range <- function(url, start, end, connecttimeout = 60){
 }
 
 download_demo_data <- function(url, dest, session = shiny::getDefaultReactiveDomain(), expected_md5 = NULL, chunk_size = 4 * 1024^2){
+  urls <- as.character(url)
+  urls <- urls[!is.na(urls) & nzchar(urls)]
+  if (length(urls) == 0) {
+    stop("No demo data URL is configured.")
+  }
+  last_error <- NULL
+  for (i in seq_along(urls)) {
+    ok <- tryCatch({
+      download_demo_data_from_url(urls[i], dest = dest, session = session,
+                                  expected_md5 = expected_md5, chunk_size = chunk_size)
+      TRUE
+    }, error = function(e) {
+      last_error <<- e
+      FALSE
+    })
+    if (isTRUE(ok)) {
+      return(invisible(dest))
+    }
+    if (i < length(urls)) {
+      tryCatch(
+        shiny::setProgress(session = session, value = 0,
+                           detail = "Primary source failed, trying a backup source ..."),
+        error = function(e) NULL
+      )
+    }
+  }
+  stop(conditionMessage(last_error))
+}
+
+download_demo_data_from_url <- function(url, dest, session = shiny::getDefaultReactiveDomain(), expected_md5 = NULL, chunk_size = 4 * 1024^2){
   if (!dir.create(dirname(dest), recursive = TRUE, showWarnings = FALSE) && !dir.exists(dirname(dest))) {
     stop("Cannot create the demo data cache directory.")
   }
