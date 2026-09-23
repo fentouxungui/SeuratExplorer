@@ -10,7 +10,8 @@ launchSeuratExplorer(
   SplitOptionMaxLevel = 12,
   MaxInputFileSize = 20 * 1024^3,
   DemoDataURL =
-    "https://raw.githubusercontent.com/fentouxungui/SeuratExplorerServer/refs/heads/main/inst/extdata/source-data/fly/Rds-file/G101_PC20res04.rds",
+    c("https://raw.githubusercontent.com/fentouxungui/SeuratExplorerServer/refs/heads/main/inst/extdata/source-data/fly/Rds-file/G101_PC20res04.rds",
+    "https://drive.usercontent.google.com/download?id=1iscfl4zyNbtjAol0bwndnBI08MDcZvYE&export=download&authuser=0&confirm=t&uuid=6352f610-9125-4551-afaa-e1eedd15701c&at=AMrWOn0YlTymrOPO6Rb0GlFtJ07o\%3A1790127440033"),
   DemoDataCacheDir = NULL,
   DemoDataMD5 = "e144cabc42684f037e60a603f74ed4f1"
 )
@@ -24,8 +25,9 @@ launchSeuratExplorer(
 
 \item{MaxInputFileSize}{set the limited upload file size}
 
-\item{DemoDataURL}{URL of the demo Seurat object downloaded by the
-"Download and Run a demo data" button}
+\item{DemoDataURL}{one or more URLs of the demo Seurat object downloaded by
+the "Download and Run a demo data" button. Multiple URLs are tried in
+order until one succeeds (primary, then backup)}
 
 \item{DemoDataCacheDir}{directory used to cache the downloaded demo data;
 if NULL, a per-user cache directory is used}

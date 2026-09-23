@@ -13,6 +13,7 @@ Sources, tried in order:
 
 1. `https://raw.githubusercontent.com/fentouxungui/SeuratExplorerServer/refs/heads/main/inst/extdata/source-data/fly/Rds-file/G101_PC20res04.rds`
 2. `https://drive.usercontent.google.com/download?id=1iscfl4zyNbtjAol0bwndnBI08MDcZvYE&export=download&authuser=0&confirm=t&uuid=6352f610-9125-4551-afaa-e1eedd15701c&at=AMrWOn0YlTymrOPO6Rb0GlFtJ07o%3A1790127440033`
+3. `https://www.daokedao.site/data/G101_PC20res04.rds`
 
 > The Google Drive "confirm" link can expire over time. It is only a fallback, so the app still works as long as the primary (GitHub) source is reachable.
 
