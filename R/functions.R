@@ -89,10 +89,15 @@ modify_columns_types <- function(df, types_to_check = c("numeric", "character"),
   return(df)
 }
 
-# get reduction options by keywords: umap and tsne
+# get reduction options by keywords; results are ordered by keyword priority
 prepare_reduction_options <- function(obj, keywords = c("umap","tsne"), verbose = FALSE){
   requireNamespace("Seurat")
-  reduction.choice <- grep(paste0(paste0("(", keywords,")"),collapse = "|"), Seurat::Reductions(obj), value = TRUE, ignore.case = TRUE)
+  reductions <- Seurat::Reductions(obj)
+  reduction.choice <- character(0)
+  for (keyword in keywords) {
+    matched <- reductions[grepl(keyword, reductions, ignore.case = TRUE)]
+    reduction.choice <- c(reduction.choice, setdiff(matched, reduction.choice))
+  }
   names(reduction.choice) <- toupper(reduction.choice)
   if(verbose){message("SeuratExplorer: prepare_reduction_options runs successfully!")}
   return(reduction.choice)
@@ -940,6 +945,8 @@ load_seurat_object <- function(path, data, verbose = FALSE){
   data$reduction_options <- prepare_reduction_options(obj = data$obj,
                                                       keywords = getOption("SeuratExplorerReductionKeyWords"),
                                                       verbose = verbose)
+
+  data$reduction_default <- if (length(data$reduction_options) > 0) unname(data$reduction_options[1]) else NULL
 
   data$assays_slots_options <- prepare_assays_slots(obj = data$obj,
                                                     data_slot = data$assay_slots,
