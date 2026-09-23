@@ -55,6 +55,10 @@ A simple, one-command package which runs an interactive dashboard capable of com
 - **Real-time Results**: See changes immediately as you adjust parameters
 - **Data Export**: Download analysis results in CSV format for further analysis
 
+## News
+
+**The Windows desktop app is now ready. You can download it from the releases page.**
+
 ## Installation
 
 Install the latest version from github - ***Recommended***:

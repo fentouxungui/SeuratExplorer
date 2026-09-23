@@ -62,6 +62,11 @@ capable of common visualizations for single cell RNA-seq.
 - **Data Export**: Download analysis results in CSV format for further
   analysis
 
+## News
+
+**The Windows desktop app is now ready. You can download it from the
+releases page.**
+
 ## Installation
 
 Install the latest version from github - ***Recommended***:
@@ -922,7 +927,7 @@ SeuratExplorer is built upon excellent work by:
 
 ## Session Info
 
-    #> R version 4.5.3 (2026-03-11 ucrt)
+    #> R version 4.6.1 (2026-06-24 ucrt)
     #> Platform: x86_64-w64-mingw32/x64
     #> Running under: Windows 11 x64 (build 26200)
     #> 
@@ -943,7 +948,7 @@ SeuratExplorer is built upon excellent work by:
     #> [1] stats     graphics  grDevices utils     datasets  methods   base     
     #> 
     #> loaded via a namespace (and not attached):
-    #>  [1] compiler_4.5.3    fastmap_1.2.0     cli_3.6.6         tools_4.5.3      
+    #>  [1] compiler_4.6.1    fastmap_1.2.0     cli_3.6.6         tools_4.6.1      
     #>  [5] htmltools_0.5.9   otel_0.2.0        rstudioapi_0.19.0 yaml_2.3.12      
     #>  [9] rmarkdown_2.32    knitr_1.52        xfun_0.60         digest_0.6.39    
     #> [13] rlang_1.3.0       evaluate_1.0.5
