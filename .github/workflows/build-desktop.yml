@@ -15,6 +15,8 @@
 #   * macOS/Windows builds are UNSIGNED, so first launch shows Gatekeeper /
 #     SmartScreen prompts. Add signing secrets and `sign: 'true'` for smooth
 #     distribution (and macOS auto-update requires signing + notarization).
+#   * Action versions are pinned to the Node.js 24 line (checkout@v5 /
+#     download-artifact@v5) to avoid the "Node.js 20 is deprecated" warning.
 
 name: Build Desktop App
 
@@ -28,7 +30,7 @@ jobs:
     name: Build SeuratExplorer source package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
@@ -51,14 +53,14 @@ jobs:
           - { os: macos-latest,   platform: mac }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
 
       - name: Fetch the SeuratExplorer source package
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: seurat-explorer-src
           path: dependency
@@ -67,7 +69,13 @@ jobs:
         shell: Rscript {0}
         run: |
           install.packages("pak")
-          pak::pak(c("fentouxungui/shinyelectron", "rlang"))
+          # The fork has an undeclared `rlang` dependency: `library(shinyelectron)`
+          # needs it but it is not in DESCRIPTION Imports, so pak will not pull it
+          # in on its own. Install it explicitly to keep the CI library complete.
+          pak::pak(c("fentouxungui/shinyelectron", "rlang", "renv"))
+          # Diagnostics: show the library the next step will load from. If either
+          # find.package() prints character(0), pak installed into a different
+          # library than the one Rscript uses (a lib-path mismatch).
           cat("libPaths:\n"); print(.libPaths())
           print(find.package("shinyelectron", quiet = TRUE))
           print(find.package("rlang", quiet = TRUE))
@@ -99,7 +107,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           path: artifacts
       - uses: softprops/action-gh-release@v2
