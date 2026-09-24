@@ -67,7 +67,7 @@ jobs:
         shell: Rscript {0}
         run: |
           install.packages("pak")
-          pak::pak("fentouxungui/shinyelectron")
+          pak::pak(c("fentouxungui/shinyelectron", "rlang"))
           shinyelectron::install_nodejs()
 
       - name: Build the desktop app
