@@ -18,8 +18,10 @@
 #   * Do NOT call shinyelectron::install_nodejs() in CI. Provide Node.js with
 #     actions/setup-node; get_node_command() falls back to the PATH node.
 #   * The fork uses `rlang` (not declared) and `withr` (declared only in
-#     Suggests) at runtime, so pak will not install them on its own. Install
-#     both explicitly here.
+#     Suggests) at runtime, so install both explicitly.
+#   * Upload/Release globs deliberately use single `*` (NOT `**`): the
+#     electron-builder output dir also contains win-unpacked/ and the bundled R
+#     runtime, and a recursive glob would upload the whole app.
 
 name: Build Desktop App
 
@@ -77,9 +79,6 @@ jobs:
         shell: Rscript {0}
         run: |
           install.packages("pak")
-          # `rlang` is undeclared and `withr` is only in Suggests in the fork,
-          # but both are needed at runtime (withr by run_command_safe(), which
-          # validate_node_npm() calls). Install them explicitly so CI has them.
           pak::pak(c("fentouxungui/shinyelectron", "rlang", "withr", "renv"))
           cat("libPaths:\n"); print(.libPaths())
           print(find.package("shinyelectron", quiet = TRUE))
@@ -92,8 +91,6 @@ jobs:
           cat("PATH node :", Sys.which("node"), "\n")
           cat("PATH npm  :", Sys.which("npm"), "\n")
           system("node --version"); system("npm --version")
-          cat("managed node     :", shinyelectron:::nodejs_executable(), "\n")
-          cat("managed installed:", shinyelectron:::nodejs_is_installed(), "\n")
 
       - name: Build the desktop app
         shell: Rscript {0}
@@ -107,11 +104,15 @@ jobs:
         with:
           name: installer-${{ matrix.platform }}
           if-no-files-found: error
+          # Top level of electron-builder's output dir only (* not **), so
+          # win-unpacked/, the bundled R runtime, app-update.yml, *.so.yml, etc.
+          # are NOT uploaded.
           path: |
-            build/**/*.exe
-            build/**/*.dmg
-            build/**/*.blockmap
-            build/**/*.yml
+            build/electron-app/dist/*.exe
+            build/electron-app/dist/*.exe.blockmap
+            build/electron-app/dist/*.dmg
+            build/electron-app/dist/*.dmg.blockmap
+            build/electron-app/dist/latest*.yml
 
   release:
     name: Release
