@@ -1,0 +1,105 @@
+# Build SeuratExplorer desktop installers (Windows + macOS) with shinyelectron.
+#
+#   build-pkg : builds the SeuratExplorer source package once (artifact).
+#   build     : per-platform Electron build using the *fork* of shinyelectron
+#               that supports `dependencies.r.local_packages` and `updates`.
+#   release   : on a v* tag, attaches installers + latest*.yml to a GitHub
+#               Release (electron-updater reads them).
+#
+# Placement: copy to .github/workflows/build-desktop.yml in the
+#            fentouxungui/SeuratExplorer repository.
+#
+# Notes
+#   * Linux is intentionally excluded: the `bundled` runtime ships portable R,
+#     which upstream publishes for macOS/Windows only.
+#   * macOS/Windows builds are UNSIGNED, so first launch shows Gatekeeper /
+#     SmartScreen prompts. Add signing secrets and `sign: 'true'` for smooth
+#     distribution (and macOS auto-update requires signing + notarization).
+
+name: Build Desktop App
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build-pkg:
+    name: Build SeuratExplorer source package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - name: R CMD build
+        run: R CMD build . --no-build-vignettes --no-manual
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seurat-explorer-src
+          path: SeuratExplorer_*.tar.gz
+          if-no-files-found: error
+
+  build:
+    name: Build (${{ matrix.platform }})
+    needs: build-pkg
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, platform: win }
+          - { os: macos-latest,   platform: mac }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Fetch the SeuratExplorer source package
+        uses: actions/download-artifact@v4
+        with:
+          name: seurat-explorer-src
+          path: dependency
+
+      - name: Install shinyelectron (fork) and Node.js
+        shell: Rscript {0}
+        run: |
+          install.packages("pak")
+          pak::pak("fentouxungui/shinyelectron")
+          shinyelectron::install_nodejs()
+
+      - name: Build the desktop app
+        shell: Rscript {0}
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+          APP_VERSION: ${{ github.ref_name }}
+        run: source("Build-Desktop-software-by-shinyelectron.R")
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.platform }}
+          if-no-files-found: error
+          path: |
+            build/**/*.exe
+            build/**/*.dmg
+            build/**/*.blockmap
+            build/**/*.yml
+
+  release:
+    name: Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true

@@ -1,33 +1,43 @@
-# # 安装 pak 管理工具（如果未安装）
-# if(!require('pak')) install.packages('pak')
-
-# # 从 GitHub 安装 shinyelectron
-# pak::pak("coatless-rpkg/shinyelectron")
-# or install a for version
-# pak::pak("fentouxungui/shinyelectron")
-
-# # 加载包
-# library(shinyelectron)
-# install_nodejs()
-
-# # 【核心验证】检查你的电脑环境是否满足编译要求
-# # 如果提示缺少工具，请根据输出的指引修复（Windows 需要 Visual Studio Build Tools）
-# sitrep_shinyelectron()
-
+# Build the SeuratExplorer desktop app with shinyelectron.
+#
+# Runs both locally (Rscript) and in GitHub Actions. It uses the *fork* of
+# shinyelectron that supports `dependencies.r.local_packages` and `updates`:
+#
+#   pak::pak("fentouxungui/shinyelectron")
+#
+# Local use:  Rscript Build-Desktop-software-by-shinyelectron.R
+# CI use:     GITHUB_WORKSPACE and APP_VERSION are set by the workflow.
+#
+# Repository layout expected:
+#   DESCRIPTION, R/, ...                        (the R package)
+#   dependency/presto-1.1.0.tar.gz              (committed)
+#   dependency/SeuratExplorer_<version>.tar.gz  (built by the build-pkg job)
+#   icons/ico/emerald.ico                       (optional)
 
 library(shinyelectron)
 
-# # 1. 建立打包工程目录（放在桌面）
-app_dir <- "C:/Users/Xi_Lab/Desktop/SeuratExplorerApp"
-if(!dir.exists(app_dir)) dir.create(app_dir, recursive = TRUE)
+# ---- paths (CI-aware) -------------------------------------------------
+ws <- Sys.getenv("GITHUB_WORKSPACE", unset = getwd())
+app_dir    <- file.path(ws, "build-app")
+output_dir <- file.path(ws, "build")
+dep_dir    <- file.path(ws, "dependency")
 
-# 2. 写入 Shiny 启动脚本 app.R
-# 已针对单细胞大数据解锁了 30GB 限制
+dir.create(app_dir, recursive = TRUE, showWarnings = FALSE)
+
+# ---- version: tag (CI) > DESCRIPTION > fallback -----------------------
+se_version <- sub("^v", "", Sys.getenv("APP_VERSION", unset = ""))
+if (!nzchar(se_version)) {
+  desc <- file.path(ws, "DESCRIPTION")
+  se_version <- if (file.exists(desc)) {
+    as.character(read.dcf(desc, fields = "Version")[[1]])
+  } else "0.0.0"
+}
+
+# ---- 1. Shiny entry point --------------------------------------------
 app_code <- '
 library(SeuratExplorer)
 
-# shinyelectron 会自己执行 shiny::runApp(appDir, port=<它选定端口>)，
-# 这里只需返回 app 对象，绝不能再调用 runApp()，也不要写死 host/port。
+# shinyelectron runs shiny::runApp() itself; only return the app object.
 options(shiny.launch.browser = FALSE)
 options(shiny.deprecation.messages = FALSE)
 
@@ -35,20 +45,23 @@ launchSeuratExplorer(
   verbose = FALSE,
   ReductionKeyWords = c("umap", "tsne", "pca"),
   SplitOptionMaxLevel = 12,
-  MaxInputFileSize = 30 * 1024^3   # 它内部会设置 shiny.maxRequestSize
+  MaxInputFileSize = 30 * 1024^3   # unlocks the 30 GB single-cell upload limit
 )
 '
+writeLines(app_code, file.path(app_dir, "app.R"))
 
-writeLines(app_code, con = file.path(app_dir, "app.R"))
-
-# 3. 写入配置文件 _shinyelectron.yml（嵌套 schema；扁平键会被忽略并告警）
-# 版本号与 SeuratExplorer 包联动（安装器版本 = 已安装/将打包的包版本）
-# se_version <- tryCatch(
-#   as.character(utils::packageVersion("SeuratExplorer")),
-#   error = function(e) "1.0.0"
-# )
-# or specify the version 注意，这个地方需要根据实际情况进行修改。
-se_version <- "0.1.8"
+# ---- 2. _shinyelectron.yml --------------------------------------------
+# Both local archives are installed into the bundled R, so the app ships the
+# exact SeuratExplorer build we tested plus the non-CRAN `presto`.  Absolute
+# paths are used because the installer resolves them from the R process cwd.
+local_se <- normalizePath(
+  file.path(dep_dir, sprintf("SeuratExplorer_%s.tar.gz", se_version)),
+  winslash = "/", mustWork = FALSE
+)
+local_presto <- normalizePath(
+  file.path(dep_dir, "presto-1.1.0.tar.gz"),
+  winslash = "/", mustWork = FALSE
+)
 
 config_code <- paste0('
 app:
@@ -69,18 +82,14 @@ window:
   height: 900
 
 menu:
-  help_url: "https://github.com/fentouxungui/SeuratExplorer/wiki"
-
-icons:
-  win: "./icons/ico/emerald.ico"
+  help_url: "https://github.com/fentouxungui/SeuratExplorer"
 
 installer:
   app_id: "com.seuratexplorer.desktop"
   one_click: false
   allow_to_change_installation_directory: true
 
-# 代码签名：暂无证书，保持关闭；拿到证书后改 sign: true 并配置
-# CSC_LINK / CSC_KEY_PASSWORD 环境变量
+# No code-signing certificate yet; enable later with CSC_LINK / CSC_KEY_PASSWORD.
 signing:
   sign: false
 
@@ -92,13 +101,15 @@ dependencies:
     - DT
   r:
     local_packages:
-      - "D:/GitHub_Res/presto-1.1.0.tar.gz"
+      - "', local_se, '"
+      - "', local_presto, '"
+
 updates:
   enabled: true
   provider: "github"
   check_on_startup: true
-  auto_download: true      # 发现新版后台自动下载；想手动点下载就设 false
-  auto_install: true       # 下载完退出时静默安装；想弹窗让用户选就设 false
+  auto_download: true      # download new builds in the background
+  auto_install: true       # install silently on quit (false = prompt)
   github:
     owner: "fentouxungui"
     repo: "SeuratExplorer"
@@ -107,23 +118,20 @@ optimize:
   r_library: true
   r_runtime: true
 ')
-writeLines(config_code, con = file.path(app_dir, "_shinyelectron.yml"))
+writeLines(config_code, file.path(app_dir, "_shinyelectron.yml"))
 
+# ---- 3. Build ----------------------------------------------------------
+# The .ico works for Windows; for macOS provide an .icns via `icons.mac` (or
+# an .png) if you want a custom dock icon.
+icon <- file.path(ws, "icons", "ico", "emerald.ico")
 
+options(timeout = 3600)   # bundled installs pull a lot of packages; be patient
 
-# 设定路径
-app_dir <- "C:/Users/Xi_Lab/Desktop/SeuratExplorerApp"
-output_dir <- "C:/Users/Xi_Lab/Desktop/SeuratExplorer-Desktop-Build"
-
-# 2. runtime_strategy 已在 _shinyelectron.yml 的 build: 段设置
-# 排查启动问题：可先运行 Sys.setenv(SHINYELECTRON_DEBUG = "1")，让后端打印 R 的 stdout/stderr 与实际端口
-options(timeout = 3600)
 export(
-  appdir = app_dir,
-  destdir = output_dir,
-  app_name = 'SeuratExplorer',
-  icon = './icons/ico/emerald.ico',
+  appdir    = app_dir,
+  destdir   = output_dir,
+  app_name  = "SeuratExplorer",
+  icon      = if (file.exists(icon)) icon else NULL,
   run_after = FALSE,
   overwrite = TRUE
 )
-
