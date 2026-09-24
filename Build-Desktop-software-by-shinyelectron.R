@@ -47,7 +47,7 @@ writeLines(app_code, con = file.path(app_dir, "app.R"))
 #   as.character(utils::packageVersion("SeuratExplorer")),
 #   error = function(e) "1.0.0"
 # )
-# or specify the version
+# or specify the version 注意，这个地方需要根据实际情况进行修改。
 se_version <- "0.1.8"
 
 config_code <- paste0('
