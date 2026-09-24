@@ -9,15 +9,12 @@
 # Placement: copy to .github/workflows/build-desktop.yml in the
 #            fentouxungui/SeuratExplorer repository.
 #
-# Notes
-#   * Linux is intentionally excluded: the `bundled` runtime ships portable R,
-#     which upstream publishes for macOS/Windows only.
-#   * macOS/Windows builds are UNSIGNED, so first launch shows Gatekeeper /
-#     SmartScreen prompts. Add signing secrets and `sign: 'true'` for smooth
-#     distribution (and macOS auto-update requires signing + notarization).
-#   * Node.js is provided by actions/setup-node (Node 24 -> npm >= 11.5) so
-#     shinyelectron::validate_node_npm() finds node/npm on PATH. The old
-#     install_nodejs() path alone was not picked up in CI.
+# IMPORTANT (Node.js)
+#   * Do NOT call shinyelectron::install_nodejs() in this workflow/script.
+#     In CI its managed Node is preferred by validate_node_npm() but is not
+#     resolving/running, and there is no fallback. Instead provide Node.js via
+#     actions/setup-node so get_node_command() falls back to the PATH node.
+#   * Local/desktop builds can still use install_nodejs().
 
 name: Build Desktop App
 
@@ -60,7 +57,8 @@ jobs:
         with:
           use-public-rspm: true
 
-      # Node.js + npm on PATH, satisfying shinyelectron (Node >= 22, npm >= 11.5).
+      # Node.js + npm on PATH (Node 24 -> npm >= 11.5), so
+      # shinyelectron::get_node_command() resolves node/npm from PATH.
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -75,10 +73,8 @@ jobs:
         shell: Rscript {0}
         run: |
           install.packages("pak")
-          # The fork has an undeclared `rlang` dependency: `library(shinyelectron)`
-          # needs it but it is not in DESCRIPTION Imports, so pak will not pull it
-          # in on its own. Install it explicitly to keep the CI library complete.
-          pak::pak(c("fentouxungui/shinyelectron", "rlang", "renv"))
+          # The fork has an undeclared `rlang` dependency; install it explicitly.
+          pak::pak(c("fentouxungui/shinyelectron", "rlang", "renv))
           cat("libPaths:\n"); print(.libPaths())
           print(find.package("shinyelectron", quiet = TRUE))
           print(find.package("rlang", quiet = TRUE))
@@ -86,10 +82,13 @@ jobs:
       - name: Verify the toolchain
         shell: Rscript {0}
         run: |
-          cat("node:", Sys.which("node"), "\n")
-          cat("npm :", Sys.which("npm"), "\n")
-          system("node --version")
-          system("npm --version")
+          cat("PATH node :", Sys.which("node"), "\n")
+          cat("PATH npm  :", Sys.which("npm"), "\n")
+          system("node --version"); system("npm --version")
+          # Should be NULL / FALSE here (no install_nodejs() call). If a managed
+          # Node path is reported, the workflow is still calling install_nodejs().
+          cat("managed node     :", shinyelectron:::nodejs_executable(), "\n")
+          cat("managed installed:", shinyelectron:::nodejs_is_installed(), "\n")
 
       - name: Build the desktop app
         shell: Rscript {0}
