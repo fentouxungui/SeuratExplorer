@@ -68,6 +68,9 @@ jobs:
         run: |
           install.packages("pak")
           pak::pak(c("fentouxungui/shinyelectron", "rlang"))
+          cat("libPaths:\n"); print(.libPaths())
+          print(find.package("shinyelectron", quiet = TRUE))
+          print(find.package("rlang", quiet = TRUE))
           shinyelectron::install_nodejs()
 
       - name: Build the desktop app
