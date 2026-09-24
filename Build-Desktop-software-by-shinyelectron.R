@@ -15,7 +15,6 @@
 #   icons/ico/emerald.ico                       (optional)
 
 library(shinyelectron)
-# install_nodejs()
 
 # ---- paths (CI-aware) -------------------------------------------------
 ws <- Sys.getenv("GITHUB_WORKSPACE", unset = getwd())
@@ -25,8 +24,13 @@ dep_dir    <- file.path(ws, "dependency")
 
 dir.create(app_dir, recursive = TRUE, showWarnings = FALSE)
 
-# ---- version: tag (CI) > DESCRIPTION > fallback -----------------------
+# ---- version ----------------------------------------------------------
+# APP_VERSION is the workflow tag (e.g. "v0.1.9"), but a manual workflow_dispatch
+# run sets it to the branch name ("main"), which is NOT a version. Only accept a
+# real version there; otherwise fall back to DESCRIPTION (which is also what
+# `R CMD build` used to name the source package).
 se_version <- sub("^v", "", Sys.getenv("APP_VERSION", unset = ""))
+if (!grepl("^[0-9]+(\\.[0-9]+)*$", se_version)) se_version <- ""
 if (!nzchar(se_version)) {
   desc <- file.path(ws, "DESCRIPTION")
   se_version <- if (file.exists(desc)) {
@@ -52,13 +56,16 @@ launchSeuratExplorer(
 writeLines(app_code, file.path(app_dir, "app.R"))
 
 # ---- 2. _shinyelectron.yml --------------------------------------------
-# Both local archives are installed into the bundled R, so the app ships the
-# exact SeuratExplorer build we tested plus the non-CRAN `presto`.  Absolute
-# paths are used because the installer resolves them from the R process cwd.
-local_se <- normalizePath(
-  file.path(dep_dir, sprintf("SeuratExplorer_%s.tar.gz", se_version)),
-  winslash = "/", mustWork = FALSE
-)
+# The local SeuratExplorer archive is located by globbing dependency/ rather than
+# rebuilding its name from the version, so a mismatch between the tag and the
+# package version cannot break the path. presto is committed with a fixed name.
+built_se <- list.files(dep_dir, pattern = "^SeuratExplorer_.*[.]tar[.]gz$", full.names = TRUE)
+local_se <- if (length(built_se) > 0) {
+  normalizePath(built_se[[1]], winslash = "/", mustWork = FALSE)
+} else {
+  normalizePath(file.path(dep_dir, sprintf("SeuratExplorer_%s.tar.gz", se_version)),
+                winslash = "/", mustWork = FALSE)
+}
 local_presto <- normalizePath(
   file.path(dep_dir, "presto-1.1.0.tar.gz"),
   winslash = "/", mustWork = FALSE
