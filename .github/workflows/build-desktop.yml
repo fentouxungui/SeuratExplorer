@@ -15,8 +15,9 @@
 #   * macOS/Windows builds are UNSIGNED, so first launch shows Gatekeeper /
 #     SmartScreen prompts. Add signing secrets and `sign: 'true'` for smooth
 #     distribution (and macOS auto-update requires signing + notarization).
-#   * Action versions are pinned to the Node.js 24 line (checkout@v5 /
-#     download-artifact@v5) to avoid the "Node.js 20 is deprecated" warning.
+#   * Node.js is provided by actions/setup-node (Node 24 -> npm >= 11.5) so
+#     shinyelectron::validate_node_npm() finds node/npm on PATH. The old
+#     install_nodejs() path alone was not picked up in CI.
 
 name: Build Desktop App
 
@@ -59,13 +60,18 @@ jobs:
         with:
           use-public-rspm: true
 
+      # Node.js + npm on PATH, satisfying shinyelectron (Node >= 22, npm >= 11.5).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
       - name: Fetch the SeuratExplorer source package
         uses: actions/download-artifact@v5
         with:
           name: seurat-explorer-src
           path: dependency
 
-      - name: Install shinyelectron (fork) and Node.js
+      - name: Install shinyelectron (fork)
         shell: Rscript {0}
         run: |
           install.packages("pak")
@@ -73,13 +79,17 @@ jobs:
           # needs it but it is not in DESCRIPTION Imports, so pak will not pull it
           # in on its own. Install it explicitly to keep the CI library complete.
           pak::pak(c("fentouxungui/shinyelectron", "rlang", "renv"))
-          # Diagnostics: show the library the next step will load from. If either
-          # find.package() prints character(0), pak installed into a different
-          # library than the one Rscript uses (a lib-path mismatch).
           cat("libPaths:\n"); print(.libPaths())
           print(find.package("shinyelectron", quiet = TRUE))
           print(find.package("rlang", quiet = TRUE))
-          shinyelectron::install_nodejs()
+
+      - name: Verify the toolchain
+        shell: Rscript {0}
+        run: |
+          cat("node:", Sys.which("node"), "\n")
+          cat("npm :", Sys.which("npm"), "\n")
+          system("node --version")
+          system("npm --version")
 
       - name: Build the desktop app
         shell: Rscript {0}
