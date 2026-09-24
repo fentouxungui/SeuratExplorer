@@ -9,12 +9,17 @@
 # Placement: copy to .github/workflows/build-desktop.yml in the
 #            fentouxungui/SeuratExplorer repository.
 #
-# IMPORTANT (Node.js)
-#   * Do NOT call shinyelectron::install_nodejs() in this workflow/script.
-#     In CI its managed Node is preferred by validate_node_npm() but is not
-#     resolving/running, and there is no fallback. Instead provide Node.js via
-#     actions/setup-node so get_node_command() falls back to the PATH node.
-#   * Local/desktop builds can still use install_nodejs().
+# Notes
+#   * Linux is intentionally excluded: the `bundled` runtime ships portable R,
+#     which upstream publishes for macOS/Windows only.
+#   * macOS/Windows builds are UNSIGNED, so first launch shows Gatekeeper /
+#     SmartScreen prompts. Add signing secrets and `sign: 'true'` for smooth
+#     distribution (and macOS auto-update requires signing + notarization).
+#   * Do NOT call shinyelectron::install_nodejs() in CI. Provide Node.js with
+#     actions/setup-node; get_node_command() falls back to the PATH node.
+#   * The fork uses `rlang` (not declared) and `withr` (declared only in
+#     Suggests) at runtime, so pak will not install them on its own. Install
+#     both explicitly here.
 
 name: Build Desktop App
 
@@ -57,8 +62,7 @@ jobs:
         with:
           use-public-rspm: true
 
-      # Node.js + npm on PATH (Node 24 -> npm >= 11.5), so
-      # shinyelectron::get_node_command() resolves node/npm from PATH.
+      # Node.js + npm on PATH (Node 24 -> npm >= 11.5).
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -69,15 +73,18 @@ jobs:
           name: seurat-explorer-src
           path: dependency
 
-      - name: Install shinyelectron (fork)
+      - name: Install shinyelectron (fork) and its runtime deps
         shell: Rscript {0}
         run: |
           install.packages("pak")
-          # The fork has an undeclared `rlang` dependency; install it explicitly.
-          pak::pak(c("fentouxungui/shinyelectron", "rlang", "renv"))
+          # `rlang` is undeclared and `withr` is only in Suggests in the fork,
+          # but both are needed at runtime (withr by run_command_safe(), which
+          # validate_node_npm() calls). Install them explicitly so CI has them.
+          pak::pak(c("fentouxungui/shinyelectron", "rlang", "withr", "renv"))
           cat("libPaths:\n"); print(.libPaths())
           print(find.package("shinyelectron", quiet = TRUE))
           print(find.package("rlang", quiet = TRUE))
+          print(find.package("withr", quiet = TRUE))
 
       - name: Verify the toolchain
         shell: Rscript {0}
@@ -85,8 +92,6 @@ jobs:
           cat("PATH node :", Sys.which("node"), "\n")
           cat("PATH npm  :", Sys.which("npm"), "\n")
           system("node --version"); system("npm --version")
-          # Should be NULL / FALSE here (no install_nodejs() call). If a managed
-          # Node path is reported, the workflow is still calling install_nodejs().
           cat("managed node     :", shinyelectron:::nodejs_executable(), "\n")
           cat("managed installed:", shinyelectron:::nodejs_is_installed(), "\n")
 
