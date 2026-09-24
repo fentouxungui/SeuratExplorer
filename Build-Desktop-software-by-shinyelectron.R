@@ -15,6 +15,7 @@
 #   icons/ico/emerald.ico                       (optional)
 
 library(shinyelectron)
+install_nodejs()
 
 # ---- paths (CI-aware) -------------------------------------------------
 ws <- Sys.getenv("GITHUB_WORKSPACE", unset = getwd())
