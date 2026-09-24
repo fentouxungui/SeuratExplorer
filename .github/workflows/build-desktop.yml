@@ -74,7 +74,7 @@ jobs:
         run: |
           install.packages("pak")
           # The fork has an undeclared `rlang` dependency; install it explicitly.
-          pak::pak(c("fentouxungui/shinyelectron", "rlang", "renv))
+          pak::pak(c("fentouxungui/shinyelectron", "rlang", "renv"))
           cat("libPaths:\n"); print(.libPaths())
           print(find.package("shinyelectron", quiet = TRUE))
           print(find.package("rlang", quiet = TRUE))
