@@ -1573,7 +1573,7 @@ ui <-  function(){
                                         div(style = "text-align: center;",
                                             actionButton("demo_data", "Download and Run a demo data", icon = icon("download"), class = "btn-primary"),
                                             tags$small(style = "display: block; color: #6c757d; margin-top: 8px;",
-                                                       "Downloads a Fly gut demo dataset (~74 MB) and loads it automatically. The file is cached locally for later use.")),
+                                                       "Downloads a Fly gut demo dataset (~74 MB, 1000 cells) and loads it automatically. The file is cached locally for later use.")),
                                         uiOutput("dataOverview"))
                                   )
   )

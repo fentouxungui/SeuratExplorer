@@ -43,12 +43,12 @@ writeLines(app_code, con = file.path(app_dir, "app.R"))
 
 # 3. 写入配置文件 _shinyelectron.yml（嵌套 schema；扁平键会被忽略并告警）
 # 版本号与 SeuratExplorer 包联动（安装器版本 = 已安装/将打包的包版本）
-se_version <- tryCatch(
-  as.character(utils::packageVersion("SeuratExplorer")),
-  error = function(e) "1.0.0"
-)
+# se_version <- tryCatch(
+#   as.character(utils::packageVersion("SeuratExplorer")),
+#   error = function(e) "1.0.0"
+# )
 # or specify the version
-# se_version <- 0.1.9
+se_version <- "0.1.8"
 
 config_code <- paste0('
 app:
@@ -92,7 +92,6 @@ dependencies:
     - DT
   r:
     local_packages:
-      - "D:/GitHub_Res/SeuratExplorer_0.1.9.tar.gz"
       - "D:/GitHub_Res/presto-1.1.0.tar.gz"
 updates:
   enabled: true

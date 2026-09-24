@@ -3768,7 +3768,7 @@ server <- function(input, output, session) {
     on.exit(shinyjs::enable("demo_data"), add = TRUE)
     demo_url <- getOption("SeuratExplorerDemoDataURL")
     demo_md5 <- getOption("SeuratExplorerDemoDataMD5")
-    demo_dest <- file.path(demo_cache_dir(), "G101_PC20res04.rds")
+    demo_dest <- normalizePath(file.path(demo_cache_dir(), "G101_PC20res04.rds"))
     used_cache <- file.exists(demo_dest) && file.size(demo_dest) > 0
     if (used_cache) {
       showModal(modalDialog(
