@@ -90,7 +90,7 @@ window:
   height: 900
 
 menu:
-  help_url: "https://github.com/fentouxungui/SeuratExplorer"
+  help_url: "https://github.com/fentouxungui/SeuratExplorer/wiki"
 
 installer:
   app_id: "com.seuratexplorer.desktop"
