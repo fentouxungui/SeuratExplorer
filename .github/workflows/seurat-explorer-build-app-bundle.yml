@@ -8,7 +8,7 @@
 #   +- rlib/<Pkg>/     (PREBUILT R package dirs -- the client only copies, never compiles)
 #
 # Attach to a release either by publishing a release, or by running this
-# workflow manually and supplying the target `tag`.
+# workflow manually (the `tag` input defaults to v0.1.9).
 
 name: Build app bundle
 
@@ -17,10 +17,11 @@ on:
     types: [published]
   workflow_dispatch:
     inputs:
-      tag: "v0.1.9"
-        description: "Existing tag to attach bundles to (e.g. v0.1.9); leave empty to build artifacts only"
+      tag:
+        description: "Existing tag to attach bundles to"
         required: false
         type: string
+        default: "v0.1.9"
 
 permissions:
   contents: write
