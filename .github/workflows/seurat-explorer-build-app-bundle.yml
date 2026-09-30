@@ -17,7 +17,7 @@ on:
     types: [published]
   workflow_dispatch:
     inputs:
-      tag: v0.1.9
+      tag: "v0.1.9"
         description: "Existing tag to attach bundles to (e.g. v0.1.9); leave empty to build artifacts only"
         required: false
         type: string
