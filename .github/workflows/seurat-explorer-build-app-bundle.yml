@@ -1,0 +1,145 @@
+# SeuratExplorer app-layer bundle builder.
+# Place at  SeuratExplorer/.github/workflows/build-app-bundle.yml
+#
+# Produces, per platform:  seurat-explorer-<version>-<platform>.zip
+#   bundle/
+#   +- manifest.json   (see ShinyApps/schemas/manifest.schema.json)
+#   +- app/app.R       (the same Shiny entry point as the desktop build)
+#   +- rlib/<Pkg>/     (PREBUILT R package dirs -- the client only copies, never compiles)
+#
+# The zip is attached to the GitHub Release; the catalog (a later step) points at it.
+
+name: Build app bundle
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  APP_ID: seurat-explorer
+  APP_NAME: SeuratExplorer
+  APP_AUTHOR: "Zhang Yongchao"
+  APP_DESC: "Explore scRNA-seq data processed in Seurat"
+  APP_HOMEPAGE: "https://github.com/fentouxungui/SeuratExplorer"
+  APP_LICENSE: "GPL-3.0-or-later"
+  # MUST equal the ShinyApps shell runtime R (binary ABI).
+  R_VERSION: "4.6.1"
+
+jobs:
+  bundle:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, platform: "win-x64" }
+          - { os: macos-14,       platform: "mac-arm64" }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ env.R_VERSION }}
+          use-public-rspm: true
+
+      - name: Install build helpers
+        shell: bash
+        run: Rscript -e 'install.packages(c("jsonlite","zip","digest","BiocManager"), repos="https://cloud.r-project.org")'
+
+      - name: Resolve version
+        shell: bash
+        run: |
+          V="${{ github.event.release.tag_name }}"
+          V="${V#v}"
+          if [ -z "$V" ]; then V=$(grep '^Version:' DESCRIPTION | awk '{print $2}'); fi
+          echo "VERSION=$V" >> "$GITHUB_ENV"
+
+      - name: Build source tarball
+        shell: bash
+        run: R CMD build --no-build-vignettes --no-manual .
+
+      - name: Install app + dependency closure into a staging library
+        shell: Rscript {0}
+        run: |
+          stage <- file.path(getwd(), "stage-lib")
+          unlink(stage, recursive = TRUE); dir.create(stage)
+          # CRAN + the Bioconductor release matching this R (ComplexHeatmap, ...).
+          options(repos = BiocManager::repositories())
+          tb <- list.files(".", pattern = sprintf("^SeuratExplorer_%s[.]tar[.]gz$", Sys.getenv("VERSION")), full.names = TRUE)
+          local_extra <- list.files("dependency", pattern = "^presto-.*[.]tar[.]gz$", full.names = TRUE)
+          install.packages(c(tb, local_extra), lib = stage, type = "binary",
+                           dependencies = TRUE, Ncpus = 2)
+          stopifnot(dir.exists(file.path(stage, "SeuratExplorer")))
+
+      - name: Assemble bundle + manifest.json
+        shell: Rscript {0}
+        run: |
+          bundle <- file.path(getwd(), "bundle")
+          unlink(bundle, recursive = TRUE); dir.create(bundle)
+
+          # Shiny entry point (must RETURN the app object; shinyelectron runs runApp).
+          dir.create(file.path(bundle, "app"))
+          writeLines(c(
+            'library(SeuratExplorer)',
+            'options(shiny.launch.browser = FALSE, shiny.deprecation.messages = FALSE)',
+            'launchSeuratExplorer(verbose = FALSE,',
+            '  ReductionKeyWords = c("umap","tsne","pca"),',
+            '  SplitOptionMaxLevel = 12, MaxInputFileSize = 30 * 1024^3)'
+          ), file.path(bundle, "app", "app.R"))
+
+          # Prebuilt package library (whole staging lib; client dedupes into the shared lib).
+          file.copy(file.path(getwd(), "stage-lib"), file.path(bundle, "rlib"), recursive = TRUE)
+
+          pkgs <- as.data.frame(installed.packages(lib.loc = file.path(getwd(), "stage-lib")))
+          man <- list(
+            schema = 1L,
+            id = Sys.getenv("APP_ID"), name = Sys.getenv("APP_NAME"), version = Sys.getenv("VERSION"),
+            author = Sys.getenv("APP_AUTHOR"), description = Sys.getenv("APP_DESC"),
+            homepage = Sys.getenv("APP_HOMEPAGE"), license = Sys.getenv("APP_LICENSE"),
+            runtime = "r-shiny", entry = "app/app.R",
+            platform = "${{ matrix.platform }}",
+            r_version = Sys.getenv("R_VERSION"), min_shell_version = "0.1.0",
+            packages = lapply(seq_len(nrow(pkgs)), function(i) list(
+              name = pkgs$Package[i], version = pkgs$Version[i],
+              path = file.path("rlib", pkgs$Package[i]), source = "cran"))
+          )
+          jsonlite::write_json(man, file.path(bundle, "manifest.json"), pretty = TRUE, auto_unbox = TRUE)
+
+      - name: Zip + sha256
+        shell: Rscript {0}
+        run: |
+          out <- sprintf("%s-%s-%s.zip", Sys.getenv("APP_ID"), Sys.getenv("VERSION"), "${{ matrix.platform }}")
+          old <- setwd("bundle"); on.exit(setwd(old))
+          zip::zip(out, files = list.files(".", recursive = TRUE, all.files = TRUE, no.. = TRUE))
+          setwd(old)
+          file.rename(file.path("bundle", out), out)
+          sha <- digest::digest(out, algo = "sha256", file = TRUE)
+          writeLines(sprintf('{"platform":"%s","file":"%s","sha256":"%s","size":%d}',
+                     "${{ matrix.platform }}", out, sha, file.size(out)),
+                     sprintf("meta-%s.json", "${{ matrix.platform }}"))
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bundle-${{ matrix.platform }}
+          path: |
+            *.zip
+            meta-*.json
+
+  release:
+    needs: bundle
+    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.zip
