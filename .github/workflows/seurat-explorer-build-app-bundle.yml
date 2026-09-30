@@ -6,8 +6,6 @@
 #   +- manifest.json   (see ShinyApps/schemas/manifest.schema.json)
 #   +- app/app.R       (the same Shiny entry point as the desktop build)
 #   +- rlib/<Pkg>/     (PREBUILT R package dirs -- the client only copies, never compiles)
-#
-# The zip is attached to the GitHub Release; the catalog (a later step) points at it.
 
 name: Build app bundle
 
@@ -67,13 +65,44 @@ jobs:
         run: |
           stage <- file.path(getwd(), "stage-lib")
           unlink(stage, recursive = TRUE); dir.create(stage)
-          # CRAN + the Bioconductor release matching this R (ComplexHeatmap, ...).
-          options(repos = BiocManager::repositories())
+          repos <- BiocManager::repositories()
+          options(repos = repos)
+
           tb <- list.files(".", pattern = sprintf("^SeuratExplorer_%s[.]tar[.]gz$", Sys.getenv("VERSION")), full.names = TRUE)
           local_extra <- list.files("dependency", pattern = "^presto-.*[.]tar[.]gz$", full.names = TRUE)
-          install.packages(c(tb, local_extra), lib = stage, type = "binary",
-                           dependencies = TRUE, Ncpus = 2)
-          stopifnot(dir.exists(file.path(stage, "SeuratExplorer")))
+          local_paths <- normalizePath(c(tb, local_extra), winslash = "/", mustWork = TRUE)
+
+          # Package names + declared deps of the LOCAL tarballs (read from their DESCRIPTION).
+          read_desc <- function(p) {
+            td <- tempfile(); dir.create(td)
+            utils::untar(p, exdir = td)
+            dd <- list.files(td, pattern = "^DESCRIPTION$", recursive = TRUE, full.names = TRUE)[1]
+            read.dcf(dd)
+          }
+          dcfs <- lapply(local_paths, read_desc)
+          loc_names <- vapply(dcfs, function(d) d[1, "Package"], character(1))
+          declared <- unique(unlist(lapply(dcfs, function(d) {
+            fields <- intersect(c("Depends", "Imports", "LinkingTo"), colnames(d))
+            vals <- unlist(lapply(fields, function(f) if (is.na(d[1, f])) "" else d[1, f]))
+            parts <- trimws(unlist(strsplit(paste(vals, collapse = ","), ",")))
+            parts <- trimws(sub("\\(.*\\)$", "", parts))
+            parts[nzchar(parts) & parts != "R"]
+          })))
+
+          # Repo-installable dependency closure (binary, fast).
+          db <- available.packages(repos = repos)
+          closure <- unique(c(unlist(tools::package_dependencies(loc_names, db = db, recursive = TRUE)), declared))
+          closure <- setdiff(closure, c(loc_names, rownames(installed.packages()), rownames(installed.packages(lib.loc = stage))))
+          if (length(closure)) {
+            install.packages(closure, lib = stage, repos = repos, type = "binary",
+                             dependencies = FALSE, Ncpus = 2)
+          }
+
+          # Local tarballs from SOURCE (type="binary" does not apply to local files).
+          install.packages(local_paths, lib = stage, repos = NULL, type = "source", dependencies = FALSE)
+
+          missing <- setdiff(loc_names, list.dirs(stage, recursive = FALSE, full.names = FALSE))
+          if (length(missing)) stop("local packages not installed: ", paste(missing, collapse = ", "))
 
       - name: Assemble bundle + manifest.json
         shell: Rscript {0}
@@ -81,7 +110,6 @@ jobs:
           bundle <- file.path(getwd(), "bundle")
           unlink(bundle, recursive = TRUE); dir.create(bundle)
 
-          # Shiny entry point (must RETURN the app object; shinyelectron runs runApp).
           dir.create(file.path(bundle, "app"))
           writeLines(c(
             'library(SeuratExplorer)',
@@ -91,7 +119,6 @@ jobs:
             '  SplitOptionMaxLevel = 12, MaxInputFileSize = 30 * 1024^3)'
           ), file.path(bundle, "app", "app.R"))
 
-          # Prebuilt package library (whole staging lib; client dedupes into the shared lib).
           file.copy(file.path(getwd(), "stage-lib"), file.path(bundle, "rlib"), recursive = TRUE)
 
           pkgs <- as.data.frame(installed.packages(lib.loc = file.path(getwd(), "stage-lib")))
