@@ -6,6 +6,9 @@
 #   +- manifest.json   (see ShinyApps/schemas/manifest.schema.json)
 #   +- app/app.R       (the same Shiny entry point as the desktop build)
 #   +- rlib/<Pkg>/     (PREBUILT R package dirs -- the client only copies, never compiles)
+#
+# Attach to a release either by publishing a release, or by running this
+# workflow manually and supplying the target `tag`.
 
 name: Build app bundle
 
@@ -13,6 +16,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag: v0.1.9
+        description: "Existing tag to attach bundles to (e.g. v0.1.9); leave empty to build artifacts only"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -51,7 +59,7 @@ jobs:
       - name: Resolve version
         shell: bash
         run: |
-          V="${{ github.event.release.tag_name }}"
+          V="${{ github.event.release.tag_name }}${{ inputs.tag }}"
           V="${V#v}"
           if [ -z "$V" ]; then V=$(grep '^Version:' DESCRIPTION | awk '{print $2}'); fi
           echo "VERSION=$V" >> "$GITHUB_ENV"
@@ -72,7 +80,6 @@ jobs:
           local_extra <- list.files("dependency", pattern = "^presto-.*[.]tar[.]gz$", full.names = TRUE)
           local_paths <- normalizePath(c(tb, local_extra), winslash = "/", mustWork = TRUE)
 
-          # Package names + declared deps of the LOCAL tarballs (read from their DESCRIPTION).
           read_desc <- function(p) {
             td <- tempfile(); dir.create(td)
             utils::untar(p, exdir = td)
@@ -89,7 +96,6 @@ jobs:
             parts[nzchar(parts) & parts != "R"]
           })))
 
-          # Repo-installable dependency closure (binary, fast).
           db <- available.packages(repos = repos)
           closure <- unique(c(unlist(tools::package_dependencies(loc_names, db = db, recursive = TRUE)), declared))
           closure <- setdiff(closure, c(loc_names, rownames(installed.packages()), rownames(installed.packages(lib.loc = stage))))
@@ -97,8 +103,6 @@ jobs:
             install.packages(closure, lib = stage, repos = repos, type = "binary",
                              dependencies = FALSE, Ncpus = 2)
           }
-
-          # Local tarballs from SOURCE (type="binary" does not apply to local files).
           install.packages(local_paths, lib = stage, repos = NULL, type = "source", dependencies = FALSE)
 
           missing <- setdiff(loc_names, list.dirs(stage, recursive = FALSE, full.names = FALSE))
@@ -158,7 +162,7 @@ jobs:
 
   release:
     needs: bundle
-    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v') || inputs.tag != ''
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -169,4 +173,5 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
           files: artifacts/*.zip
