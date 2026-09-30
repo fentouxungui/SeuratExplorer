@@ -3,12 +3,9 @@
 #
 # Produces, per platform:  seurat-explorer-<version>-<platform>.zip
 #   bundle/
-#   +- manifest.json   (see ShinyApps/schemas/manifest.schema.json)
-#   +- app/app.R       (the same Shiny entry point as the desktop build)
-#   +- rlib/<Pkg>/     (PREBUILT R package dirs -- the client only copies, never compiles)
-#
-# Attach to a release either by publishing a release, or by running this
-# workflow manually (the `tag` input defaults to v0.1.9).
+#   +- manifest.json
+#   +- app/app.R
+#   +- rlib/<Pkg>/   (PREBUILT R package dirs; installed directly here, not copied)
 
 name: Build app bundle
 
@@ -33,7 +30,6 @@ env:
   APP_DESC: "Explore scRNA-seq data processed in Seurat"
   APP_HOMEPAGE: "https://github.com/fentouxungui/SeuratExplorer"
   APP_LICENSE: "GPL-3.0-or-later"
-  # MUST equal the ShinyApps shell runtime R (binary ABI).
   R_VERSION: "4.6.1"
 
 jobs:
@@ -69,11 +65,12 @@ jobs:
         shell: bash
         run: R CMD build --no-build-vignettes --no-manual .
 
-      - name: Install app + dependency closure into a staging library
+      - name: Install app + dependency closure into bundle/rlib
         shell: Rscript {0}
         run: |
-          stage <- file.path(getwd(), "stage-lib")
-          unlink(stage, recursive = TRUE); dir.create(stage)
+          bundle <- file.path(getwd(), "bundle")
+          unlink(bundle, recursive = TRUE); dir.create(bundle, recursive = TRUE)
+          lib <- file.path(bundle, "rlib"); dir.create(lib, recursive = TRUE)
           repos <- BiocManager::repositories()
           options(repos = repos)
 
@@ -99,23 +96,23 @@ jobs:
 
           db <- available.packages(repos = repos)
           closure <- unique(c(unlist(tools::package_dependencies(loc_names, db = db, recursive = TRUE)), declared))
-          closure <- setdiff(closure, c(loc_names, rownames(installed.packages()), rownames(installed.packages(lib.loc = stage))))
+          closure <- setdiff(closure, c(loc_names, rownames(installed.packages()), basename(list.dirs(lib, recursive = FALSE))))
           if (length(closure)) {
-            install.packages(closure, lib = stage, repos = repos, type = "binary",
+            install.packages(closure, lib = lib, repos = repos, type = "binary",
                              dependencies = FALSE, Ncpus = 2)
           }
-          install.packages(local_paths, lib = stage, repos = NULL, type = "source", dependencies = FALSE)
+          install.packages(local_paths, lib = lib, repos = NULL, type = "source", dependencies = FALSE)
 
-          missing <- setdiff(loc_names, list.dirs(stage, recursive = FALSE, full.names = FALSE))
+          missing <- setdiff(loc_names, basename(list.dirs(lib, recursive = FALSE)))
           if (length(missing)) stop("local packages not installed: ", paste(missing, collapse = ", "))
+          cat("rlib packages:", length(list.dirs(lib, recursive = FALSE)), "\n")
 
-      - name: Assemble bundle + manifest.json
+      - name: Assemble app + manifest.json
         shell: Rscript {0}
         run: |
           bundle <- file.path(getwd(), "bundle")
-          unlink(bundle, recursive = TRUE); dir.create(bundle)
-
-          dir.create(file.path(bundle, "app"))
+          lib <- file.path(bundle, "rlib")
+          dir.create(file.path(bundle, "app"), recursive = TRUE, showWarnings = FALSE)
           writeLines(c(
             'library(SeuratExplorer)',
             'options(shiny.launch.browser = FALSE, shiny.deprecation.messages = FALSE)',
@@ -124,9 +121,7 @@ jobs:
             '  SplitOptionMaxLevel = 12, MaxInputFileSize = 30 * 1024^3)'
           ), file.path(bundle, "app", "app.R"))
 
-          file.copy(file.path(getwd(), "stage-lib"), file.path(bundle, "rlib"), recursive = TRUE)
-
-          pkgs <- as.data.frame(installed.packages(lib.loc = file.path(getwd(), "stage-lib")))
+          pkgs <- as.data.frame(installed.packages(lib.loc = lib))
           man <- list(
             schema = 1L,
             id = Sys.getenv("APP_ID"), name = Sys.getenv("APP_NAME"), version = Sys.getenv("VERSION"),
@@ -145,14 +140,19 @@ jobs:
         shell: Rscript {0}
         run: |
           out <- sprintf("%s-%s-%s.zip", Sys.getenv("APP_ID"), Sys.getenv("VERSION"), "${{ matrix.platform }}")
-          old <- setwd("bundle"); on.exit(setwd(old))
-          zip::zip(out, files = list.files(".", recursive = TRUE, all.files = TRUE, no.. = TRUE))
+          bundle <- file.path(getwd(), "bundle")
+          old <- setwd(bundle); on.exit(setwd(old))
+          # R-only zipper: no external command-line length limit; recurses directories.
+          zip::zipr(out, files = list.files(".", all.files = TRUE, no.. = TRUE))
+          entries <- utils::unzip(out, list = TRUE)$Name
+          if (!any(grepl("^rlib/", entries))) stop("zip is missing rlib/ -- aborting")
           setwd(old)
-          file.rename(file.path("bundle", out), out)
+          file.rename(file.path(bundle, out), out)
           sha <- digest::digest(out, algo = "sha256", file = TRUE)
           writeLines(sprintf('{"platform":"%s","file":"%s","sha256":"%s","size":%d}',
                      "${{ matrix.platform }}", out, sha, file.size(out)),
                      sprintf("meta-%s.json", "${{ matrix.platform }}"))
+          cat("bundle zip size:", file.size(out), "\n")
 
       - uses: actions/upload-artifact@v4
         with:
