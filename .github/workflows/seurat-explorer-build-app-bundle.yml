@@ -2,10 +2,11 @@
 # Place at  SeuratExplorer/.github/workflows/build-app-bundle.yml
 #
 # Produces, per platform:  seurat-explorer-<version>-<platform>.zip
-#   bundle/
-#   +- manifest.json
-#   +- app/app.R
-#   +- rlib/<Pkg>/   (PREBUILT R package dirs; installed directly here, not copied)
+#   bundle/ +- manifest.json +- app/app.R +- rlib/<Pkg>/
+#
+# IMPORTANT: the release tag version and DESCRIPTION Version must match, or the
+# built source tarball name will not match and the bundle is built without the
+# app (the install step below aborts in that case).
 
 name: Build app bundle
 
@@ -75,6 +76,9 @@ jobs:
           options(repos = repos)
 
           tb <- list.files(".", pattern = sprintf("^SeuratExplorer_%s[.]tar[.]gz$", Sys.getenv("VERSION")), full.names = TRUE)
+          if (length(tb) == 0) {
+            stop(sprintf("SeuratExplorer_%s.tar.gz not found -- bump DESCRIPTION Version to match the tag (version mismatch)", Sys.getenv("VERSION")))
+          }
           local_extra <- list.files("dependency", pattern = "^presto-.*[.]tar[.]gz$", full.names = TRUE)
           local_paths <- normalizePath(c(tb, local_extra), winslash = "/", mustWork = TRUE)
 
@@ -95,7 +99,8 @@ jobs:
           })))
 
           db <- available.packages(repos = repos)
-          closure <- unique(c(unlist(tools::package_dependencies(loc_names, db = db, recursive = TRUE)), declared))
+          seed <- unique(c(loc_names, declared))
+          closure <- unique(c(unlist(tools::package_dependencies(seed, db = db, recursive = TRUE)), declared))
           closure <- setdiff(closure, c(loc_names, rownames(installed.packages()), basename(list.dirs(lib, recursive = FALSE))))
           if (length(closure)) {
             install.packages(closure, lib = lib, repos = repos, type = "binary",
@@ -142,7 +147,6 @@ jobs:
           out <- sprintf("%s-%s-%s.zip", Sys.getenv("APP_ID"), Sys.getenv("VERSION"), "${{ matrix.platform }}")
           bundle <- file.path(getwd(), "bundle")
           old <- setwd(bundle); on.exit(setwd(old))
-          # R-only zipper: no external command-line length limit; recurses directories.
           zip::zipr(out, files = list.files(".", all.files = TRUE, no.. = TRUE))
           entries <- utils::unzip(out, list = TRUE)$Name
           if (!any(grepl("^rlib/", entries))) stop("zip is missing rlib/ -- aborting")
