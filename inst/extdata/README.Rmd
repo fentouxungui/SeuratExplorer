@@ -37,11 +37,15 @@ for_github <- FALSE
 
 A simple, one-command package which runs an interactive dashboard capable of common visualizations for single cell RNA-seq. ``SeuratExplorer`` requires a processed ``Seurat`` object, which is saved as ``rds`` or ``qs2`` file.
 
+Essentially, ``SeuratExplorer`` provides graphical interfaces for command-line tools from ``Seurat`` and other related packages, making complex analyses accessible without programming.
+
 ## Why build this R package
 
 > Currently, there are no comprehensive tools for visualizing Seurat analysis results that are accessible to users without programming expertise. When bioinformatics analysts hand over results to end users, those without R programming knowledge often struggle to retrieve and re-analyze the data independently. ``SeuratExplorer`` is designed to bridge this gap by enabling such users to visualize and explore analysis results through an intuitive graphical interface. The only requirement for users is to configure R and RStudio on their computers and install ``SeuratExplorer``. Alternatively, users can upload their ``Seurat object`` files to a server deployed with ``Shiny Server`` and ``SeuratExplorer`` for browser-based access.
 
-> Essentially, ``SeuratExplorer`` provides graphical interfaces for command-line tools from ``Seurat`` and other related packages, making complex analyses accessible without programming.
+## Available on ShinyApps
+
+This app is now available on [ShinyApps](https://github.com/fentouxungui/ShinyApps/releases), a desktop app store for Shiny Apps that allows users to install, run, update, and uninstall apps.
 
 ### Key Features
 

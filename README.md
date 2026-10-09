@@ -23,6 +23,10 @@ capable of common visualizations for single cell RNA-seq.
 `SeuratExplorer` requires a processed `Seurat` object, which is saved as
 `rds` or `qs2` file.
 
+Essentially, `SeuratExplorer` provides graphical interfaces for
+command-line tools from `Seurat` and other related packages, making
+complex analyses accessible without programming.
+
 ## Why build this R package
 
 > Currently, there are no comprehensive tools for visualizing Seurat
@@ -37,9 +41,12 @@ capable of common visualizations for single cell RNA-seq.
 > upload their `Seurat object` files to a server deployed with
 > `Shiny Server` and `SeuratExplorer` for browser-based access.
 
-> Essentially, `SeuratExplorer` provides graphical interfaces for
-> command-line tools from `Seurat` and other related packages, making
-> complex analyses accessible without programming.
+## Available on ShinyApps
+
+This app is now available on
+[ShinyApps](https://github.com/fentouxungui/ShinyApps/releases), a
+desktop app store for Shiny Apps that allows users to install, run,
+update, and uninstall apps.
 
 ### Key Features
 
