@@ -1326,7 +1326,11 @@ explorer_body_ui <- function(tab_list){
         plotOutput("geneclusters_histogram"),
         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
       box(title = "Settings", solidHeader = TRUE, status = "primary", width = 3,
-        textInput("geneclustersGeneSymbol", "Gene Symbol:", value = "", width = '100%'),
+        textInput("geneclustersGeneSymbol", "Gene Symbol or Metadata Column:", value = "", width = '100%'),
+        div(
+          style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+          uiOutput("geneclusters_hints.UI")
+        ),
         withSpinner(uiOutput("GeneclustersAssays.UI"), proxy.height = "10px"),
         withSpinner(uiOutput("geneclustersAssaySlots.UI"), proxy.height = "10px"),
         div(style = "margin-top: 15px;",

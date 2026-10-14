@@ -2864,6 +2864,20 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                 selected = ifelse('data' %in% slot_choices, 'data', slot_choices[1])) # default use data slot
   })
 
+  # Hint: available genes + numeric metadata columns
+  output$geneclusters_hints.UI <- renderUI({
+    if (length(data$extra_qc_options) == 0) {
+      p("Enter a gene symbol.",
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else if (length(data$extra_qc_options) > 10) {
+      p(paste0("Also supports numeric metadata columns: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "), "."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    } else {
+      p(paste0("Also supports numeric metadata columns: ", paste0(data$extra_qc_options, collapse = " "), "."),
+        style = "font-size: 12px; margin: 0; color: #004085;")
+    }
+  })
+
   # Reactive state
   geneclusters_expr <- reactiveVal(NULL)
   geneclusters_expr_gene <- reactiveVal(NULL)
@@ -2880,30 +2894,43 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # Default placeholder histogram
   output$geneclusters_histogram <- renderPlot({
     ggplot2::ggplot() +
-      ggplot2::annotate('text', x = 0, y = 0, label = 'Enter a gene symbol, select assay/slot,\nthen click "Generate Histogram".',
+      ggplot2::annotate('text', x = 0, y = 0, label = 'Enter a gene symbol or numeric metadata column,\nthen click "Generate Histogram".',
                         color = 'darkgrey', size = 6) +
       ggplot2::theme_void()
   })
 
   # Generate histogram
   observeEvent(input$geneclustersPlotHistogram, {
-    gene <- ReviseGene(Agene = trimws(input$geneclustersGeneSymbol),
+    input_name <- trimws(input$geneclustersGeneSymbol)
+    gene <- ReviseGene(Agene = input_name,
                        GeneLibrary = rownames(data$obj@assays[[input$GeneclustersAssay]]))
     if (is.na(gene)) {
-      showModal(modalDialog(title = "Error", "Gene not found!", easyClose = TRUE, footer = modalButton("OK")))
-      return()
+      # fall back to a numeric column in cell metadata (e.g. a module score)
+      if (input_name %in% data$extra_qc_options) {
+        gene <- input_name
+      } else {
+        showModal(modalDialog(title = "Error", "Gene or numeric metadata column not found!",
+                              easyClose = TRUE, footer = modalButton("OK")))
+        return()
+      }
     }
     geneclusters_expr_gene(gene)
 
-    # Extract expression
-    expr_df <- Seurat::FetchData(data$obj, vars = gene,
-                                 assay = input$GeneclustersAssay,
-                                 layer = input$geneclustersSlot)
-    vals <- expr_df[[1]]
+    # Extract expression / values (gene from assay, or numeric column from meta.data)
+    vals <- get_genecluster_values(obj = data$obj, name = gene,
+                                   assay = input$GeneclustersAssay,
+                                   layer = input$geneclustersSlot,
+                                   meta_numeric_columns = data$extra_qc_options)
+    if (is.null(vals)) {
+      showModal(modalDialog(title = "Error", "Cannot extract values for this input.",
+                            easyClose = TRUE, footer = modalButton("OK")))
+      return()
+    }
     # Exclude NA
     vals <- vals[!is.na(vals)]
     if (length(vals) == 0) {
-      showModal(modalDialog(title = "Error", "All expression values are NA for this gene.", easyClose = TRUE, footer = modalButton("OK")))
+      showModal(modalDialog(title = "Error", "All values are NA for this input.",
+                            easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
     geneclusters_expr(vals)
@@ -3031,14 +3058,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     cuts <- geneclusters_cutoffs()
     n <- length(cuts)
 
-    # Get cell names (non-NA expression)
-    expr_df <- Seurat::FetchData(data$obj, vars = gene,
-                                 assay = input$GeneclustersAssay,
-                                 layer = input$geneclustersSlot)
-    all_cells <- colnames(data$obj)
-    cell_has_expr <- !is.na(expr_df[[1]])
-    expr_cells <- all_cells[cell_has_expr]
-    expr_vals <- expr_df[[1]][cell_has_expr]
+    # Get cell names (non-NA values); supports both genes and numeric meta.data columns
+    vals_all <- get_genecluster_values(obj = data$obj, name = gene,
+                                       assay = input$GeneclustersAssay,
+                                       layer = input$geneclustersSlot,
+                                       meta_numeric_columns = data$extra_qc_options)
+    cell_has_expr <- !is.na(vals_all)
+    expr_cells <- names(vals_all)[cell_has_expr]
+    expr_vals <- vals_all[cell_has_expr]
 
     groups <- rep(NA_character_, length(expr_vals))
     groups[expr_vals <= cuts[1]] <- df$name[1]

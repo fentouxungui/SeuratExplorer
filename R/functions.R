@@ -1245,6 +1245,26 @@ empty_plot_no_reduction <- ggplot2::ggplot() +
                  axis.ticks = ggplot2::element_blank())
 
 
+# Extract values for the "Gene Based Cluster" module.
+# `name` is either a gene/feature of `assay` or a numeric column of the cell metadata
+# (e.g. a module score added by AddModuleScore). Returns a named numeric vector
+# (names = cell names, NA preserved), or NULL when `name` matches neither.
+get_genecluster_values <- function(obj, name, assay, layer, meta_numeric_columns) {
+  if (name %in% rownames(obj@assays[[assay]])) {
+    expr_df <- Seurat::FetchData(obj, vars = name, assay = assay, layer = layer)
+    vals <- expr_df[[1]]
+    names(vals) <- rownames(expr_df)
+    return(vals)
+  }
+  if (name %in% meta_numeric_columns) {
+    vals <- obj@meta.data[[name]]
+    names(vals) <- rownames(obj@meta.data)
+    return(vals)
+  }
+  return(NULL)
+}
+
+
 
 check_allowed_chars <- function(text_string, allowed_characters = "[^a-z A-Z0-9_+-]") {
   # Returns TRUE if NO forbidden characters are found (meaning only allowed chars are present)
