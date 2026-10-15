@@ -101,7 +101,12 @@ jobs:
           db <- available.packages(repos = repos)
           seed <- unique(c(loc_names, declared))
           closure <- unique(c(unlist(tools::package_dependencies(seed, db = db, recursive = TRUE)), declared))
-          closure <- setdiff(closure, c(loc_names, rownames(installed.packages()), basename(list.dirs(lib, recursive = FALSE))))
+          # Exclude ONLY base-priority packages from the required closure: a
+          # plain installed.packages() also drops toolchain packages installed by
+          # the earlier step (jsonlite/zip/digest/BiocManager) that the app may
+          # need at runtime -> "there is no package called 'X'" after install.
+          base_pkgs <- rownames(installed.packages(priority = "base"))
+          closure <- setdiff(closure, c(loc_names, base_pkgs, basename(list.dirs(lib, recursive = FALSE))))
           if (length(closure)) {
             install.packages(closure, lib = lib, repos = repos, type = "binary",
                              dependencies = FALSE, Ncpus = 2)
