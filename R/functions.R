@@ -513,22 +513,24 @@ top_genes <- function(SeuratObj, percent.cut = 0.01, group.by, assay = 'RNA') {
 }
 
 top_genes_core <- function(expr_mat, cutoff = 0.01, celltype){
-  # to block R RMD check note: Undefined global functions or variables:
-  Expr <- NULL
-  Gene <- NULL
+  top_genes_aggregate(
+    gene_list = top_genes_cell_block(expr_mat, cutoff, seq_len(ncol(expr_mat))),
+    expr_mat = expr_mat,
+    celltype = celltype
+  )
+}
 
-  # Optimized version using matrix operations instead of loops
-  # Calculate total UMI per cell
-  cell_totals <- colSums(expr_mat)
-
-  # Find genes above cutoff for each cell using vectorized operations
-  gene_list <- list()
-  for (i in 1:ncol(expr_mat)) {
-    if (cell_totals[i] > 0) {
-      rates <- expr_mat[, i] / cell_totals[i]
+# Per-cell extraction used by top_genes_core(). `cols` selects a block of cells
+# so the loop can be spread over several event-loop ticks (cancellable runs).
+top_genes_cell_block <- function(expr_mat, cutoff, cols){
+  cell_totals <- colSums(expr_mat[, cols, drop = FALSE])
+  gene_list <- vector("list", length(cols))
+  for (k in seq_along(cols)) {
+    if (cell_totals[k] > 0) {
+      rates <- expr_mat[, cols[k]] / cell_totals[k]
       top_genes_idx <- which(rates > cutoff)
       if (length(top_genes_idx) > 0) {
-        gene_list[[i]] <- data.frame(
+        gene_list[[k]] <- data.frame(
           'Gene' = rownames(expr_mat)[top_genes_idx],
           'Expr' = rates[top_genes_idx],
           stringsAsFactors = FALSE
@@ -536,12 +538,24 @@ top_genes_core <- function(expr_mat, cutoff = 0.01, celltype){
       }
     }
   }
+  gene_list[!vapply(gene_list, is.null, logical(1))]
+}
+
+# Aggregate the per-cell gene list of one group into the summary table.
+top_genes_aggregate <- function(gene_list, expr_mat, celltype){
+  # to block R RMD check note: Undefined global functions or variables:
+  Expr <- NULL
+  Gene <- NULL
+
+  gene_list <- gene_list[!vapply(gene_list, is.null, logical(1))]
 
   if (length(gene_list) == 0) {
-    # Return empty data frame with correct structure
+    # Return empty data frame with correct structure. All columns must be
+    # zero-length: mixing scalars with character(0) throws
+    # "arguments imply differing number of rows".
     return(data.frame(
-      celltype = celltype,
-      total.cells = ncol(expr_mat),
+      celltype = character(0),
+      total.cells = integer(0),
       Gene = character(0),
       total.pos.cells = integer(0),
       total.UMI.pct = numeric(0),
@@ -701,6 +715,52 @@ calculate_correlation <- function(SeuratObj, features, method, assay = 'RNA'){
   cor.res$correlation <- round(cor.res$correlation, digits = 4)
   rownames(cor.res) <- NULL
   return(cor.res)
+}
+
+
+# --- Feature correlation: blocked (cancelable) top-correlation search --------
+# The full gene x gene correlation is O(genes^2 x cells) and can run for a very
+# long time. The upper triangle is computed in blocks of genes so the Shiny
+# event loop can run between blocks, which makes the run cancelable.
+# Each block keeps only its own top `keep` pairs; the global top-N is always a
+# subset of that union, so the final table matches the unblocked computation.
+calculate_top_correlations_block <- function(expr_t, from, to, method = "pearson",
+                                             keep = 1000L) {
+  n <- ncol(expr_t)
+  if (from > n) return(NULL)
+  to <- min(to, n)
+  x <- expr_t[, from:to, drop = FALSE]
+  y <- expr_t[, from:n, drop = FALSE]
+  cm <- stats::cor(x = x, y = y, method = method)
+
+  # keep only pairs (i < j): zero the diagonal block's lower triangle + diagonal
+  k <- to - from + 1L
+  block <- cm[, seq_len(k), drop = FALSE]
+  block[lower.tri(block, diag = TRUE)] <- 0
+  cm[, seq_len(k)] <- block
+
+  res <- reshape2::melt(cm)
+  colnames(res) <- c("GeneA", "GeneB", "correlation")
+  res <- res[res$correlation != 0, , drop = FALSE]
+  if (nrow(res) == 0) return(NULL)
+  res <- res[order(abs(res$correlation), decreasing = TRUE), , drop = FALSE]
+  if (nrow(res) > keep) res <- res[seq_len(keep), , drop = FALSE]
+  rownames(res) <- NULL
+  res
+}
+
+# Assemble per-block results into the final table (same as
+# calculate_top_correlations()).
+finalize_top_correlations <- function(parts, top = 1000) {
+  parts <- parts[!vapply(parts, is.null, logical(1))]
+  if (length(parts) == 0) return(data.frame())
+  res <- do.call(rbind, parts)
+  res <- res[res$correlation != 0, , drop = FALSE]
+  res <- res[order(abs(res$correlation), decreasing = TRUE), , drop = FALSE]
+  res$correlation <- round(res$correlation, digits = 4)
+  if (nrow(res) > top) res <- res[seq_len(top), , drop = FALSE]
+  rownames(res) <- NULL
+  res
 }
 
 
@@ -1270,6 +1330,233 @@ check_allowed_chars <- function(text_string, allowed_characters = "[^a-z A-Z0-9_
   # Returns TRUE if NO forbidden characters are found (meaning only allowed chars are present)
   # allows for letters, numbers, whitespace, -, +, and _
   !grepl(allowed_characters, text_string)
+}
+
+
+
+############################## Gene set scoring (AddModuleScore / AUCell)
+# Single entry point used by the "Module Score" tab.
+# Every method returns the Seurat object with exactly one new numeric metadata
+# column called `name`, plus an `info` list that the UI reports to the user.
+
+score_gene_set_addmodulescore <- function(obj, genes, name, assay = NULL, seed = 1) {
+  if (is.null(assay) || !nzchar(assay)) {
+    assay <- SeuratObject::DefaultAssay(obj)
+  }
+  if (name %in% colnames(obj@meta.data)) {
+    stop("Column '", name, "' already exists in the metadata.", call. = FALSE)
+  }
+  # AddModuleScore writes '<name>1', so that column must be free as well,
+  # otherwise an existing metadata column would be silently overwritten.
+  tmp_name <- name
+  while (paste0(tmp_name, "1") %in% colnames(obj@meta.data)) {
+    tmp_name <- paste0(tmp_name, "_")
+  }
+  full_col_name <- paste0(tmp_name, "1")
+  obj <- Seurat::AddModuleScore(object = obj, features = list(genes),
+                                name = tmp_name, assay = assay, seed = seed)
+  colnames(obj@meta.data)[colnames(obj@meta.data) == full_col_name] <- name
+  list(
+    obj = obj,
+    info = list(method = "addmodulescore", assay = assay,
+                n_genes = length(genes), note = NULL)
+  )
+}
+
+
+# Build AUCell rankings for an assay, reusing a cached copy while the matrix is
+# unchanged. `cache` is an environment owned by the Shiny session: rankings are
+# deliberately kept OUT of the Seurat object because they are large and the app
+# copies the object on every `obj <- ...` assignment.
+get_aucell_rankings <- function(obj, assay, cache = NULL, layer_slot = "data",
+                                splitByBlocks = TRUE) {
+  if (!requireNamespace("AUCell", quietly = TRUE)) {
+    stop("Package 'AUCell' is required. Install it with BiocManager::install(\"AUCell\").",
+         call. = FALSE)
+  }
+
+  note <- NULL
+  layers_available <- tryCatch(SeuratObject::Layers(obj[[assay]]),
+                               error = function(e) character(0))
+  if (identical(layer_slot, "data") && !("data" %in% layers_available)) {
+    layer_slot <- "counts"
+    note <- "This assay has no 'data' layer; AUCell ranked the raw counts instead."
+  }
+
+  mat <- if (identical(layer_slot, "counts")) {
+    get_counts_matrix(obj, assay = assay)
+  } else {
+    get_data_matrix(obj, assay = assay)
+  }
+  if (is.null(mat) || nrow(mat) == 0 || ncol(mat) == 0) {
+    stop("Cannot extract the expression matrix of assay '", assay, "'.", call. = FALSE)
+  }
+
+  cell_names <- colnames(mat)
+  key <- paste(assay, layer_slot, nrow(mat), ncol(mat),
+               cell_names[1], cell_names[length(cell_names)], sep = "|")
+  if (!is.null(cache) && exists(key, envir = cache, inherits = FALSE)) {
+    return(list(rankings = get(key, envir = cache, inherits = FALSE),
+                n_genes = nrow(mat), layer_slot = layer_slot,
+                note = note, cached = TRUE))
+  }
+
+  rankings <- AUCell::AUCell_buildRankings(exprMat = mat, plotStats = FALSE,
+                                           splitByBlocks = splitByBlocks)
+  if (!is.null(cache)) {
+    assign(key, rankings, envir = cache)
+  }
+  list(rankings = rankings, n_genes = nrow(mat), layer_slot = layer_slot,
+       note = note, cached = FALSE)
+}
+
+
+score_gene_set_aucell <- function(obj, genes, name, assay = NULL, auc_pct = 5,
+                                  auc_max_rank = NULL, cache = NULL, seed = 1) {
+  if (is.null(assay) || !nzchar(assay)) {
+    assay <- SeuratObject::DefaultAssay(obj)
+  }
+  if (name %in% colnames(obj@meta.data)) {
+    stop("Column '", name, "' already exists in the metadata.", call. = FALSE)
+  }
+  if (length(genes) == 0) {
+    stop("The gene set is empty after matching against the assay.", call. = FALSE)
+  }
+
+  rk <- get_aucell_rankings(obj = obj, assay = assay, cache = cache,
+                            layer_slot = "data")
+
+  auc_max_rank <- if (is.null(auc_max_rank) || !is.finite(auc_max_rank)) {
+    ceiling((auc_pct / 100) * rk$n_genes)
+  } else {
+    as.integer(auc_max_rank)
+  }
+  auc_max_rank <- as.integer(max(1, min(auc_max_rank, rk$n_genes)))
+
+  # AUCell requires a NAMED list of gene sets: the name becomes the row name
+  # of getAUC(), so reuse the metadata column name.
+  gene_sets <- stats::setNames(list(genes), name)
+  auc <- AUCell::AUCell_calcAUC(geneSets = gene_sets, rankings = rk$rankings,
+                                normAUC = TRUE, aucMaxRank = auc_max_rank)
+  auc_mat <- AUCell::getAUC(auc)
+  # AUCell returns gene sets in rows and cells in columns; stay tolerant about
+  # the orientation instead of silently binding scores to the wrong cells.
+  if (nrow(auc_mat) == 1 && all(colnames(obj) %in% colnames(auc_mat))) {
+    scores <- as.numeric(auc_mat[1, colnames(obj)])
+  } else if (ncol(auc_mat) == 1 && all(colnames(obj) %in% rownames(auc_mat))) {
+    scores <- as.numeric(auc_mat[colnames(obj), 1])
+  } else {
+    stop("Unexpected AUCell result shape (", nrow(auc_mat), " x ", ncol(auc_mat),
+         ") or cell names do not match the object.", call. = FALSE)
+  }
+  if (length(scores) != ncol(obj) || anyNA(scores)) {
+    stop("AUCell did not return a score for every cell.", call. = FALSE)
+  }
+
+  obj@meta.data[[name]] <- scores
+  if (is.null(obj@misc$gene_set_scores)) {
+    obj@misc$gene_set_scores <- list()
+  }
+  obj@misc$gene_set_scores[[name]] <- list(
+    method = "aucell", assay = assay, layer = rk$layer_slot,
+    n_genes = length(genes), genes = genes, auc_max_rank = auc_max_rank,
+    normAUC = TRUE
+  )
+
+  note <- rk$note
+  if (is.null(note) && length(genes) < 30) {
+    note <- "The gene set has fewer than 30 genes; AUCell scores may be noisy."
+  }
+  list(
+    obj = obj,
+    info = list(method = "aucell", assay = assay, n_genes = length(genes),
+                layer = rk$layer_slot, auc_max_rank = auc_max_rank,
+                cached = rk$cached, note = note)
+  )
+}
+
+
+compute_gene_set_score <- function(obj, genes, name,
+                                   method = c("addmodulescore", "aucell"),
+                                   assay = NULL, auc_pct = 5,
+                                   auc_max_rank = NULL, cache = NULL, seed = 1) {
+  method <- match.arg(method)
+  if (identical(method, "aucell")) {
+    score_gene_set_aucell(obj = obj, genes = genes, name = name, assay = assay,
+                          auc_pct = auc_pct, auc_max_rank = auc_max_rank,
+                          cache = cache, seed = seed)
+  } else {
+    score_gene_set_addmodulescore(obj = obj, genes = genes, name = name,
+                                  assay = assay, seed = seed)
+  }
+}
+
+
+# --- cancellable, chunked long-running computations ----------------------
+# Seurat::FindAllMarkers is a loop of FindMarkers() calls, one per cluster.
+# Doing that loop here - one cluster per event-loop tick - keeps the Shiny app
+# responsive so the Cancel button can interrupt a long run. The assembled table
+# is identical to FindAllMarkers(only.pos = TRUE).
+
+find_markers_one_cluster <- function(object, cluster, cluster_col, assay = NULL,
+                                     test.use = "wilcox", logfc.threshold = 0.1,
+                                     min.pct = 0.01, min.diff.pct = -Inf,
+                                     only.pos = TRUE, return.thresh = 0.01) {
+  genes.de <- Seurat::FindMarkers(object = object, assay = assay,
+                                  ident.1 = cluster, ident.2 = NULL,
+                                  group.by = cluster_col, test.use = test.use,
+                                  logfc.threshold = logfc.threshold,
+                                  min.pct = min.pct, min.diff.pct = min.diff.pct,
+                                  only.pos = only.pos, verbose = FALSE)
+  if (is.null(genes.de) || nrow(genes.de) == 0) {
+    return(NULL)
+  }
+  if (identical(test.use, "roc")) {
+    genes.de <- genes.de[genes.de$myAUC > return.thresh |
+                           genes.de$myAUC < (1 - return.thresh), , drop = FALSE]
+  } else {
+    genes.de <- genes.de[order(genes.de$p_val,
+                               -abs(genes.de$pct.1 - genes.de$pct.2)), , drop = FALSE]
+    genes.de <- genes.de[genes.de$p_val < return.thresh, , drop = FALSE]
+  }
+  if (nrow(genes.de) == 0) {
+    return(NULL)
+  }
+  genes.de$cluster <- cluster
+  genes.de$gene <- rownames(genes.de)
+  genes.de
+}
+
+# Same final assembly as Seurat::FindAllMarkers(only.pos = TRUE).
+finalize_find_all_markers <- function(parts) {
+  parts <- parts[!vapply(parts, is.null, logical(1))]
+  if (length(parts) == 0) {
+    return(data.frame())
+  }
+  gde.all <- do.call(rbind, parts)
+  gde.all[gde.all[[2]] > 0, , drop = FALSE]
+}
+
+
+# Static note for long-running DEG dialogs. Seurat emits a one-time console
+# message when presto is missing; that message used to be picked up by the
+# progress handler and corrupted the progress bar. Show it as a fixed block
+# (below the wait text, above the progress bar) for the whole computation.
+presto_missing_ui <- function() {
+  if (requireNamespace("presto", quietly = TRUE)) {
+    return(NULL)
+  }
+  div(
+    style = paste0("background: #fff3cd; border-left: 4px solid #ffc107; ",
+                   "padding: 8px 10px; margin: 10px 0; font-size: 12px; ",
+                   "line-height: 1.4; color: #856404;"),
+    icon("info-circle", style = "margin-right: 5px;"),
+    tags$strong("presto is not installed."),
+    " The Wilcoxon rank sum test will use Seurat's slower implementation, so this step may take much longer.",
+    tags$br(),
+    tags$code(style = "font-size: 11px;", "devtools::install_github('immunogenomics/presto')"),
+    " and restart the app to enable the fast version."
+  )
 }
 
 

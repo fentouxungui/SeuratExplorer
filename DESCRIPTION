@@ -35,6 +35,7 @@ Imports:
     knitr,
     markdown,
     shinyjs,
+    later,
     rlang
 Depends: 
     R (>= 4.1.0),
@@ -45,12 +46,14 @@ Suggests:
     MAST,
     limma,
     DESeq2,
+    AUCell,
     Signac
 Remotes:
     bioc::release/ComplexHeatmap,
     github::immunogenomics/presto,
     bioc::release/MAST,
     bioc::release/limma,
-    bioc::release/DESeq2
+    bioc::release/DESeq2,
+    bioc::release/AUCell
 LazyData: true
 Config/roxygen2/version: 8.1.0

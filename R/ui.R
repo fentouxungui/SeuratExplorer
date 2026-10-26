@@ -36,7 +36,7 @@ explorer_sidebar_ui <- function(){
     renameclusters = "Interactively rename cluster labels.",
     geneclusters = "Group cells by a gene's expression level with custom cutoffs.",
     combinedclusters = "Combine two cluster annotations into a new grouping.",
-    addmodulescore = "Score cells with a gene set using AddModuleScore.",
+    addmodulescore = "Score cells with a gene set using AddModuleScore (Seurat) or AUCell.",
     featuresdf = "Search and browse feature / gene names across assays.",
     cellmetadata = "Browse and download cell-level metadata.",
     objectstructure = "Inspect the structure of the Seurat object."
@@ -1395,7 +1395,7 @@ explorer_body_ui <- function(tab_list){
   )
   tab_list[["addmodulescore"]] = tabItem(tabName = "addmodulescore",
     fluidRow(
-      box(title = "Add Module Score", solidHeader = TRUE, status = "primary", width = 12,
+      box(title = "Module Score", solidHeader = TRUE, status = "primary", width = 12,
         textAreaInput("ModuleScoreFeatures", "Gene Symbols:",
           value = "", height = '100px', resize = "vertical",
           placeholder = "Paste gene symbols, one per line or comma-separated"),
