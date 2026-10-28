@@ -1965,7 +1965,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     shinyjs::runjs("$('#close_featurecorrelation_info i').toggleClass('fa-chevron-up fa-chevron-down');")
   }, ignoreInit = TRUE)
 
-  DEGs <- reactiveValues(degs = NULL, degs_ready = FALSE)
+  DEGs <- reactiveValues(degs = NULL, degs_ready = FALSE, run_info = NULL)
 
   # Long computations are executed in chunks (one cluster / one batch of cells
   # per event-loop tick) so pending input is processed in between. A Cancel
@@ -2061,6 +2061,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         }
         DEGs$degs <- res
         DEGs$degs_ready <- TRUE
+        DEGs$run_info <- run_info_line(
+          "Cluster markers",
+          paste(nrow(res), "markers"),
+          paste(length(unique(res$cluster)), "clusters"),
+          paste("test:", deg_testuse),
+          paste("logFC >=", deg_logfc),
+          paste("min.pct:", deg_minpct),
+          paste("assay:", deg_assay))
         showNotification(  ui = tagList(
           icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
           "Cluster markers calculation completed!"
@@ -2328,6 +2336,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       } else {
         DEGs$degs <- result
         DEGs$degs_ready <- TRUE
+        DEGs$run_info <- run_info_line(
+          "Two-group DEGs",
+          paste(nrow(result), "genes"),
+          paste("case:", paste(input$IntraClusterDEGsCustomizedGroupsCase, collapse = "/")),
+          paste("control:", paste(input$IntraClusterDEGsCustomizedGroupsControl, collapse = "/")),
+          paste("group by:", input$IntraClusterDEGsCustomizedGroups),
+          paste("test:", input$testuse),
+          paste("assay:", input$DEGsAssay))
         showNotification(  ui = tagList(
           icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
           "Intra-cluster DEGs calculation completed!"
@@ -2347,6 +2363,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   # part-5: output results
+  # Provenance line above the result table: analysis + main parameters + time
+  output$degs_run_info <- renderUI({
+    if (is.null(DEGs$run_info)) return(NULL)
+    tags$div(style = "color: #6c757d; font-size: 12px; margin-bottom: 6px;",
+             icon("clock-rotate-left"), " ", DEGs$run_info)
+  })
+
   output$dataset_degs <-  DT::renderDT(server=FALSE,{
     req(DEGs$degs)
     if(verbose){message("SeuratExplorer: preparing dataset_degs...")}
@@ -2504,7 +2527,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       - Find Top Genes by mean UMI Counts: for each cluster, calculate the top n highly expressed genes by mean UMI counts.')
   })
 
-  TopGenes <- reactiveValues(topgenes = NULL, topgenes_ready = FALSE)
+  TopGenes <- reactiveValues(topgenes = NULL, topgenes_ready = FALSE, run_info = NULL)
 
   output$TopGenes_ready <- reactive({
     return(TopGenes$topgenes_ready)
@@ -2539,6 +2562,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     cds <- subset_Seurat(cds, idents = input$TopGenesSelectedClusters)
 
     counts.expr <- get_counts_matrix(cds, input$TopGenesAssay)
+    # later() callbacks are NOT reactive contexts: every input used by the
+    # chunked loop (including the provenance line) must be captured here.
+    tg_assay <- input$TopGenesAssay
     cutoff <- input$TopGenesTopPercent / 100
     group_by <- if (input$TopGenesClusterLevel) input$TopGenesClusterResolution else NULL
 
@@ -2591,6 +2617,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       if (nrow(res) > 0) rownames(res) <- NULL
       TopGenes$topgenes <- res
       if (nrow(res) > 0) {
+        TopGenes$run_info <- run_info_line(
+          "Top genes by cell",
+          paste(nrow(res), "genes"),
+          paste("UMI cutoff:", paste0(round(cutoff * 100, 2), "%")),
+          paste("groups:", length(cells_by_group)),
+          paste("assay:", tg_assay))
         TopGenes$topgenes_ready <- TRUE
         showNotification(  ui = tagList(
           icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
@@ -2659,6 +2691,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     cds <- subset_Seurat(cds, idents = input$TopGenesSelectedClusters)
 
     counts.expr <- get_counts_matrix(cds, input$TopGenesAssay)
+    # captured for the later() callbacks, see the note in TopGenesAnalysis()
+    tg_assay <- input$TopGenesAssay
     group_by <- if (input$TopGenesClusterLevel) input$TopGenesClusterResolution else NULL
 
     cell_names <- colnames(cds)
@@ -2685,6 +2719,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       if (nrow(res) > 0) rownames(res) <- NULL
       TopGenes$topgenes <- res
       if (nrow(res) > 0) {
+        TopGenes$run_info <- run_info_line(
+          "Accumulated top genes",
+          paste(nrow(res), "genes"),
+          paste("top n:", top_n),
+          paste("groups:", length(cells_by_group)),
+          paste("assay:", tg_assay))
         TopGenes$topgenes_ready <- TRUE
         showNotification(  ui = tagList(
           icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
@@ -2736,6 +2776,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     later::later(step, 0)
   })
 
+  output$topgenes_run_info <- renderUI({
+    if (is.null(TopGenes$run_info)) return(NULL)
+    tags$div(style = "color: #6c757d; font-size: 12px; margin-bottom: 6px;",
+             icon("clock-rotate-left"), " ", TopGenes$run_info)
+  })
+
   output$dataset_topgenes <-  DT::renderDT(server=FALSE,{
     req(TopGenes$topgenes)
     if(verbose){message("SeuratExplorer: preparing topgenes...")}
@@ -2757,7 +2803,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
            Attention: Unmatched features will be automatically ignored.')
   })
 
-  FeatureSummary <- reactiveValues(summary = NULL, summary_ready = FALSE)
+  FeatureSummary <- reactiveValues(summary = NULL, summary_ready = FALSE, run_info = NULL)
 
   output$FeatureSummary_ready <- reactive({
     return(FeatureSummary$summary_ready)
@@ -2815,12 +2861,28 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                                    assay = input$FeatureSummaryAssay)
       }
       removeModal()
+      FeatureSummary$run_info <- run_info_line(
+        "Feature summary",
+        paste(nrow(FeatureSummary$summary), "rows"),
+        paste(length(GeneRevised), "features"),
+        paste("group by:", if (isTRUE(input$FeatureSummaryClusterLevel)) {
+          input$FeatureSummaryClusterResolution
+        } else {
+          "all cells"
+        }),
+        paste("assay:", input$FeatureSummaryAssay))
       FeatureSummary$summary_ready <- TRUE
       showNotification(  ui = tagList(
         icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
         "Feature summary completed!",
       ), type = "message", duration = 5)
     }
+  })
+
+  output$featuresummary_run_info <- renderUI({
+    if (is.null(FeatureSummary$run_info)) return(NULL)
+    tags$div(style = "color: #6c757d; font-size: 12px; margin-bottom: 6px;",
+             icon("clock-rotate-left"), " ", FeatureSummary$run_info)
   })
 
   output$dataset_featuresummary <-  DT::renderDT(server=FALSE,{
@@ -2851,7 +2913,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     If nothing is returned, the input genes are probably expressed too low; genes with very low expression are removed before the analysis.')
   })
 
-  FeatureCorrelation <- reactiveValues(summary = NULL, summary_ready = FALSE)
+  FeatureCorrelation <- reactiveValues(summary = NULL, summary_ready = FALSE, run_info = NULL)
 
   output$FeatureCorrelation_ready <- reactive({
     return(FeatureCorrelation$summary_ready)
@@ -2928,6 +2990,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         res <- finalize_top_correlations(parts, top = keep_n)
         FeatureCorrelation$summary <- res
         if (nrow(res) > 0) {
+          FeatureCorrelation$run_info <- run_info_line(
+            "Top correlated pairs",
+            paste(nrow(res), "pairs"),
+            paste("method:", cor_method),
+            paste("top:", keep_n),
+            paste("assay:", cor_assay))
           FeatureCorrelation$summary_ready <- TRUE
           showNotification(  ui = tagList(
             icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
@@ -3024,6 +3092,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                                               assay = input$FeatureCorrelationAssay)
       removeModal()
       if (nrow(FeatureCorrelation$summary) > 0) {
+        FeatureCorrelation$run_info <- run_info_line(
+          "Most correlated genes",
+          paste(nrow(FeatureCorrelation$summary), "genes"),
+          paste("feature:", feature.revised),
+          paste("method:", input$correlationmethod),
+          paste("assay:", input$FeatureCorrelationAssay))
         FeatureCorrelation$summary_ready <- TRUE
         showNotification(  ui = tagList(
           icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
@@ -3081,6 +3155,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                                           assay = input$FeatureCorrelationAssay)
       removeModal()
       if (nrow(FeatureCorrelation$summary) > 0) {
+        FeatureCorrelation$run_info <- run_info_line(
+          "Correlation in a gene list",
+          paste(nrow(FeatureCorrelation$summary), "pairs"),
+          paste(length(GeneRevised), "genes"),
+          paste("method:", input$correlationmethod),
+          paste("assay:", input$FeatureCorrelationAssay))
         FeatureCorrelation$summary_ready <- TRUE
         showNotification(  ui = tagList(
           icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
@@ -3099,6 +3179,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         ))
       }
     }
+  })
+
+  output$correlation_run_info <- renderUI({
+    if (is.null(FeatureCorrelation$run_info)) return(NULL)
+    tags$div(style = "color: #6c757d; font-size: 12px; margin-bottom: 6px;",
+             icon("clock-rotate-left"), " ", FeatureCorrelation$run_info)
   })
 
   output$dataset_correlation <-  DT::renderDT(server=FALSE,{

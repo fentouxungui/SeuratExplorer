@@ -1613,6 +1613,17 @@ show_error <- function(title, detail, subtitle = NULL, code = NULL, size = "m") 
 }
 
 
+# One-line provenance shown above result tables, so a result can always be
+# traced back to the analysis and the main parameters that produced it:
+# "2026-10-28 14:05 · Cluster markers · 1234 markers · test: wilcox · assay: RNA"
+run_info_line <- function(...) {
+  parts <- as.character(unlist(list(...), use.names = FALSE))
+  parts <- parts[!is.na(parts) & nzchar(parts)]
+  paste0(format(Sys.time(), "%Y-%m-%d %H:%M"), "  ·  ",
+         paste(parts, collapse = "  ·  "))
+}
+
+
 # create_resizable_plot_ui is a function created by Claude code
 #' Create a collapsible parameter group for Plot Settings
 #'

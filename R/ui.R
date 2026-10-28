@@ -19,6 +19,16 @@ explorer_sidebar_ui <- function(){
   # to make shinyBS::updateCollapse() runs correctly, refer to: https://github.com/ebailey78/shinyBS/issues/92
   shiny::addResourcePath("sbs", system.file("www", package="shinyBS"))
 
+  # Thin divider between menu groups. It is a plain <li> with no height of its
+  # own (only the 1px border), so the spacing of the surrounding items is
+  # unchanged; the side margins inset the line from the menu edges.
+  menu_divider <- function(){
+    tags$li(
+      style = paste0("list-style: none; height: 0; margin: 0 12px; padding: 0; ",
+                     "border-top: 1px solid rgba(255, 255, 255, 0.15);")
+    )
+  }
+
   # Tooltip texts for each menu item (hover to show)
   tooltips <- c(
     dimplot = "Visualize cells in reduced dimensions (UMAP / t-SNE / PCA), colored by cluster or split by metadata.",
@@ -53,14 +63,17 @@ explorer_sidebar_ui <- function(){
                          menuSubItem(text = span(title = tooltips[["averagedheatmap"]], "Heatmap Group Averaged"), tabName = "averagedheatmap", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["ridgeplot"]], "Ridge Plot"), tabName = "ridgeplot", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["cellratioplot"]], "Cell Percentage Plot"), tabName = "cellratioplot", icon = shiny::icon("angle-right")),
+                         menu_divider(),
                          menuSubItem(text = span(title = tooltips[["degs"]], "DEGs Analysis"), tabName = "degs", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["topgenes"]], "Top Expressed Features"), tabName = "topgenes", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["featuresummary"]], "Feature Summary"), tabName = "featuresummary", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["featurecorrelation"]], "Feature Correlation"), tabName = "featurecorrelation", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span(title = tooltips[["addmodulescore"]], "Module Score", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "addmodulescore", icon = shiny::icon("angle-right")),
+                         menu_divider(),
                          menuSubItem(text = span(title = tooltips[["renameclusters"]], "Rename Clusters"), tabName = "renameclusters", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["geneclusters"]], "Gene Based Cluster", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "geneclusters", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["combinedclusters"]], "Combination Based Cluster", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "combinedclusters", icon = shiny::icon("angle-right")),
-                         menuSubItem(text = span(title = tooltips[["addmodulescore"]], "Module Score", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "addmodulescore", icon = shiny::icon("angle-right")),
+                         menu_divider(),
                          menuSubItem(text = span(title = tooltips[["featuresdf"]], "Search Features"), tabName = "featuresdf", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["cellmetadata"]], "Cells Metadata"), tabName = "cellmetadata", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["objectstructure"]], "Object Structure"), tabName = "objectstructure", icon = shiny::icon("angle-right")),
@@ -747,6 +760,7 @@ explorer_body_ui <- function(tab_list){
                                            div(
                                              class = "box-body",
                                              style = "padding: 20px;",
+                                             uiOutput("degs_run_info"),
                                              withSpinner(DT::dataTableOutput('dataset_degs'))
                                            )
                                          )
@@ -961,6 +975,7 @@ explorer_body_ui <- function(tab_list){
                                            div(
                                              class = "box-body",
                                              style = "padding: 20px;",
+                                             uiOutput("topgenes_run_info"),
                                              withSpinner(DT::dataTableOutput('dataset_topgenes'))
                                            )
                                          )
@@ -1058,6 +1073,7 @@ explorer_body_ui <- function(tab_list){
                                        div(
                                          class = "box-body",
                                          style = "padding: 20px;",
+                                         uiOutput("featuresummary_run_info"),
                                          withSpinner(DT::dataTableOutput('dataset_featuresummary'))
                                        )
                                      )
@@ -1249,6 +1265,7 @@ explorer_body_ui <- function(tab_list){
                                        div(
                                          class = "box-body",
                                          style = "padding: 20px;",
+                                         uiOutput("correlation_run_info"),
                                          withSpinner(DT::dataTableOutput('dataset_correlation'))
                                        )
                                      )
@@ -1625,6 +1642,23 @@ ui <-  function(){
 
         .box.box-solid .box-title {
           font-weight: 600;
+        }
+
+        /* Information boxes: tighten the gap to the content below.
+           AdminLTE gives .box a 20px bottom margin; stacked with the 10px of
+           the wrapping column it left a visibly large gap under the hints. */
+        #degs-info-box,
+        #topgenes-info-box,
+        #featuresummary-info-box,
+        #featurecorrelation-info-box {
+          margin-bottom: 8px !important;
+        }
+
+        #degs-info-box > .box,
+        #topgenes-info-box > .box,
+        #featuresummary-info-box > .box,
+        #featurecorrelation-info-box > .box {
+          margin-bottom: 0 !important;
         }
 
         /* Optimize button style */
