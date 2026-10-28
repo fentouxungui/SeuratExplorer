@@ -1623,6 +1623,37 @@ run_info_line <- function(...) {
          paste(parts, collapse = "  ·  "))
 }
 
+# NULL / non-finite / non-positive safe numeric accessor for plot dimensions.
+num_or <- function(x, default) {
+  if (is.null(x) || length(x) != 1L || !is.numeric(x) || !is.finite(x) || x <= 0) {
+    default
+  } else {
+    x
+  }
+}
+
+# Keep the last rendered plot plus the exact pixel size it was drawn at, so the
+# download handler can write the PDF on demand instead of every render paying
+# for a second full plot build (ggsave re-runs the whole ggplot build).
+store_plot <- function(cache, key, plot, width, height) {
+  cache[[key]] <- list(plot = plot, width = width, height = height)
+  invisible(NULL)
+}
+
+# Write a cached ggplot to `file`. Returns FALSE when nothing has been rendered
+# yet, which mirrors the previous "no file to copy" behaviour.
+save_cached_plot <- function(cache, key, file, scale = 5) {
+  cached <- cache[[key]]
+  if (is.null(cached) || is.null(cached$plot)) {
+    return(FALSE)
+  }
+  ggplot2::ggsave(file, cached$plot,
+                  width = num_or(cached$width, 800),
+                  height = num_or(cached$height, 720),
+                  units = "px", scale = scale, limitsize = FALSE)
+  TRUE
+}
+
 
 # create_resizable_plot_ui is a function created by Claude code
 #' Create a collapsible parameter group for Plot Settings

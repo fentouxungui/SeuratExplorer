@@ -26,6 +26,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
 
+  # Last rendered plot per output. The download handlers build the PDF from
+  # this cache on demand, so renderPlot() draws once instead of twice.
+  plot_cache <- new.env(parent = emptyenv())
+
   session$onSessionEnded(function() {
     if (dir.exists(temp_dir)) {
       unlink(temp_dir, recursive = TRUE)
@@ -307,22 +311,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       p <- p & NoLegend()
     }
     if (input$DimPlotMode) {
-      ggplot2::ggsave(file.path(temp_dir, "dimplot.pdf"),
-                      p,
-                      width = session$clientData$output_dimplot_width,
-                      height = session$clientData$output_dimplot_width * input$DimPlotHWRatio,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- num_or(session$clientData$output_dimplot_width, 800)
+      plot_h <- plot_w * num_or(input$DimPlotHWRatio, 0.9)
     }else{
-      ggplot2::ggsave(file.path(temp_dir, "dimplot.pdf"),
-                      p,
-                      width = dimplot_dims$width,
-                      height = dimplot_dims$height,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- dimplot_dims$width
+      plot_h <- dimplot_dims$height
     }
+    store_plot(plot_cache, "dimplot", p, plot_w, plot_h)
     return(p)
   }, height = function(){
     if (input$DimPlotMode) {
@@ -337,9 +332,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloaddimplot <- downloadHandler(
     filename = function(){'dimplot.pdf'},
     content = function(file) {
-      if (file.exists(file.path(temp_dir, "dimplot.pdf"))) {
-        file.copy(file.path(temp_dir, "dimplot.pdf"), file, overwrite=TRUE)
-      }
+      save_cached_plot(plot_cache, "dimplot", file)
     })
 
   ################################ Feature Plot
@@ -518,22 +511,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
     }
     if (input$FeaturePlotMode) {
-      ggplot2::ggsave(file.path(temp_dir, "featureplot.pdf"),
-                      p,
-                      width = session$clientData$output_featureplot_width,
-                      height = session$clientData$output_featureplot_width * input$FeaturePlotHWRatio,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- num_or(session$clientData$output_featureplot_width, 800)
+      plot_h <- plot_w * num_or(input$FeaturePlotHWRatio, 0.9)
     }else{
-      ggplot2::ggsave(file.path(temp_dir, "featureplot.pdf"),
-                      p,
-                      width = featureplot_dims$width,
-                      height = featureplot_dims$height,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- featureplot_dims$width
+      plot_h <- featureplot_dims$height
     }
+    store_plot(plot_cache, "featureplot", p, plot_w, plot_h)
     return(p)
   }, height = function(){
     if (input$FeaturePlotMode) {
@@ -546,10 +530,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloadfeatureplot <- downloadHandler(
     filename = function(){'featureplot.pdf'},
     content = function(file) {
-      if (file.exists(file.path(temp_dir, "featureplot.pdf"))) {
-        # problem: will throw an error when file not exists; or with a uncorrected input, will download the pic of previous corrected input.
-        file.copy(file.path(temp_dir, "featureplot.pdf"), file, overwrite=TRUE)
-      }
+      save_cached_plot(plot_cache, "featureplot", file)
     })
 
   ################################ Violin Plot
@@ -823,22 +804,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
     }
     if (input$VlnPlotMode) {
-      ggplot2::ggsave(file.path(temp_dir, "vlnplot.pdf"),
-                      p,
-                      width = session$clientData$output_vlnplot_width,
-                      height = session$clientData$output_vlnplot_width * input$VlnPlotHWRatio,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- num_or(session$clientData$output_vlnplot_width, 800)
+      plot_h <- plot_w * num_or(input$VlnPlotHWRatio, 0.9)
     }else{
-      ggplot2::ggsave(file.path(temp_dir, "vlnplot.pdf"),
-                      p,
-                      width = vlnplot_dims$width,
-                      height = vlnplot_dims$height,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- vlnplot_dims$width
+      plot_h <- vlnplot_dims$height
     }
+    store_plot(plot_cache, "vlnplot", p, plot_w, plot_h)
     return(p)
   }, height = function(){
     if (input$VlnPlotMode) {
@@ -851,9 +823,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloadvlnplot <- downloadHandler(
     filename = function(){'vlnplot.pdf'},
     content = function(file) {
-      if (file.exists(file.path(temp_dir, "vlnplot.pdf"))) {
-        file.copy(file.path(temp_dir, "vlnplot.pdf"), file, overwrite=TRUE)
-      }
+      save_cached_plot(plot_cache, "vlnplot", file)
     })
 
   ################################ Dot Plot
@@ -1065,22 +1035,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
     }
     if (input$DotPlotMode) {
-      ggplot2::ggsave(file.path(temp_dir, "dotplot.pdf"),
-                      p,
-                      width = session$clientData$output_dotplot_width,
-                      height = session$clientData$output_dotplot_width * input$DotPlotHWRatio,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- num_or(session$clientData$output_dotplot_width, 800)
+      plot_h <- plot_w * num_or(input$DotPlotHWRatio, 0.9)
     }else{
-      ggplot2::ggsave(file.path(temp_dir, "dotplot.pdf"),
-                      p,
-                      width = dotplot_dims$width,
-                      height = dotplot_dims$height,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- dotplot_dims$width
+      plot_h <- dotplot_dims$height
     }
+    store_plot(plot_cache, "dotplot", p, plot_w, plot_h)
 
     return(p)
   }, height = function(){
@@ -1095,9 +1056,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloaddotplot <- downloadHandler(
     filename = function(){'dotplot.pdf'},
     content = function(file) {
-      if (file.exists(file.path(temp_dir, "dotplot.pdf"))) {
-        file.copy(file.path(temp_dir, "dotplot.pdf"), file, overwrite=TRUE)
-      }
+      save_cached_plot(plot_cache, "dotplot", file)
     })
   # known bugs:
   # when split by is selected, change cluster order not work!
@@ -1255,22 +1214,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
     }
     if (input$HeatmapPlotMode) {
-      ggplot2::ggsave(file.path(temp_dir, "heatmap.pdf"),
-                      p,
-                      width = session$clientData$output_heatmap_width,
-                      height = session$clientData$output_heatmap_width * input$HeatmapPlotHWRatio,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- num_or(session$clientData$output_heatmap_width, 800)
+      plot_h <- plot_w * num_or(input$HeatmapPlotHWRatio, 0.9)
     }else{
-      ggplot2::ggsave(file.path(temp_dir, "heatmap.pdf"),
-                      p,
-                      width = heatmap_dims$width,
-                      height = heatmap_dims$height,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- heatmap_dims$width
+      plot_h <- heatmap_dims$height
     }
+    store_plot(plot_cache, "heatmap", p, plot_w, plot_h)
 
     return(p)
   }, height = function(){
@@ -1286,9 +1236,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloadheatmap <- downloadHandler(
     filename = function(){'heatmap.pdf'},
     content = function(file) {
-      if (file.exists(file.path(temp_dir, "heatmap.pdf"))) {
-        file.copy(file.path(temp_dir, "heatmap.pdf"), file, overwrite=TRUE)
-      }
+      save_cached_plot(plot_cache, "heatmap", file)
     })
 
   ################################ Group Averaged Heatmap
@@ -1422,18 +1370,16 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                              cluster_rows = input$AveragedHeatmapClusterFeatures))
       }
     }
-    # special case for not use ggsave, because the p is generated by ComplexHeatmap
+    # ComplexHeatmap objects are not ggplots: the PDF is written by the
+    # download handler with pdf()/print(), so only the size is captured here.
     if (input$AveragedHeatmapPlotMode) {
-      pdf(file = file.path(temp_dir, "AveragedHeatmap.pdf"),
-          width = session$clientData$output_averagedheatmap_width / 96 * 1.5,
-          height = session$clientData$output_averagedheatmap_width / 96 * 1.5 * input$AveragedHeatmapPlotHWRatio)
+      plot_w <- num_or(session$clientData$output_averagedheatmap_width, 800)
+      plot_h <- plot_w * num_or(input$AveragedHeatmapPlotHWRatio, 0.9)
     }else{
-      pdf(file = file.path(temp_dir, "AveragedHeatmap.pdf"),
-          width = averagedheatmap_dims$width / 96 * 1.5,
-          height = averagedheatmap_dims$height / 96 * 1.5)
+      plot_w <- averagedheatmap_dims$width
+      plot_h <- averagedheatmap_dims$height
     }
-    p
-    dev.off()
+    store_plot(plot_cache, "averagedheatmap", p, plot_w, plot_h)
     return(p)
   }, height = function(){
     if (input$AveragedHeatmapPlotMode) {
@@ -1446,9 +1392,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloadaveragedheatmap <- downloadHandler(
     filename = function(){'AveragedHeatmap.pdf'},
     content = function(file) {
-      if (file.exists(file.path(temp_dir, "AveragedHeatmap.pdf"))) {
-        file.copy(file.path(temp_dir, "AveragedHeatmap.pdf"), file, overwrite=TRUE)
-      }
+      cached <- plot_cache$averagedheatmap
+      if (is.null(cached) || is.null(cached$plot)) return(invisible(NULL))
+      pdf(file = file,
+          width = num_or(cached$width, 800) / 96 * 1.5,
+          height = num_or(cached$height, 720) / 96 * 1.5)
+      print(cached$plot)
+      dev.off()
     })
 
   # AveragedHeatmap Related bugs
@@ -1646,22 +1596,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       }
     }
     if (input$RidgeplotPlotMode) {
-      ggplot2::ggsave(file.path(temp_dir, "ridgeplot.pdf"),
-                      p,
-                      width = session$clientData$output_ridgeplot_width,
-                      height = session$clientData$output_ridgeplot_width * input$RidgeplotHWRatio,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- num_or(session$clientData$output_ridgeplot_width, 800)
+      plot_h <- plot_w * num_or(input$RidgeplotHWRatio, 0.9)
     }else{
-      ggplot2::ggsave(file.path(temp_dir, "ridgeplot.pdf"),
-                      p,
-                      width = ridgeplot_dims$width,
-                      height = ridgeplot_dims$height,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- ridgeplot_dims$width
+      plot_h <- ridgeplot_dims$height
     }
+    store_plot(plot_cache, "ridgeplot", p, plot_w, plot_h)
     return(p)
   }, height = function(){
     if (input$RidgeplotPlotMode) {
@@ -1675,9 +1616,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloadridgeplot <- downloadHandler(
     filename = function(){'ridgeplot.pdf'},
     content = function(file) {
-      if (file.exists(file.path(temp_dir, "ridgeplot.pdf"))) {
-        file.copy(file.path(temp_dir, "ridgeplot.pdf"), file, overwrite=TRUE)
-      }
+      save_cached_plot(plot_cache, "ridgeplot", file)
     })
 
   ################################ Cell ratio Plot
@@ -1866,22 +1805,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                                                   hjust=1))
     }
     if (input$CellratioMode) {
-      ggplot2::ggsave(file.path(temp_dir, "cellratioplot.pdf"),
-                      p,
-                      width = session$clientData$output_cellratioplot_width,
-                      height = session$clientData$output_cellratioplot_width * input$CellratioPlotHWRatio,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- num_or(session$clientData$output_cellratioplot_width, 800)
+      plot_h <- plot_w * num_or(input$CellratioPlotHWRatio, 0.9)
     }else{
-      ggplot2::ggsave(file.path(temp_dir, "cellratioplot.pdf"),
-                      p,
-                      width = cellratioplot_dims$width,
-                      height = cellratioplot_dims$height,
-                      units = "px",
-                      scale = 5,
-                      limitsize = FALSE)
+      plot_w <- cellratioplot_dims$width
+      plot_h <- cellratioplot_dims$height
     }
+    store_plot(plot_cache, "cellratioplot", p, plot_w, plot_h)
     return(p)
   }, height = function(){
     if (input$CellratioMode) {
@@ -1895,9 +1825,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$downloadcellratioplot <- downloadHandler(
     filename = function(){'cellratioplot.pdf'},
     content = function(file) {
-      if (file.exists(file.path(temp_dir, "cellratioplot.pdf"))) {
-        file.copy(file.path(temp_dir, "cellratioplot.pdf"), file, overwrite=TRUE)
-      }
+      save_cached_plot(plot_cache, "cellratioplot", file)
     })
 
   output$cellratiodata <-  DT::renderDT(server=FALSE,{
