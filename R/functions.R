@@ -1770,32 +1770,53 @@ create_resizable_plot_ui <- function(plot_id, initial_width = 800, initial_heigh
       ")
       )
     ),
-    # JavaScript to sync plot dimensions with resizable container
+    # JavaScript to sync plot dimensions with the resizable container.
+    # Shiny re-renders a plot whenever the element that hosts it changes size,
+    # so growing that element during a drag re-runs renderPlot() on every drag
+    # step no matter what the app sends. The plot element is therefore frozen
+    # at its current pixel size while the handle is being dragged, and the
+    # final size is applied exactly once when the mouse is released.
     tags$script(HTML(paste0("
         $(function() {
-          var updateDimensions = function() {
-            var container = $('#", plot_id, "_inner');
-            var width = container.width();
-            var height = container.height();
+          var inner  = $('#", plot_id, "_inner');
+          var plotEl = $('#", plot_id, "');
+          var lastW = -1, lastH = -1;
+
+          var applySize = function(width, height) {
+            if (width === lastW && height === lastH) { return; }
+            lastW = width; lastH = height;
+            plotEl.css({ width: width + 'px', height: height + 'px' });
             Shiny.setInputValue('", plot_id, "_width', width, {priority: 'event'});
             Shiny.setInputValue('", plot_id, "_height', height, {priority: 'event'});
           };
 
-          // Initial dimensions
-          updateDimensions();
+          // Initial size: pin the plot element once, so its size is known.
+          // Skip it when the container is not laid out yet (width/height 0),
+          // otherwise the plot would be pinned to a zero-sized box.
+          var initW = Math.round(inner.width()), initH = Math.round(inner.height());
+          if (initW > 0 && initH > 0) {
+            plotEl.css({ width: initW + 'px', height: initH + 'px' });
+            lastW = initW; lastH = initH;
+            Shiny.setInputValue('", plot_id, "_width', initW, {priority: 'event'});
+            Shiny.setInputValue('", plot_id, "_height', initH, {priority: 'event'});
+          }
 
-          // Update on resize
-          var resizeTimer;
-          $('#", plot_id, "_inner').on('resize', function(e, ui) {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(function() {
-              Shiny.setInputValue('", plot_id, "_width', ui.size.width, {priority: 'event'});
-              Shiny.setInputValue('", plot_id, "_height', ui.size.height, {priority: 'event'});
-            }, 100);
+          // Freeze while dragging: the box grows, the plot does not
+          inner.on('resizestart', function() {
+            var w = plotEl.width(), h = plotEl.height();
+            if (w > 0 && h > 0) {
+              plotEl.css({ width: w + 'px', height: h + 'px' });
+            }
           });
 
-          // Update periodically as a fallback
-          setInterval(updateDimensions, 2000);
+          // Apply the final size once, after the handle is released
+          var resizeTimer;
+          inner.on('resizestop', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+              applySize(Math.round(inner.width()), Math.round(inner.height()));
+            }, 50);
+          });
         });
       "))
     )
