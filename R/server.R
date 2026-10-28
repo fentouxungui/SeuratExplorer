@@ -1394,9 +1394,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     content = function(file) {
       cached <- plot_cache$averagedheatmap
       if (is.null(cached) || is.null(cached$plot)) return(invisible(NULL))
+      # Same dpi convention as the ggplot exports (see save_cached_plot()).
+      pdf_dpi <- getOption("SeuratExplorerPdfDpi", 72)
       pdf(file = file,
-          width = num_or(cached$width, 800) / 96 * 1.5,
-          height = num_or(cached$height, 720) / 96 * 1.5)
+          width = num_or(cached$width, 800) / pdf_dpi,
+          height = num_or(cached$height, 720) / pdf_dpi)
       print(cached$plot)
       dev.off()
     })

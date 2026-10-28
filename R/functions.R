@@ -1642,7 +1642,16 @@ store_plot <- function(cache, key, plot, width, height) {
 
 # Write a cached ggplot to `file`. Returns FALSE when nothing has been rendered
 # yet, which mirrors the previous "no file to copy" behaviour.
-save_cached_plot <- function(cache, key, file, scale = 5) {
+#
+# ggsave lays the plot out at the page size it is given, so dpi decides whether
+# the page or the content matches the browser:
+#   dpi = 72  -> page is W/72 in: same text/point proportions as the on-screen
+#                plot (Shiny renders at 72 dpi), page 1.33x the screen size.
+#   dpi = 96  -> page is W/96 in: same page size as the screen, but text and
+#                points look 1.33x larger relative to the figure.
+# The mismatch is inherent (72 dpi device shown on a 96 dpi screen); the option
+# lets the user pick which side to match. Default: content, i.e. dpi = 72.
+save_cached_plot <- function(cache, key, file, dpi = getOption("SeuratExplorerPdfDpi", 72)) {
   cached <- cache[[key]]
   if (is.null(cached) || is.null(cached$plot)) {
     return(FALSE)
@@ -1650,7 +1659,7 @@ save_cached_plot <- function(cache, key, file, scale = 5) {
   ggplot2::ggsave(file, cached$plot,
                   width = num_or(cached$width, 800),
                   height = num_or(cached$height, 720),
-                  units = "px", scale = scale, limitsize = FALSE)
+                  units = "px", dpi = dpi, limitsize = FALSE)
   TRUE
 }
 
