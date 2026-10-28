@@ -50,14 +50,16 @@ This app is now available on [ShinyApps](https://github.com/fentouxungui/ShinyAp
 ### Key Features
 
 - **No Coding Required**: Interactive point-and-click interface for all analyses
-- **Comprehensive Visualizations**: 10+ plot types for exploring single-cell data
+- **Comprehensive Visualizations**: 8 plot types for exploring single-cell data
 - **Multi-Assay Support**: Works with scRNA-seq, scATAC-seq, spatial, and multi-omics data
 - **Flexible Analysis**: Find markers, explore correlations, and summarize features interactively
-- **Interactive Annotation**: Rename clusters, define gene-expression-based clusters, combine cluster annotations, and compute module scores — all from the browser
-- **Publication-Ready Plots**: Download high-quality PDF figures directly from the app
+- **Interactive Annotation**: Rename clusters, define gene-expression-based clusters, combine cluster annotations, and compute module scores (``AddModuleScore`` or ``AUCell``) — all from the browser
+- **Dataset Status in the Header**: Project name, cell and feature counts, default assay, and how many times the object has been modified in the current session
+- **Publication-Ready Plots**: Download vector PDF figures sized to match the plot on screen
+- **Progress and Cancel**: Long-running analyses such as cluster markers, top genes and top correlations show a progress bar and can be cancelled at a safe point
 - **Batch Processing**: Analyze multiple genes/clusters simultaneously
 - **Real-time Results**: See changes immediately as you adjust parameters
-- **Data Export**: Download analysis results in CSV format for further analysis
+- **Data Export**: Download analysis results in CSV/Excel format, with a one-line provenance record (analysis, main parameters, timestamp) above each result table
 
 ## News
 
@@ -79,7 +81,7 @@ Or install from CRAN:
 if (!require("BiocManager", quietly = TRUE)){
   install.packages("BiocManager")
 }
-BiocManager::install(c("ComplexHeatmap", "MAST", "limma", "DESeq2"))
+BiocManager::install(c("ComplexHeatmap", "MAST", "limma", "DESeq2", "AUCell"))
 
 # Install presto from GitHub
 if(!require(devtools)){
@@ -108,9 +110,12 @@ launchSeuratExplorer()
 You can customize the launch behavior with additional parameters:
 
 - `verbose`: Set to `TRUE` for debug messages (default: `FALSE`)
-- `ReductionKeyWords`: Keywords for dimension reduction options (default: `c("umap","tsne")`)
+- `ReductionKeyWords`: Keywords for dimension reduction options (default: `c("umap","tsne","pca")`)
 - `SplitOptionMaxLevel`: Maximum levels for split options (default: `12`)
 - `MaxInputFileSize`: Maximum upload file size in bytes (default: `20*1024^3`, i.e., 20GB)
+- `DemoDataURL`: One or more URLs of the demo dataset used by the **Download and Run a demo data** button; they are tried in order until one succeeds
+- `DemoDataCacheDir`: Directory used to cache the downloaded demo data (default: a per-user cache directory)
+- `DemoDataMD5`: Expected MD5 checksum of the demo data; set to `NULL` to skip the integrity check
 
 ```{r eval=FALSE}
 # Example with custom parameters
@@ -119,6 +124,18 @@ launchSeuratExplorer(
   ReductionKeyWords = c("umap", "tsne", "pca"),
   MaxInputFileSize = 10*1024^3  # 10GB
 )
+```
+
+## Plot export size
+
+Downloaded figures are vector PDFs, so they stay sharp at any zoom. The app renders plots for a 72 dpi device while screens display at 96 dpi, so a single value cannot match both the page size and the size of the text/points inside the figure. The trade-off is controlled by the `SeuratExplorerPdfDpi` option, set before launching:
+
+- `options(SeuratExplorerPdfDpi = 72)` (default): text and points keep the proportions seen in the browser; the PDF page is about 1.33× the on-screen size.
+- `options(SeuratExplorerPdfDpi = 96)`: the PDF page matches the on-screen size; text and points appear about 1.33× larger relative to the figure.
+
+```{r eval=FALSE}
+options(SeuratExplorerPdfDpi = 96)
+launchSeuratExplorer()
 ```
 
 ## Deploy on server
@@ -189,6 +206,10 @@ Different visualization features support different assay slots:
 - Supports ``Seurat`` objects saved as ``.rds`` or ``.qs2`` files
 
 - Supports data processed by ``Seurat`` V5 and older versions. Note: It may take some time to update older ``Seurat`` objects when loading data
+
+- Includes a **Download and Run a demo data** button: the demo dataset (~74 MB) is downloaded once, cached locally, and then loaded automatically on later runs
+
+- Once a dataset is loaded, the dashboard header shows its project name, cell and feature counts, default assay, and how many times the object has been modified in the current session
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
 if(for_github){
@@ -457,7 +478,7 @@ if (for_github) {
 
 ### Find Cluster Markers and DEGs Analysis
 
-This analysis typically requires more computation time. Please wait patiently for results to complete. **Important**: Save your results before starting a new analysis, as previous results will be overwritten. Results can be downloaded in ``csv`` format.
+This analysis typically requires more computation time. Please wait patiently for results to complete. **Important**: Save your results before starting a new analysis, as previous results will be overwritten. Results can be downloaded in ``csv`` or ``xlsx`` format.
 
 #### Two analysis modes supported
 
@@ -465,14 +486,18 @@ This analysis typically requires more computation time. Please wait patiently fo
 
 - **Calculate DEGs for custom groups**: Compare differential expression between two user-defined groups. You can subset cells (with one or more filter conditions, combined as an intersection) before calculating DEGs between groups, then choose the group column and the case/control levels. By default, all cells from both groups are used
 
+Cluster-marker analysis processes one cluster at a time, shows a progress bar and can be cancelled between clusters. The two-group comparison runs as a single blocking step and cannot be interrupted once started.
+
 #### Custom parameters
 
 Before running the analysis you can adjust the following parameters (in the **Custom Parameters** tab):
 
-- **Logfc Threshold**: minimum log fold-change (default `0.1`)
+- **logFC threshold**: minimum log fold-change (default `0.1`)
 - **Test Use**: `wilcox`, `wilcox_limma`, `t`, `negbinom`, `poisson`, `LR`, `MAST` (requires `MAST`), or `DESeq2` (requires `DESeq2`)
 - **Min Pct**: minimum expression percentage for a gene to be tested (default `0.01`)
 - **Min Diff Pct**: minimum expression-percentage difference between groups (default `0`)
+
+Above the result table, a one-line provenance record (timestamp, analysis name and the main parameters) shows which settings produced the table currently on screen.
 
 #### External gene annotation links (Only avaliable for github version)
 
@@ -621,7 +646,7 @@ Calculates correlation values for gene pairs within cells from a cluster. Suppor
 
 #### Three analysis modes
 
-- ``Find Top Correlated Gene Pairs``: Identifies the top 1000 correlated gene pairs
+- ``Find Top Correlated Gene Pairs``: Identifies the top **N** correlated gene pairs; set **N** in Step 2 (default `1000`, range `10`–`100000`). The search is computed in blocks of genes and can be cancelled between blocks
 
 - ``Find Top Correlated Genes for A Gene``: Finds the most correlated genes for a user-specified gene
 
@@ -653,6 +678,17 @@ if (for_github) {
 
 **Note**: If no results are returned, this is typically because the input genes have very low expression levels. Very lowly expressed genes are removed before analysis.
 
+### Module Score (BETA)
+
+Score each cell with a gene set, using either Seurat's ``AddModuleScore`` or ``AUCell`` (``AUCell`` must be installed).
+
+1. Paste gene symbols and click **Check Genes** to validate them (matched genes are kept, missing genes are reported).
+2. Choose the scoring method. For ``AUCell``, set the share of top-ranked genes used to compute the AUC (default `5%`); the rankings are cached and reused for later gene sets on the same assay.
+3. Enter a score name (letters, numbers and underscore only) and click **Compute Module Score**.
+4. The resulting numeric score is added to the cell metadata and can be explored in Feature Plot, Violin Plot, or Ridge Plot by entering the score name as a feature.
+
+- Supports switching between assays containing the `counts` or `data` slots
+
 ### Rename cluster names
 
 You can rename cluster names, and changes will take effect immediately. However, the original Seurat object file is never modified. Once you close the session, the new annotations will be lost. You can download a mapping file of old names to new names and send it to a bioinformatician to request permanent changes to the Seurat object.
@@ -661,9 +697,9 @@ To rename clusters: select a cluster resolution, edit the ``New_Name`` column in
 
 ### Gene Based Cluster (BETA)
 
-Group cells into new clusters based on a single gene's expression level using user-defined cutoffs.
+Group cells into new clusters based on a single gene's expression level, or on a numeric metadata column such as a module score, using user-defined cutoffs.
 
-1. Enter a gene symbol, select the assay/slot, and click **Generate Histogram** to plot the expression distribution.
+1. Enter a gene symbol (or a numeric metadata column), select the assay/slot, and click **Generate Histogram** to plot the value distribution.
 2. Enter comma-separated cutoff values and click **Apply Cutoffs** to define expression intervals.
 3. Edit the group names in the classification table, then click **Check** to validate names.
 4. Click **Submit** to add a new factor column (named ``<gene>_cluster``) to the cell metadata.
@@ -679,16 +715,6 @@ Combine two existing cluster annotations into a single new grouping.
 3. Click **Submit** to add the combined annotation as a new factor column in the cell metadata.
 
 A mapping file can be downloaded for permanent changes to the Seurat object.
-
-### Module Score (BETA)
-
-Score each cell with a gene set using Seurat's ``AddModuleScore``.
-
-1. Paste gene symbols and click **Check Genes** to validate them (matched genes are kept, missing genes are reported).
-2. Enter a score name (letters, numbers and underscore only) and click **Compute Module Score**.
-3. The resulting numeric score is added to the cell metadata and can be explored in Feature Plot, Violin Plot, or Ridge Plot by entering the score name as a feature.
-
-- Supports switching between assays containing the `counts` or `data` slots
 
 ### Search Features
 
@@ -815,7 +841,7 @@ A: No. When running locally (`launchSeuratExplorer()`), all data stays on your c
 
 **Q: Can I save my analysis results?**
 
-A: Yes! Most visualizations can be downloaded as PDF files. Analysis results (DEGs, feature summaries, etc.) can be downloaded as CSV files. Cluster name mappings can also be exported.
+A: Yes! Every plot can be downloaded as a vector PDF sized to match what you see in the browser (see [Plot export size](#plot-export-size)). Analysis results (DEGs, top expressed features, feature summary, feature correlation) can be downloaded as CSV or Excel files, and each result table carries a one-line record of the analysis and parameters that produced it. Cluster name mappings can also be exported.
 
 **Q: What's the difference between the two "Top Expressed Features" methods?**
 

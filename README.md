@@ -1,18 +1,12 @@
----
-output: github_document
----
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
 <!-- To generate README.md for GitHub homepage: copy this file to the package root directory, set for_github parameter to TRUE, then knit. Delete the README.Rmd file from the root directory after completion -->
-
-
-
-
-
 
 # SeuratExplorer
 
 <!-- badges: start -->
+
 [![](https://www.r-pkg.org/badges/version/SeuratExplorer)](https://cran.r-project.org/package=SeuratExplorer)
 [![](https://img.shields.io/badge/devel%20version-0.1.9-rossellhayes.svg)](https://github.com/fentouxungui/SeuratExplorer)
 [![](http://cranlogs.r-pkg.org/badges/grand-total/SeuratExplorer)](https://cran.r-project.org/package=SeuratExplorer)
@@ -22,40 +16,75 @@ output: github_document
 [![AskZreadAI](https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff)](https://zread.ai/fentouxungui/SeuratExplorer)
 <!-- badges: end -->
 
-> A ``Shiny`` App for Exploring scRNA-seq Data Processed in ``Seurat``
+> A `Shiny` App for Exploring scRNA-seq Data Processed in `Seurat`
 
-A simple, one-command package which runs an interactive dashboard capable of common visualizations for single cell RNA-seq. ``SeuratExplorer`` requires a processed ``Seurat`` object, which is saved as ``rds`` or ``qs2`` file.
+A simple, one-command package which runs an interactive dashboard
+capable of common visualizations for single cell RNA-seq.
+`SeuratExplorer` requires a processed `Seurat` object, which is saved as
+`rds` or `qs2` file.
 
-Essentially, ``SeuratExplorer`` provides graphical interfaces for command-line tools from ``Seurat`` and other related packages, making complex analyses accessible without programming.
+Essentially, `SeuratExplorer` provides graphical interfaces for
+command-line tools from `Seurat` and other related packages, making
+complex analyses accessible without programming.
 
 ## Why build this R package
 
-> Currently, there are no comprehensive tools for visualizing Seurat analysis results that are accessible to users without programming expertise. When bioinformatics analysts hand over results to end users, those without R programming knowledge often struggle to retrieve and re-analyze the data independently. ``SeuratExplorer`` is designed to bridge this gap by enabling such users to visualize and explore analysis results through an intuitive graphical interface. The only requirement for users is to configure R and RStudio on their computers and install ``SeuratExplorer``. Alternatively, users can upload their ``Seurat object`` files to a server deployed with ``Shiny Server`` and ``SeuratExplorer`` for browser-based access.
+> Currently, there are no comprehensive tools for visualizing Seurat
+> analysis results that are accessible to users without programming
+> expertise. When bioinformatics analysts hand over results to end
+> users, those without R programming knowledge often struggle to
+> retrieve and re-analyze the data independently. `SeuratExplorer` is
+> designed to bridge this gap by enabling such users to visualize and
+> explore analysis results through an intuitive graphical interface. The
+> only requirement for users is to configure R and RStudio on their
+> computers and install `SeuratExplorer`. Alternatively, users can
+> upload their `Seurat object` files to a server deployed with
+> `Shiny Server` and `SeuratExplorer` for browser-based access.
 
 ## Available on ShinyApps
 
-This app is now available on [ShinyApps](https://github.com/fentouxungui/ShinyApps/releases), a desktop app store for Shiny Apps that allows users to install, run, update, and uninstall apps.
+This app is now available on
+[ShinyApps](https://github.com/fentouxungui/ShinyApps/releases), a
+desktop app store for Shiny Apps that allows users to install, run,
+update, and uninstall apps.
 
 ### Key Features
 
-- **No Coding Required**: Interactive point-and-click interface for all analyses
-- **Comprehensive Visualizations**: 10+ plot types for exploring single-cell data
-- **Multi-Assay Support**: Works with scRNA-seq, scATAC-seq, spatial, and multi-omics data
-- **Flexible Analysis**: Find markers, explore correlations, and summarize features interactively
-- **Interactive Annotation**: Rename clusters, define gene-expression-based clusters, combine cluster annotations, and compute module scores — all from the browser
-- **Publication-Ready Plots**: Download high-quality PDF figures directly from the app
+- **No Coding Required**: Interactive point-and-click interface for all
+  analyses
+- **Comprehensive Visualizations**: 8 plot types for exploring
+  single-cell data
+- **Multi-Assay Support**: Works with scRNA-seq, scATAC-seq, spatial,
+  and multi-omics data
+- **Flexible Analysis**: Find markers, explore correlations, and
+  summarize features interactively
+- **Interactive Annotation**: Rename clusters, define
+  gene-expression-based clusters, combine cluster annotations, and
+  compute module scores (`AddModuleScore` or `AUCell`) — all from the
+  browser
+- **Dataset Status in the Header**: Project name, cell and feature
+  counts, default assay, and how many times the object has been modified
+  in the current session
+- **Publication-Ready Plots**: Download vector PDF figures sized to
+  match the plot on screen
+- **Progress and Cancel**: Long-running analyses such as cluster
+  markers, top genes and top correlations show a progress bar and can be
+  cancelled at a safe point
 - **Batch Processing**: Analyze multiple genes/clusters simultaneously
-- **Real-time Results**: See changes immediately as you adjust parameters
-- **Data Export**: Download analysis results in CSV format for further analysis
+- **Real-time Results**: See changes immediately as you adjust
+  parameters
+- **Data Export**: Download analysis results in CSV/Excel format, with a
+  one-line provenance record (analysis, main parameters, timestamp)
+  above each result table
 
 ## News
 
-**The Windows desktop app is now ready. You can download it from the releases page.**
+**The Windows desktop app is now ready. You can download it from the
+releases page.**
 
 ## Installation
 
 Install the latest version from github - ***Recommended***:
-
 
 ``` r
 if(!require(devtools)){install.packages("devtools")}
@@ -64,13 +93,12 @@ devtools::install_github("fentouxungui/SeuratExplorer", dependencies = TRUE)
 
 Or install from CRAN:
 
-
 ``` r
 # Install non-CRAN dependencies first
 if (!require("BiocManager", quietly = TRUE)){
   install.packages("BiocManager")
 }
-BiocManager::install(c("ComplexHeatmap", "MAST", "limma", "DESeq2"))
+BiocManager::install(c("ComplexHeatmap", "MAST", "limma", "DESeq2", "AUCell"))
 
 # Install presto from GitHub
 if(!require(devtools)){
@@ -84,13 +112,12 @@ install.packages("SeuratExplorer")
 
 **System Requirements:**
 
-- R (>= 4.1.0)
-- Seurat (>= 5.4.0)
-- SeuratObject (>= 5.3.0)
-- ggplot2 (>= 4.0.1)
+- R (\>= 4.1.0)
+- Seurat (\>= 5.4.0)
+- SeuratObject (\>= 5.3.0)
+- ggplot2 (\>= 4.0.1)
 
 ## Run app on local
-
 
 ``` r
 library(SeuratExplorer)
@@ -100,10 +127,19 @@ launchSeuratExplorer()
 You can customize the launch behavior with additional parameters:
 
 - `verbose`: Set to `TRUE` for debug messages (default: `FALSE`)
-- `ReductionKeyWords`: Keywords for dimension reduction options (default: `c("umap","tsne")`)
-- `SplitOptionMaxLevel`: Maximum levels for split options (default: `12`)
-- `MaxInputFileSize`: Maximum upload file size in bytes (default: `20*1024^3`, i.e., 20GB)
-
+- `ReductionKeyWords`: Keywords for dimension reduction options
+  (default: `c("umap","tsne","pca")`)
+- `SplitOptionMaxLevel`: Maximum levels for split options (default:
+  `12`)
+- `MaxInputFileSize`: Maximum upload file size in bytes (default:
+  `20*1024^3`, i.e., 20GB)
+- `DemoDataURL`: One or more URLs of the demo dataset used by the
+  **Download and Run a demo data** button; they are tried in order until
+  one succeeds
+- `DemoDataCacheDir`: Directory used to cache the downloaded demo data
+  (default: a per-user cache directory)
+- `DemoDataMD5`: Expected MD5 checksum of the demo data; set to `NULL`
+  to skip the integrity check
 
 ``` r
 # Example with custom parameters
@@ -114,12 +150,36 @@ launchSeuratExplorer(
 )
 ```
 
+## Plot export size
+
+Downloaded figures are vector PDFs, so they stay sharp at any zoom. The
+app renders plots for a 72 dpi device while screens display at 96 dpi,
+so a single value cannot match both the page size and the size of the
+text/points inside the figure. The trade-off is controlled by the
+`SeuratExplorerPdfDpi` option, set before launching:
+
+- `options(SeuratExplorerPdfDpi = 72)` (default): text and points keep
+  the proportions seen in the browser; the PDF page is about 1.33× the
+  on-screen size.
+- `options(SeuratExplorerPdfDpi = 96)`: the PDF page matches the
+  on-screen size; text and points appear about 1.33× larger relative to
+  the figure.
+
+``` r
+options(SeuratExplorerPdfDpi = 96)
+launchSeuratExplorer()
+```
+
 ## Deploy on server
 
-You can deploy this app on a Shiny Server, which allows users to visualize their data through a web interface by uploading the data to the server.
+You can deploy this app on a Shiny Server, which allows users to
+visualize their data through a web interface by uploading the data to
+the server.
 
-**Live Demo**: Upload an `.rds` or `.qs2` file (up to 20GB) to the [Demo Site](http://netinfo.nibs.ac.cn:666/SeuratExplorer/). You can download sample demo data from [GitHub](https://github.com/fentouxungui/SeuratExplorerServer/blob/main/inst/extdata/source-data/fly/Rds-file/G101_PC20res04.rds).
-
+**Live Demo**: Upload an `.rds` or `.qs2` file (up to 20GB) to the [Demo
+Site](http://netinfo.nibs.ac.cn:666/SeuratExplorer/). You can download
+sample demo data from
+[GitHub](https://github.com/fentouxungui/SeuratExplorerServer/blob/main/inst/extdata/source-data/fly/Rds-file/G101_PC20res04.rds).
 
 ``` r
 # app.R
@@ -131,20 +191,29 @@ launchSeuratExplorer()
 
 > [Seurat Assay](https://github.com/satijalab/seurat/wiki/Assay)
 >
-> The Assay class stores single cell data. For typical scRNA-seq experiments, a Seurat object will have a single Assay ("RNA"). This assay will also store multiple 'transformations' of the data, including raw counts (@counts slot), normalized data (@data slot), and scaled data for dimensional reduction (@scale.data slot).
+> The Assay class stores single cell data. For typical scRNA-seq
+> experiments, a Seurat object will have a single Assay (“RNA”). This
+> assay will also store multiple ‘transformations’ of the data,
+> including raw counts (@counts slot), normalized data (@data slot), and
+> scaled data for dimensional reduction (@scale.data slot).
 
-SeuratExplorer supports assay switching, enabling compatibility with multiple data types, including:
+SeuratExplorer supports assay switching, enabling compatibility with
+multiple data types, including:
 
 **Single-cell Modalities:**
 
-- **scRNA-seq**: Usually the default 'RNA' assay containing gene expression data
-- **scATAC-seq**: Usually named with "ATAC" (chromatin accessibility) and "ACTIVITY" (derived gene activity scores)
+- **scRNA-seq**: Usually the default ‘RNA’ assay containing gene
+  expression data
+- **scATAC-seq**: Usually named with “ATAC” (chromatin accessibility)
+  and “ACTIVITY” (derived gene activity scores)
 - **Spatial Transcriptomics**:
-  - Xenium data, usually named with 'Xenium'
-  - Visium HD data, usually named with 'Visium'
+  - Xenium data, usually named with ‘Xenium’
+  - Visium HD data, usually named with ‘Visium’
   - Other spatial platforms (MERFISH, seqFISH, etc.)
-- **CITE-seq**: For antibody-derived tags (ADT) data, usually named with 'ADT' or 'HTO'
-- **Multi-omics**: Any custom assay types following Seurat's assay structure
+- **CITE-seq**: For antibody-derived tags (ADT) data, usually named with
+  ‘ADT’ or ‘HTO’
+- **Multi-omics**: Any custom assay types following Seurat’s assay
+  structure
 
 **Normalization Methods:**
 
@@ -156,8 +225,10 @@ SeuratExplorer supports assay switching, enabling compatibility with multiple da
 **Assay Slots:**
 
 - **counts**: Stores unnormalized data such as raw counts or TPMs
-- **data**: Normalized data matrix (log-normalized or other transformations)
-- **scale.data**: Scaled data matrix (used for dimensional reduction and visualization)
+- **data**: Normalized data matrix (log-normalized or other
+  transformations)
+- **scale.data**: Scaled data matrix (used for dimensional reduction and
+  visualization)
 
 ### Assay Slot Support by Feature
 
@@ -180,18 +251,25 @@ Different visualization features support different assay slots:
 
 ### Load data
 
-- Supports ``Seurat`` objects saved as ``.rds`` or ``.qs2`` files
+- Supports `Seurat` objects saved as `.rds` or `.qs2` files
 
-- Supports data processed by ``Seurat`` V5 and older versions. Note: It may take some time to update older ``Seurat`` objects when loading data
+- Supports data processed by `Seurat` V5 and older versions. Note: It
+  may take some time to update older `Seurat` objects when loading data
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/upload-data.png" alt="plot of chunk unnamed-chunk-8" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-8</p>
-</div>
+- Includes a **Download and Run a demo data** button: the demo dataset
+  (~74 MB) is downloaded once, cached locally, and then loaded
+  automatically on later runs
+
+- Once a dataset is loaded, the dashboard header shows its project name,
+  cell and feature counts, default assay, and how many times the object
+  has been modified in the current session
+
+<img src="./inst/extdata/www/upload-data.png" alt="" width="100%" />
 
 ### Dimensional Reduction Plot
 
-- Supports selection of **dimensionality reduction methods** (UMAP, t-SNE, PCA, etc.)
+- Supports selection of **dimensionality reduction methods** (UMAP,
+  t-SNE, PCA, etc.)
 
 - Supports selection of **cluster resolutions**
 
@@ -211,20 +289,12 @@ Different visualization features support different assay slots:
 
 **Example plots:**
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/Dimplot-1.png" alt="plot of chunk unnamed-chunk-9" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-9</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/Dimplot-2.png" alt="plot of chunk unnamed-chunk-9" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-9</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/Dimplot-1-highlight.png" alt="plot of chunk unnamed-chunk-9" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-9</p>
-</div>
+<img src="./inst/extdata/www/Dimplot-1.png" alt="" width="100%" /><img src="./inst/extdata/www/Dimplot-2.png" alt="" width="100%" /><img src="./inst/extdata/www/Dimplot-1-highlight.png" alt="" width="100%" />
 
 ### Feature Plot
 
-- Supports simultaneous display of multiple genes (gene names are case-insensitive). Tip: Paste multiple gene names directly from Excel
+- Supports simultaneous display of multiple genes (gene names are
+  case-insensitive). Tip: Paste multiple gene names directly from Excel
 
 - Supports selection of **dimensionality reduction methods**
 
@@ -232,7 +302,8 @@ Different visualization features support different assay slots:
 
 - Supports customizing colors for lowest and highest expression levels
 
-- Supports setting minimum/maximum expression cutoff (percentile) to trim outliers
+- Supports setting minimum/maximum expression cutoff (percentile) to
+  trim outliers
 
 - Supports showing cluster labels and adjusting label size
 
@@ -244,30 +315,24 @@ Different visualization features support different assay slots:
 
 - Supports downloading plots in PDF format (WYSIWYG)
 
-- Supports switching between assays containing any of the following slots: `counts`, `data`, `scale.data`
+- Supports switching between assays containing any of the following
+  slots: `counts`, `data`, `scale.data`
 
 **Example plots:**
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/featureplot-1.png" alt="plot of chunk unnamed-chunk-10" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-10</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/featureplot-2.png" alt="plot of chunk unnamed-chunk-10" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-10</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/featureplot-3.png" alt="plot of chunk unnamed-chunk-10" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-10</p>
-</div>
+<img src="./inst/extdata/www/featureplot-1.png" alt="" width="100%" /><img src="./inst/extdata/www/featureplot-2.png" alt="" width="100%" /><img src="./inst/extdata/www/featureplot-3.png" alt="" width="100%" />
 
 ### Violin Plot
 
-- Supports simultaneous display of multiple genes (gene names are case-insensitive). Tip: Paste multiple gene names directly from Excel
+- Supports simultaneous display of multiple genes (gene names are
+  case-insensitive). Tip: Paste multiple gene names directly from Excel
 
 - Supports selection of **cluster resolutions**
 
 - Supports **split** plots
 
-- Supports **stacking** and **flipping** plots, with color mapping selection
+- Supports **stacking** and **flipping** plots, with color mapping
+  selection
 
 - Supports adjusting point size and transparency
 
@@ -277,36 +342,17 @@ Different visualization features support different assay slots:
 
 - Supports downloading plots in PDF format (WYSIWYG)
 
-- Supports switching between assays containing any of the following slots: `counts`, `data`, `scale.data`
+- Supports switching between assays containing any of the following
+  slots: `counts`, `data`, `scale.data`
 
 **Example plots:**
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/violin-1.png" alt="plot of chunk unnamed-chunk-11" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-11</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/violin-2.png" alt="plot of chunk unnamed-chunk-11" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-11</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/violin-3.png" alt="plot of chunk unnamed-chunk-11" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-11</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/violin-4.png" alt="plot of chunk unnamed-chunk-11" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-11</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/violin-5.png" alt="plot of chunk unnamed-chunk-11" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-11</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/violin-6.png" alt="plot of chunk unnamed-chunk-11" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-11</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/violin-7.png" alt="plot of chunk unnamed-chunk-11" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-11</p>
-</div>
+<img src="./inst/extdata/www/violin-1.png" alt="" width="100%" /><img src="./inst/extdata/www/violin-2.png" alt="" width="100%" /><img src="./inst/extdata/www/violin-3.png" alt="" width="100%" /><img src="./inst/extdata/www/violin-4.png" alt="" width="100%" /><img src="./inst/extdata/www/violin-5.png" alt="" width="100%" /><img src="./inst/extdata/www/violin-6.png" alt="" width="100%" /><img src="./inst/extdata/www/violin-7.png" alt="" width="100%" />
 
 ### Dot Plot
 
-- Supports simultaneous display of multiple genes (gene names are case-insensitive). Tip: Paste multiple gene names directly from Excel
+- Supports simultaneous display of multiple genes (gene names are
+  case-insensitive). Tip: Paste multiple gene names directly from Excel
 
 - Supports selection of **cluster resolutions** and subsetting clusters
 
@@ -328,21 +374,17 @@ Different visualization features support different assay slots:
 
 **Example plots:**
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/dotplot.png" alt="plot of chunk unnamed-chunk-12" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-12</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/dotplot-1.png" alt="plot of chunk unnamed-chunk-12" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-12</p>
-</div>
+<img src="./inst/extdata/www/dotplot.png" alt="" width="100%" /><img src="./inst/extdata/www/dotplot-1.png" alt="" width="100%" />
 
 ### Heatmap for cell level expression
 
-- Supports simultaneous display of multiple genes (gene names are case-insensitive). Tip: Paste multiple gene names directly from Excel
+- Supports simultaneous display of multiple genes (gene names are
+  case-insensitive). Tip: Paste multiple gene names directly from Excel
 
 - Supports selection of **cluster resolutions** and reordering clusters
 
-- Supports adjusting font size, horizontal/vertical justification and rotation angle of cluster labels
+- Supports adjusting font size, horizontal/vertical justification and
+  rotation angle of cluster labels
 
 - Supports adjusting the height of group bars
 
@@ -354,18 +396,17 @@ Different visualization features support different assay slots:
 
 - Supports downloading plots in PDF format (WYSIWYG)
 
-- Supports switching between assays containing the `data` or `scale.data` slots
+- Supports switching between assays containing the `data` or
+  `scale.data` slots
 
 **Example plots:**
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/heatmap-cell-level.png" alt="plot of chunk unnamed-chunk-13" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-13</p>
-</div>
+<img src="./inst/extdata/www/heatmap-cell-level.png" alt="" width="100%" />
 
 ### Heatmap for group averaged expression
 
-- Supports simultaneous display of multiple genes (gene names are case-insensitive). Tip: Paste multiple gene names directly from Excel
+- Supports simultaneous display of multiple genes (gene names are
+  case-insensitive). Tip: Paste multiple gene names directly from Excel
 
 - Supports selection of **cluster resolutions** and reordering clusters
 
@@ -383,14 +424,12 @@ Different visualization features support different assay slots:
 
 **Example plots:**
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/heatmap-group-level.png" alt="plot of chunk unnamed-chunk-14" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-14</p>
-</div>
+<img src="./inst/extdata/www/heatmap-group-level.png" alt="" width="100%" />
 
 ### Ridge Plot
 
-- Supports simultaneous display of multiple genes (gene names are case-insensitive). Tip: Paste multiple gene names directly from Excel
+- Supports simultaneous display of multiple genes (gene names are
+  case-insensitive). Tip: Paste multiple gene names directly from Excel
 
 - Supports selection of **cluster resolutions** and reordering clusters
 
@@ -404,17 +443,12 @@ Different visualization features support different assay slots:
 
 - Supports downloading plots in PDF format (WYSIWYG)
 
-- Supports switching between assays containing any of the following slots: `counts`, `data`, `scale.data`
+- Supports switching between assays containing any of the following
+  slots: `counts`, `data`, `scale.data`
 
 **Example plots:**
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/ridge-plot.png" alt="plot of chunk unnamed-chunk-15" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-15</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/ridge-plot-2.png" alt="plot of chunk unnamed-chunk-15" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-15</p>
-</div>
+<img src="./inst/extdata/www/ridge-plot.png" alt="" width="100%" /><img src="./inst/extdata/www/ridge-plot-2.png" alt="" width="100%" />
 
 ### Plot Cell Percentage
 
@@ -426,68 +460,96 @@ Different visualization features support different assay slots:
 
 **Example plots:**
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/cell-ratio.png" alt="plot of chunk unnamed-chunk-16" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-16</p>
-</div><div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/cell-ratio-2.png" alt="plot of chunk unnamed-chunk-16" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-16</p>
-</div>
+<img src="./inst/extdata/www/cell-ratio.png" alt="" width="100%" /><img src="./inst/extdata/www/cell-ratio-2.png" alt="" width="100%" />
 
 ### Find Cluster Markers and DEGs Analysis
 
-This analysis typically requires more computation time. Please wait patiently for results to complete. **Important**: Save your results before starting a new analysis, as previous results will be overwritten. Results can be downloaded in ``csv`` format.
+This analysis typically requires more computation time. Please wait
+patiently for results to complete. **Important**: Save your results
+before starting a new analysis, as previous results will be overwritten.
+Results can be downloaded in `csv` or `xlsx` format.
 
 #### Two analysis modes supported
 
-- **Find markers for all clusters**: Identifies marker genes for each cluster
+- **Find markers for all clusters**: Identifies marker genes for each
+  cluster
 
-- **Calculate DEGs for custom groups**: Compare differential expression between two user-defined groups. You can subset cells (with one or more filter conditions, combined as an intersection) before calculating DEGs between groups, then choose the group column and the case/control levels. By default, all cells from both groups are used
+- **Calculate DEGs for custom groups**: Compare differential expression
+  between two user-defined groups. You can subset cells (with one or
+  more filter conditions, combined as an intersection) before
+  calculating DEGs between groups, then choose the group column and the
+  case/control levels. By default, all cells from both groups are used
+
+Cluster-marker analysis processes one cluster at a time, shows a
+progress bar and can be cancelled between clusters. The two-group
+comparison runs as a single blocking step and cannot be interrupted once
+started.
 
 #### Custom parameters
 
-Before running the analysis you can adjust the following parameters (in the **Custom Parameters** tab):
+Before running the analysis you can adjust the following parameters (in
+the **Custom Parameters** tab):
 
-- **Logfc Threshold**: minimum log fold-change (default `0.1`)
-- **Test Use**: `wilcox`, `wilcox_limma`, `t`, `negbinom`, `poisson`, `LR`, `MAST` (requires `MAST`), or `DESeq2` (requires `DESeq2`)
-- **Min Pct**: minimum expression percentage for a gene to be tested (default `0.01`)
-- **Min Diff Pct**: minimum expression-percentage difference between groups (default `0`)
+- **logFC threshold**: minimum log fold-change (default `0.1`)
+- **Test Use**: `wilcox`, `wilcox_limma`, `t`, `negbinom`, `poisson`,
+  `LR`, `MAST` (requires `MAST`), or `DESeq2` (requires `DESeq2`)
+- **Min Pct**: minimum expression percentage for a gene to be tested
+  (default `0.01`)
+- **Min Diff Pct**: minimum expression-percentage difference between
+  groups (default `0`)
+
+Above the result table, a one-line provenance record (timestamp,
+analysis name and the main parameters) shows which settings produced the
+table currently on screen.
 
 #### External gene annotation links (Only avaliable for github version)
 
-After results are shown, selecting a row in the results table reveals links to external gene databases. For **Human**, **Mouse** and **Fly**, links to GeneCards, Ensembl, HGNC, MGI, FlyBase, NCBI and UniProt are provided based on the selected feature type (Symbol, Ensembl ID, or Entrez ID).
+After results are shown, selecting a row in the results table reveals
+links to external gene databases. For **Human**, **Mouse** and **Fly**,
+links to GeneCards, Ensembl, HGNC, MGI, FlyBase, NCBI and UniProt are
+provided based on the selected feature type (Symbol, Ensembl ID, or
+Entrez ID).
 
-- Supports switching between assays containing any of the following slots: `counts`, `data`
+- Supports switching between assays containing any of the following
+  slots: `counts`, `data`
 
 **Screen shots:**
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/DEGs-2.png" alt="plot of chunk unnamed-chunk-17" width="50%" />
-<p class="caption">plot of chunk unnamed-chunk-17</p>
-</div>
+<img src="./inst/extdata/www/DEGs-2.png" alt="" width="50%" />
 
 #### Output description
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/DEGs-4.jpg" alt="plot of chunk unnamed-chunk-18" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-18</p>
-</div>
+<img src="./inst/extdata/www/DEGs-4.jpg" alt="" width="100%" />
 
-> [FindMarkers(object, ...)](https://satijalab.org/seurat/reference/findmarkers)
+> [FindMarkers(object,
+> …)](https://satijalab.org/seurat/reference/findmarkers)
 >
-> A data.frame with a ranked list of putative markers as rows, and associated statistics as columns (p-values, ROC score, etc., depending on the test used (test.use)). The following columns are always present:
-> 
-> avg_logFC: log fold-change of the average expression between the two groups. Positive values indicate that the gene is more highly expressed in the first group
-> 
-> pct.1: The percentage of cells where the gene is detected in the first group
-> 
-> pct.2: The percentage of cells where the gene is detected in the second group
-> 
-> p_val_adj: Adjusted p-value, based on bonferroni correction using all genes in the dataset
+> A data.frame with a ranked list of putative markers as rows, and
+> associated statistics as columns (p-values, ROC score, etc., depending
+> on the test used (test.use)). The following columns are always
+> present:
+>
+> avg_logFC: log fold-change of the average expression between the two
+> groups. Positive values indicate that the gene is more highly
+> expressed in the first group
+>
+> pct.1: The percentage of cells where the gene is detected in the first
+> group
+>
+> pct.2: The percentage of cells where the gene is detected in the
+> second group
+>
+> p_val_adj: Adjusted p-value, based on bonferroni correction using all
+> genes in the dataset
 
 ### Top Expressed Features
 
-Highly expressed genes can reflect the main functions of cells. There are two approaches to identifying these genes: ``Find Top Genes by Cell`` identifies genes that are highly expressed in individual cells (even if only in a few cells), while ``Find Top Genes by Accumulated UMI counts`` tends to find genes with high accumulated expression across most cells in a cluster.
+Highly expressed genes can reflect the main functions of cells. There
+are two approaches to identifying these genes: `Find Top Genes by Cell`
+identifies genes that are highly expressed in individual cells (even if
+only in a few cells), while `Find Top Genes by Accumulated UMI counts`
+tends to find genes with high accumulated expression across most cells
+in a cluster.
 
 - Supports assay switching
 
@@ -495,240 +557,293 @@ Highly expressed genes can reflect the main functions of cells. There are two ap
 
 #### How it works
 
-**Step 1**: For each cell, identify genes with high UMI percentage. For example, if a cell has 10,000 UMIs and the ``UMI percentage cutoff`` is set to 0.01, all genes with more than 10,000 × 0.01 = 100 UMIs are considered highly expressed in that cell.
+**Step 1**: For each cell, identify genes with high UMI percentage. For
+example, if a cell has 10,000 UMIs and the `UMI percentage cutoff` is
+set to 0.01, all genes with more than 10,000 × 0.01 = 100 UMIs are
+considered highly expressed in that cell.
 
-**Step 2**: Summarize these genes for each cluster. First, collect all highly expressed genes in a cluster. For each gene, count the number of cells where it is highly expressed, and calculate the mean and median UMI percentage in those highly expressed cells.
+**Step 2**: Summarize these genes for each cluster. First, collect all
+highly expressed genes in a cluster. For each gene, count the number of
+cells where it is highly expressed, and calculate the mean and median
+UMI percentage in those highly expressed cells.
 
-
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/Find-Top-Genes-by-Cell.jpg" alt="plot of chunk unnamed-chunk-19" width="80%" />
-<p class="caption">plot of chunk unnamed-chunk-19</p>
-</div>
+<img src="./inst/extdata/www/Find-Top-Genes-by-Cell.jpg" alt="" width="80%" />
 
 #### Output description
 
-- ``celltype``: The cluster name as defined by ``Choose A Cluster Resolution``
+- `celltype`: The cluster name as defined by
+  `Choose A Cluster Resolution`
 
-- ``total.cells``: Total number of cells in this cluster
+- `total.cells`: Total number of cells in this cluster
 
-- ``Gene``: Gene that is highly expressed in at least 1 cell in this cluster
+- `Gene`: Gene that is highly expressed in at least 1 cell in this
+  cluster
 
-- ``total.pos.cells``: Number of cells that express this gene
+- `total.pos.cells`: Number of cells that express this gene
 
-- ``total.UMI.pct``: (All UMIs of this gene) / (Total UMIs of this cluster)
+- `total.UMI.pct`: (All UMIs of this gene) / (Total UMIs of this
+  cluster)
 
-- ``cut.Cells``: Number of cells that highly express this gene
+- `cut.Cells`: Number of cells that highly express this gene
 
-- ``cut.pct.mean``: Mean expression percentage in highly expressed cells
+- `cut.pct.mean`: Mean expression percentage in highly expressed cells
 
-- ``cut.pct.median``: Median expression percentage in highly expressed cells
-
+- `cut.pct.median`: Median expression percentage in highly expressed
+  cells
 
 #### 2. Find Top Genes by Accumulated UMI Counts
 
-For each cluster, calculate the ``top n`` highly expressed genes by accumulated UMI counts. Clusters with fewer than 3 cells will be skipped.
+For each cluster, calculate the `top n` highly expressed genes by
+accumulated UMI counts. Clusters with fewer than 3 cells will be
+skipped.
 
 - Supports switching between assays containing the `counts` slot
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/Find-Top-Genes-by-Mean-UMI-counts.jpg" alt="plot of chunk unnamed-chunk-20" width="80%" />
-<p class="caption">plot of chunk unnamed-chunk-20</p>
-</div>
+<img src="./inst/extdata/www/Find-Top-Genes-by-Mean-UMI-counts.jpg" alt="" width="80%" />
 
 #### Output description
 
-- ``celltype``: The cluster name as defined by ``Choose A Cluster Resolution``
+- `celltype`: The cluster name as defined by
+  `Choose A Cluster Resolution`
 
-- ``total.cells``: Total number of cells in this cluster
+- `total.cells`: Total number of cells in this cluster
 
-- ``Gene``: The ``top n`` highly expressed genes
+- `Gene`: The `top n` highly expressed genes
 
-- ``total.pos.cells``: Number of cells that express this gene
+- `total.pos.cells`: Number of cells that express this gene
 
-- ``MeanUMICounts``: (Total accumulated UMI counts) / (Total cells of this cluster)
+- `MeanUMICounts`: (Total accumulated UMI counts) / (Total cells of this
+  cluster)
 
-- ``PCT``: (Total accumulated UMI counts of the gene) / (Total UMIs of cluster cells)
+- `PCT`: (Total accumulated UMI counts of the gene) / (Total UMIs of
+  cluster cells)
 
 ### Feature Summary
 
-Summarize features of interest by cluster, including positive cell percentage and mean/median expression levels.
+Summarize features of interest by cluster, including positive cell
+percentage and mean/median expression levels.
 
 - Supports switching between assays containing the `data` slot
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/gene-short-summary.jpg" alt="plot of chunk unnamed-chunk-21" width="80%" />
-<p class="caption">plot of chunk unnamed-chunk-21</p>
-</div>
+<img src="./inst/extdata/www/gene-short-summary.jpg" alt="" width="80%" />
 
 #### Output description
 
-- ``CellType``: The cluster name as defined by ``Choose A Cluster Resolution``
+- `CellType`: The cluster name as defined by
+  `Choose A Cluster Resolution`
 
-- ``TotalCells``: Total number of cells in this cluster
+- `TotalCells`: Total number of cells in this cluster
 
-- ``Gene``: The input genes
+- `Gene`: The input genes
 
-- ``PCT``: The percentage of cells expressing this gene in this cluster
+- `PCT`: The percentage of cells expressing this gene in this cluster
 
-- ``Expr.mean``: The mean normalized expression in this cluster
+- `Expr.mean`: The mean normalized expression in this cluster
 
-- ``Expr.median``: The median normalized expression in this cluster
+- `Expr.median`: The median normalized expression in this cluster
 
 ### Feature Correlation Analysis
 
-Calculates correlation values for gene pairs within cells from a cluster. Supports both Pearson and Spearman correlation methods.
+Calculates correlation values for gene pairs within cells from a
+cluster. Supports both Pearson and Spearman correlation methods.
 
 - Supports switching between assays containing the `data` slot
 
 #### Three analysis modes
 
-- ``Find Top Correlated Gene Pairs``: Identifies the top 1000 correlated gene pairs
+- `Find Top Correlated Gene Pairs`: Identifies the top **N** correlated
+  gene pairs; set **N** in Step 2 (default `1000`, range `10`–`100000`).
+  The search is computed in blocks of genes and can be cancelled between
+  blocks
 
-- ``Find Top Correlated Genes for A Gene``: Finds the most correlated genes for a user-specified gene
+- `Find Top Correlated Genes for A Gene`: Finds the most correlated
+  genes for a user-specified gene
 
-- ``Calculate Correlation of All Pairs in A Gene List``: Calculates correlation values for all pairs in a user-provided gene list
+- `Calculate Correlation of All Pairs in A Gene List`: Calculates
+  correlation values for all pairs in a user-provided gene list
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/featurecorrelation.jpg" alt="plot of chunk unnamed-chunk-22" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-22</p>
-</div>
+<img src="./inst/extdata/www/featurecorrelation.jpg" alt="" width="100%" />
 
 #### Output description
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/feature-correlation-output.jpg" alt="plot of chunk unnamed-chunk-23" width="40%" />
-<p class="caption">plot of chunk unnamed-chunk-23</p>
-</div>
+<img src="./inst/extdata/www/feature-correlation-output.jpg" alt="" width="40%" />
 
-- ``GeneA``: The first gene in a gene pair
+- `GeneA`: The first gene in a gene pair
 
-- ``GeneB``: The second gene in a gene pair
+- `GeneB`: The second gene in a gene pair
 
-- ``correlation``: The correlation value
+- `correlation`: The correlation value
 
-**Note**: If no results are returned, this is typically because the input genes have very low expression levels. Very lowly expressed genes are removed before analysis.
+**Note**: If no results are returned, this is typically because the
+input genes have very low expression levels. Very lowly expressed genes
+are removed before analysis.
+
+### Module Score (BETA)
+
+Score each cell with a gene set, using either Seurat’s `AddModuleScore`
+or `AUCell` (`AUCell` must be installed).
+
+1.  Paste gene symbols and click **Check Genes** to validate them
+    (matched genes are kept, missing genes are reported).
+2.  Choose the scoring method. For `AUCell`, set the share of top-ranked
+    genes used to compute the AUC (default `5%`); the rankings are
+    cached and reused for later gene sets on the same assay.
+3.  Enter a score name (letters, numbers and underscore only) and click
+    **Compute Module Score**.
+4.  The resulting numeric score is added to the cell metadata and can be
+    explored in Feature Plot, Violin Plot, or Ridge Plot by entering the
+    score name as a feature.
+
+- Supports switching between assays containing the `counts` or `data`
+  slots
 
 ### Rename cluster names
 
-You can rename cluster names, and changes will take effect immediately. However, the original Seurat object file is never modified. Once you close the session, the new annotations will be lost. You can download a mapping file of old names to new names and send it to a bioinformatician to request permanent changes to the Seurat object.
+You can rename cluster names, and changes will take effect immediately.
+However, the original Seurat object file is never modified. Once you
+close the session, the new annotations will be lost. You can download a
+mapping file of old names to new names and send it to a bioinformatician
+to request permanent changes to the Seurat object.
 
-To rename clusters: select a cluster resolution, edit the ``New_Name`` column in the table, then click **Check** to preview the re-colored dimension-reduction plot, and finally **Update** to add the new annotation. You can download the old-to-new name mapping.
+To rename clusters: select a cluster resolution, edit the `New_Name`
+column in the table, then click **Check** to preview the re-colored
+dimension-reduction plot, and finally **Update** to add the new
+annotation. You can download the old-to-new name mapping.
 
 ### Gene Based Cluster (BETA)
 
-Group cells into new clusters based on a single gene's expression level using user-defined cutoffs.
+Group cells into new clusters based on a single gene’s expression level,
+or on a numeric metadata column such as a module score, using
+user-defined cutoffs.
 
-1. Enter a gene symbol, select the assay/slot, and click **Generate Histogram** to plot the expression distribution.
-2. Enter comma-separated cutoff values and click **Apply Cutoffs** to define expression intervals.
-3. Edit the group names in the classification table, then click **Check** to validate names.
-4. Click **Submit** to add a new factor column (named ``<gene>_cluster``) to the cell metadata.
+1.  Enter a gene symbol (or a numeric metadata column), select the
+    assay/slot, and click **Generate Histogram** to plot the value
+    distribution.
+2.  Enter comma-separated cutoff values and click **Apply Cutoffs** to
+    define expression intervals.
+3.  Edit the group names in the classification table, then click
+    **Check** to validate names.
+4.  Click **Submit** to add a new factor column (named `<gene>_cluster`)
+    to the cell metadata.
 
-- Supports switching between assays containing the `counts` or `data` slots
+- Supports switching between assays containing the `counts` or `data`
+  slots
 
 ### Combination Based Cluster (BETA)
 
 Combine two existing cluster annotations into a single new grouping.
 
-1. Select a first and second cluster resolution and a connector (`-`, `+`, or `_`), then click **Generate**.
-2. Review the combination table (with cell counts), optionally edit the ``NewName`` column.
-3. Click **Submit** to add the combined annotation as a new factor column in the cell metadata.
+1.  Select a first and second cluster resolution and a connector (`-`,
+    `+`, or `_`), then click **Generate**.
+2.  Review the combination table (with cell counts), optionally edit the
+    `NewName` column.
+3.  Click **Submit** to add the combined annotation as a new factor
+    column in the cell metadata.
 
-A mapping file can be downloaded for permanent changes to the Seurat object.
-
-### Module Score (BETA)
-
-Score each cell with a gene set using Seurat's ``AddModuleScore``.
-
-1. Paste gene symbols and click **Check Genes** to validate them (matched genes are kept, missing genes are reported).
-2. Enter a score name (letters, numbers and underscore only) and click **Compute Module Score**.
-3. The resulting numeric score is added to the cell metadata and can be explored in Feature Plot, Violin Plot, or Ridge Plot by entering the score name as a feature.
-
-- Supports switching between assays containing the `counts` or `data` slots
+A mapping file can be downloaded for permanent changes to the Seurat
+object.
 
 ### Search Features
 
-All features (genes) extracted from the row names of the assay can be searched.
+All features (genes) extracted from the row names of the assay can be
+searched.
 
-- Supports switching between assays containing any of the following slots: `counts`, `data`, `scale.data`
+- Supports switching between assays containing any of the following
+  slots: `counts`, `data`, `scale.data`
 - Case-insensitive search for gene/feature names
 - View feature annotations for ATAC assays (requires Signac package)
 - Copy multiple feature names for use in other analysis modules
 
 ### Cell Metadata
 
-The metadata of all cells extracted from the meta.data slot of the Seurat object contains descriptive information for each cell, such as quality control metrics, cell type classifications, batch information, and experimental conditions. This metadata is crucial for organizing, filtering, integrating, and visualizing single-cell RNA-seq data.
+The metadata of all cells extracted from the meta.data slot of the
+Seurat object contains descriptive information for each cell, such as
+quality control metrics, cell type classifications, batch information,
+and experimental conditions. This metadata is crucial for organizing,
+filtering, integrating, and visualizing single-cell RNA-seq data.
 
-- Supports downloading cell metadata in ``csv`` format for further analysis
+- Supports downloading cell metadata in `csv` format for further
+  analysis
 
-<div class="figure">
-<img src="C:/Users/Xi_Lab/AppData/Local/R/win-library/4.6/SeuratExplorer/extdata/www/cell-metadata.jpg" alt="plot of chunk unnamed-chunk-24" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-24</p>
-</div>
+<img src="./inst/extdata/www/cell-metadata.jpg" alt="" width="100%" />
 
 ### Structure of Seurat Object
 
-> The Seurat object is an S4 class in R designed to store and manage single-cell expression data and associated analyses. It is a highly structured and self-contained object, allowing for the integration of various data modalities and analytical results.
+> The Seurat object is an S4 class in R designed to store and manage
+> single-cell expression data and associated analyses. It is a highly
+> structured and self-contained object, allowing for the integration of
+> various data modalities and analytical results.
 
 > Key Slots and their Contents:
 
-> assays: This is a list containing one or more Assay objects. Each Assay object represents a specific type of expression data.
-> Each Assay object itself contains slots like counts (raw data), data (normalized data), scale.data (scaled data), and meta.features (feature-level metadata).
+> assays: This is a list containing one or more Assay objects. Each
+> Assay object represents a specific type of expression data. Each Assay
+> object itself contains slots like counts (raw data), data (normalized
+> data), scale.data (scaled data), and meta.features (feature-level
+> metadata).
 
-> meta.data:
-> A data frame storing cell-level metadata. This includes information such as the number of features detected per cell (nFeature_RNA), original identity classes (orig.ident), and can be extended with additional information (e.g., cell type annotations, sample information).
+> meta.data: A data frame storing cell-level metadata. This includes
+> information such as the number of features detected per cell
+> (nFeature_RNA), original identity classes (orig.ident), and can be
+> extended with additional information (e.g., cell type annotations,
+> sample information).
 
-> active.assay:
-> A character string indicating the name of the currently active or default assay for analysis.
+> active.assay: A character string indicating the name of the currently
+> active or default assay for analysis.
 
-> active.ident:
-> Stores the active cluster identity for each cell, typically resulting from clustering analyses.
+> active.ident: Stores the active cluster identity for each cell,
+> typically resulting from clustering analyses.
 
-> reductions:
-> A list of DimReduc objects, each representing a dimensionality reduction technique applied to the data (e.g., PCA, UMAP, tSNE). These objects store the lower-dimensional embeddings of the cells.
+> reductions: A list of DimReduc objects, each representing a
+> dimensionality reduction technique applied to the data (e.g., PCA,
+> UMAP, tSNE). These objects store the lower-dimensional embeddings of
+> the cells.
 
-> graphs:
-> A list of Graph objects, typically storing nearest-neighbor graphs used in clustering and other analyses.
-images:
-> For spatial transcriptomics data, this slot stores Image objects containing spatial image data and information linking spots to their physical locations.
+> graphs: A list of Graph objects, typically storing nearest-neighbor
+> graphs used in clustering and other analyses. images: For spatial
+> transcriptomics data, this slot stores Image objects containing
+> spatial image data and information linking spots to their physical
+> locations.
 
-> project.name:
-> A character string holding the name of the project.
+> project.name: A character string holding the name of the project.
 
-> misc:
-> A list for storing miscellaneous information not fitting into other specific slots.
+> misc: A list for storing miscellaneous information not fitting into
+> other specific slots.
 
 ### About
 
-You're reading the tutorial right now!
+You’re reading the tutorial right now!
 
 ## Data Preparation Tips
 
 ### Preparing Your Seurat Object
 
-For the best experience with SeuratExplorer, ensure your Seurat object contains:
+For the best experience with SeuratExplorer, ensure your Seurat object
+contains:
 
-1. **Required Elements:**
-   - At least one assay with data (`RNA`, `ATAC`, etc.)
-   - Dimensional reductions (`umap`, `tsne`, or `pca`)
-   - Cell metadata (`meta.data` slot) with cluster information
-
-2. **Recommended Elements:**
-   - Multiple cluster resolutions (e.g., `seurat_clusters` at different resolutions)
-   - Sample or batch information in metadata
-   - Cell type annotations (can be added interactively in the app)
-   - Quality control metrics (nCount_RNA, nFeature_RNA, percent.mt, etc.)
-
-3. **File Formats:**
-   - `.rds`: Standard R data format (smaller files, faster I/O)
-   - `.qs2`: QSZ compression format (better compression for large objects)
-
-4. **File Size Considerations:**
-   - Maximum upload size: 20GB (configurable via `MaxInputFileSize` parameter)
-   - For large datasets, consider subsetting or using data with fewer cells
-   - Use `.qs2` format for better compression of large objects
+1.  **Required Elements:**
+    - At least one assay with data (`RNA`, `ATAC`, etc.)
+    - Dimensional reductions (`umap`, `tsne`, or `pca`)
+    - Cell metadata (`meta.data` slot) with cluster information
+2.  **Recommended Elements:**
+    - Multiple cluster resolutions (e.g., `seurat_clusters` at different
+      resolutions)
+    - Sample or batch information in metadata
+    - Cell type annotations (can be added interactively in the app)
+    - Quality control metrics (nCount_RNA, nFeature_RNA, percent.mt,
+      etc.)
+3.  **File Formats:**
+    - `.rds`: Standard R data format (smaller files, faster I/O)
+    - `.qs2`: QSZ compression format (better compression for large
+      objects)
+4.  **File Size Considerations:**
+    - Maximum upload size: 20GB (configurable via `MaxInputFileSize`
+      parameter)
+    - For large datasets, consider subsetting or using data with fewer
+      cells
+    - Use `.qs2` format for better compression of large objects
 
 ### Example Preprocessing Code
-
 
 ``` r
 # Basic Seurat preprocessing
@@ -760,63 +875,98 @@ qs2::qs_save(seurat_obj, "my_seurat_object.qs2")
 
 **Q: Can I use SeuratExplorer with Seurat v3 objects?**
 
-A: Yes! SeuratExplorer automatically updates old Seurat objects when loading. However, for very old versions (v2 or earlier), manual update using `UpdateSeuratObject()` may be required before use.
+A: Yes! SeuratExplorer automatically updates old Seurat objects when
+loading. However, for very old versions (v2 or earlier), manual update
+using `UpdateSeuratObject()` may be required before use.
 
 **Q: Is my data uploaded to any server?**
 
-A: No. When running locally (`launchSeuratExplorer()`), all data stays on your computer. Only when deployed on a Shiny Server would data be uploaded to that server.
+A: No. When running locally (`launchSeuratExplorer()`), all data stays
+on your computer. Only when deployed on a Shiny Server would data be
+uploaded to that server.
 
 **Q: Can I save my analysis results?**
 
-A: Yes! Most visualizations can be downloaded as PDF files. Analysis results (DEGs, feature summaries, etc.) can be downloaded as CSV files. Cluster name mappings can also be exported.
+A: Yes! Every plot can be downloaded as a vector PDF sized to match what
+you see in the browser (see [Plot export size](#plot-export-size)).
+Analysis results (DEGs, top expressed features, feature summary, feature
+correlation) can be downloaded as CSV or Excel files, and each result
+table carries a one-line record of the analysis and parameters that
+produced it. Cluster name mappings can also be exported.
 
-**Q: What's the difference between the two "Top Expressed Features" methods?**
+**Q: What’s the difference between the two “Top Expressed Features”
+methods?**
 
-A:
-- **Find Top Genes by Cell**: Identifies genes that are highly expressed in individual cells, useful for finding cell-specific markers
-- **Find Top Genes by Mean UMI**: Finds genes with high average expression across all cells in a cluster, useful for identifying cluster characteristics
+A: - **Find Top Genes by Cell**: Identifies genes that are highly
+expressed in individual cells, useful for finding cell-specific
+markers - **Find Top Genes by Mean UMI**: Finds genes with high average
+expression across all cells in a cluster, useful for identifying cluster
+characteristics
 
 **Q: How do I add custom color palettes?**
 
-A: While SeuratExplorer includes many predefined color palettes, you can use the `getColors()` function in your own R scripts to access these palettes for custom visualizations.
+A: While SeuratExplorer includes many predefined color palettes, you can
+use the `getColors()` function in your own R scripts to access these
+palettes for custom visualizations.
 
 ## Key related packages
 
 ### Core Dependencies
 
-- [satijalab/seurat](https://github.com/satijalab/seurat): Seurat is an R toolkit for single cell genomics, developed and maintained by the Satija Lab at NYGC. SeuratExplorer builds upon Seurat's powerful analysis capabilities to provide interactive visualization.
+- [satijalab/seurat](https://github.com/satijalab/seurat): Seurat is an
+  R toolkit for single cell genomics, developed and maintained by the
+  Satija Lab at NYGC. SeuratExplorer builds upon Seurat’s powerful
+  analysis capabilities to provide interactive visualization.
 
-- [rstudio/shiny](https://shiny.posit.co/): Shiny is an R package that makes it easy to build interactive web apps straight from R. SeuratExplorer uses Shiny to create its interactive dashboard.
+- [rstudio/shiny](https://shiny.posit.co/): Shiny is an R package that
+  makes it easy to build interactive web apps straight from R.
+  SeuratExplorer uses Shiny to create its interactive dashboard.
 
 ### Visualization Dependencies
 
-- [ggplot2](https://ggplot2.tidyverse.org/): A system for declaratively creating graphics, based on "The Grammar of Graphics". SeuratExplorer uses ggplot2 for all its visualizations.
+- [ggplot2](https://ggplot2.tidyverse.org/): A system for declaratively
+  creating graphics, based on “The Grammar of Graphics”. SeuratExplorer
+  uses ggplot2 for all its visualizations.
 
-- [ComplexHeatmap](https://jokergoo.github.io/ComplexHeatmap/reference/Heatmap.html): Bioconductor package for making complex heatmaps with annotations.
+- [ComplexHeatmap](https://jokergoo.github.io/ComplexHeatmap/reference/Heatmap.html):
+  Bioconductor package for making complex heatmaps with annotations.
 
-- [shinydashboard](https://rstudio.github.io/shinydashboard/): Create dashboards with Shiny. SeuratExplorer uses this for its admin-style interface.
+- [shinydashboard](https://rstudio.github.io/shinydashboard/): Create
+  dashboards with Shiny. SeuratExplorer uses this for its admin-style
+  interface.
 
 ### Related Projects
 
-- [Hla-Lab/SeuratExplorer](https://github.com/rwcrocker/SeuratExplorer/): An interactive R shiny application for exploring scRNAseq data processed in Seurat (another implementation with similar goals).
+- [Hla-Lab/SeuratExplorer](https://github.com/rwcrocker/SeuratExplorer/):
+  An interactive R shiny application for exploring scRNAseq data
+  processed in Seurat (another implementation with similar goals).
 
-- [junjunlab/scRNAtoolVis](https://github.com/junjunlab/scRNAtoolVis): Some useful functions to make your scRNA-seq plots more beautiful. Some code from this package has been adapted in SeuratExplorer.
+- [junjunlab/scRNAtoolVis](https://github.com/junjunlab/scRNAtoolVis):
+  Some useful functions to make your scRNA-seq plots more beautiful.
+  Some code from this package has been adapted in SeuratExplorer.
 
-- [rstudio/shiny-server](https://github.com/rstudio/shiny-server): Shiny Server is a server program that makes Shiny applications available over the web. Use this to deploy SeuratExplorer on a server for multi-user access.
+- [rstudio/shiny-server](https://github.com/rstudio/shiny-server): Shiny
+  Server is a server program that makes Shiny applications available
+  over the web. Use this to deploy SeuratExplorer on a server for
+  multi-user access.
 
 ## Contributing and Support
 
 ### Getting Help
 
-- **Documentation**: See function documentation with `?function_name` in R
-- **Issues**: Report bugs or request features at [GitHub Issues](https://github.com/fentouxungui/SeuratExplorer/issues)
-- **WeChat**: Follow [微信公众号：分析力工厂](https://mp.weixin.qq.com/s/lpvI9OnyN95amOeVGmeyMQ) for tutorials and updates in Chinese
+- **Documentation**: See function documentation with `?function_name` in
+  R
+- **Issues**: Report bugs or request features at [GitHub
+  Issues](https://github.com/fentouxungui/SeuratExplorer/issues)
+- **WeChat**: Follow
+  [微信公众号：分析力工厂](https://mp.weixin.qq.com/s/lpvI9OnyN95amOeVGmeyMQ)
+  for tutorials and updates in Chinese
 
 ### Citation
 
 If you use SeuratExplorer in your research, please cite:
 
-```bibtex
+``` bibtex
 @software{seuratexplorer2025,
   title = {SeuratExplorer: An Shiny App for Exploring scRNA-seq Data Processed in Seurat},
   author = {Zhang, Yongchao},
@@ -828,7 +978,8 @@ If you use SeuratExplorer in your research, please cite:
 
 ### License
 
-This package is licensed under GPL (>= 3). See [LICENSE.md](LICENSE.md) for details.
+This package is licensed under GPL (\>= 3). See [LICENSE.md](LICENSE.md)
+for details.
 
 ## Acknowledgments
 
@@ -841,77 +992,33 @@ SeuratExplorer is built upon excellent work by:
 
 ## 中文介绍
 
-[微信公众号： 分析力工厂](https://mp.weixin.qq.com/s/lpvI9OnyN95amOeVGmeyMQ)
+[微信公众号：
+分析力工厂](https://mp.weixin.qq.com/s/lpvI9OnyN95amOeVGmeyMQ)
 
 ## Session Info
 
-
-```
-#> R version 4.6.1 (2026-06-24 ucrt)
-#> Platform: x86_64-w64-mingw32/x64
-#> Running under: Windows 11 x64 (build 26200)
-#> 
-#> Matrix products: default
-#>   LAPACK version 3.12.1
-#> 
-#> locale:
-#> [1] LC_COLLATE=Chinese (Simplified)_China.utf8  LC_CTYPE=Chinese (Simplified)_China.utf8   
-#> [3] LC_MONETARY=Chinese (Simplified)_China.utf8 LC_NUMERIC=C                               
-#> [5] LC_TIME=Chinese (Simplified)_China.utf8    
-#> 
-#> time zone: Asia/Shanghai
-#> tzcode source: internal
-#> 
-#> attached base packages:
-#> [1] stats     graphics  grDevices utils     datasets  methods   base     
-#> 
-#> other attached packages:
-#> [1] SeuratExplorer_0.1.9 shiny_1.14.0        
-#> 
-#> loaded via a namespace (and not attached):
-#>   [1] RcppAnnoy_0.0.23            splines_4.6.1               later_1.4.8                 tibble_3.3.1               
-#>   [5] R.oo_1.27.1                 polyclip_1.10-7             graph_1.90.0                XML_3.99-0.25              
-#>   [9] fastDummies_1.7.6           shinyjqui_0.4.1             lifecycle_1.0.5             doParallel_1.0.17          
-#>  [13] globals_0.19.1              lattice_0.22-9              MASS_7.3-65                 crosstalk_1.2.2            
-#>  [17] magrittr_2.0.5              limma_3.68.5                plotly_4.12.1               sass_0.4.10                
-#>  [21] jquerylib_0.1.4             yaml_2.3.12                 shinyBS_0.65.0              Seurat_5.5.1               
-#>  [25] httpuv_1.6.17               otel_0.2.0                  sctransform_0.4.3           spam_2.11-4                
-#>  [29] spatstat.sparse_3.2-0       sp_2.2-3                    reticulate_1.47.0           cowplot_1.2.0              
-#>  [33] pbapply_1.7-5               DBI_1.3.0                   RColorBrewer_1.1-3          abind_1.4-8                
-#>  [37] Rtsne_0.17                  GenomicRanges_1.64.0        presto_1.1.0                purrr_1.2.2                
-#>  [41] R.utils_2.13.0              BiocGenerics_0.58.1         circlize_0.4.18             IRanges_2.46.0             
-#>  [45] S4Vectors_0.50.3            ggrepel_0.9.8               irlba_2.3.7                 listenv_1.0.0              
-#>  [49] spatstat.utils_3.2-5        goftest_1.2-3               RSpectra_0.16-2             spatstat.random_3.5-1      
-#>  [53] annotate_1.90.0             fitdistrplus_1.2-6          parallelly_1.48.0           commonmark_2.0.0           
-#>  [57] DelayedMatrixStats_1.34.0   codetools_0.2-20            DelayedArray_0.38.2         DT_0.34.0                  
-#>  [61] tidyselect_1.2.1            shape_1.4.6.1               farver_2.1.2                shinyWidgets_0.9.1         
-#>  [65] spatstat.explore_3.8-2      matrixStats_1.5.0           stats4_4.6.1                Seqinfo_1.2.0              
-#>  [69] jsonlite_2.0.0              GetoptLong_1.1.1            progressr_1.0.0             ggalluvial_0.12.6          
-#>  [73] ggridges_0.5.7              survival_3.8-6              iterators_1.0.14            systemfonts_1.3.2          
-#>  [77] foreach_1.5.2               tools_4.6.1                 ragg_1.5.2                  ica_1.0-3                  
-#>  [81] Rcpp_1.1.2                  glue_1.8.1                  gridExtra_2.3.1             SparseArray_1.12.2         
-#>  [85] xfun_0.60                   MatrixGenerics_1.24.0       AUCell_1.34.0               dplyr_1.2.1                
-#>  [89] shinydashboard_0.7.3        withr_3.0.3                 fastmap_1.2.0               shinyjs_2.1.1              
-#>  [93] litedown_0.11               digest_0.6.39               R6_2.6.1                    mime_0.13                  
-#>  [97] textshaping_1.0.5           colorspace_2.1-3            scattermore_1.2             tensor_1.5.1               
-#> [101] markdown_2.0                spatstat.data_3.1-9         RSQLite_3.53.3              R.methodsS3_1.8.2          
-#> [105] tidyr_1.3.2                 generics_0.1.4              data.table_1.18.6.1         httr_1.4.9                 
-#> [109] htmlwidgets_1.6.4           S4Arrays_1.12.0             uwot_0.2.5                  pkgconfig_2.0.3            
-#> [113] gtable_0.3.6                blob_1.3.0                  ComplexHeatmap_2.28.0       lmtest_0.9-40              
-#> [117] S7_0.2.2                    XVector_0.52.0              htmltools_0.5.9             dotCall64_1.2              
-#> [121] GSEABase_1.74.0             clue_0.3-68                 SeuratObject_5.4.0          scales_1.4.0               
-#> [125] Biobase_2.72.0              png_0.1-9                   spatstat.univar_3.2-0       knitr_1.52                 
-#> [129] rstudioapi_0.19.0           reshape2_1.4.5              rjson_0.2.23                nlme_3.1-169               
-#> [133] cachem_1.1.0                zoo_1.9-0                   GlobalOptions_0.1.4         stringr_1.6.0              
-#> [137] KernSmooth_2.23-26          shinycssloaders_1.1.0       parallel_4.6.1              miniUI_0.1.2               
-#> [141] AnnotationDbi_1.74.0        pillar_1.11.1               grid_4.6.1                  vctrs_0.7.3                
-#> [145] RANN_2.6.3                  promises_1.5.0              xtable_1.8-8                cluster_2.1.8.2            
-#> [149] evaluate_1.0.5              cli_3.6.6                   compiler_4.6.1              rlang_1.3.0                
-#> [153] crayon_1.5.3                future.apply_1.20.2         labeling_0.4.3              plyr_1.8.9                 
-#> [157] stringi_1.8.9               deldir_2.0-4                viridisLite_0.4.3           Biostrings_2.80.2          
-#> [161] colourpicker_1.3.0          spatstat.geom_3.8-2         Matrix_1.7-5                RcppHNSW_0.7.0             
-#> [165] patchwork_1.3.2             sparseMatrixStats_1.24.0    bit64_4.8.6                 future_1.75.0              
-#> [169] ggplot2_4.0.3               statmod_1.5.2               KEGGREST_1.52.2             SummarizedExperiment_1.42.0
-#> [173] ROCR_1.0-12                 fontawesome_0.5.3           igraph_2.3.3                memoise_2.0.1              
-#> [177] bslib_0.12.0                bit_4.6.0
-```
+    #> R version 4.6.1 (2026-06-24 ucrt)
+    #> Platform: x86_64-w64-mingw32/x64
+    #> Running under: Windows 11 x64 (build 26200)
+    #> 
+    #> Matrix products: default
+    #>   LAPACK version 3.12.1
+    #> 
+    #> locale:
+    #> [1] LC_COLLATE=Chinese (Simplified)_China.utf8 
+    #> [2] LC_CTYPE=Chinese (Simplified)_China.utf8   
+    #> [3] LC_MONETARY=Chinese (Simplified)_China.utf8
+    #> [4] LC_NUMERIC=C                               
+    #> [5] LC_TIME=Chinese (Simplified)_China.utf8    
+    #> 
+    #> time zone: Asia/Shanghai
+    #> tzcode source: internal
+    #> 
+    #> attached base packages:
+    #> [1] stats     graphics  grDevices utils     datasets  methods   base     
+    #> 
+    #> loaded via a namespace (and not attached):
+    #>  [1] compiler_4.6.1    fastmap_1.2.0     cli_3.6.6         tools_4.6.1      
+    #>  [5] htmltools_0.5.9   otel_0.2.0        rstudioapi_0.19.0 yaml_2.3.12      
+    #>  [9] rmarkdown_2.32    knitr_1.52        xfun_0.60         digest_0.6.39    
+    #> [13] rlang_1.3.0       evaluate_1.0.5
