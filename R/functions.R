@@ -1238,7 +1238,7 @@ check_data <- function(data, key_paramaters = c('reduction_options', 'cluster_op
     if ('reduction_options' %in% zero_length_parameters) {
       reduction_keywords <- getOption("SeuratExplorerReductionKeyWords", default = c("umap", "tsne"))
       showModal(modalDialog(
-        title = tagList(icon("triangle-exclamation"), "No Dimensionality Reduction Found"),
+        title = tagList(icon("exclamation-triangle"), "No Dimensionality Reduction Found"),
         tags$div(
           tags$p("This Seurat object has no dimensionality reduction matching the keywords:"),
           tags$pre(paste(reduction_keywords, collapse = ", ")),
@@ -1252,13 +1252,13 @@ check_data <- function(data, key_paramaters = c('reduction_options', 'cluster_op
     }
     if (length(zero_length_parameters) != 0) {
       showModal(modalDialog(
-        title = tagList(icon("triangle-exclamation"), "Warning"),
+        title = tagList(icon("exclamation-triangle"), "Warning"),
         tags$div(
           tags$p(paste0("Key parameters found with zero length: ", paste0(zero_length_parameters, collapse = ', '), '.')),
           tags$small(style = "color: #6c757d;", "Related functions will not work properly!")
         ),
         easyClose = TRUE,
-        footer = modalButton("Continue"),
+        footer = modalButton("OK"),
         size = "m"
       ))
     }
@@ -1557,6 +1557,59 @@ presto_missing_ui <- function() {
     tags$code(style = "font-size: 11px;", "devtools::install_github('immunogenomics/presto')"),
     " and restart the app to enable the fast version."
   )
+}
+
+
+# Consistent "working" modal for long-running analyses.
+# A progress bar and a Cancel button are added only when their ids are supplied.
+# The progress bar is created as `progress_id`; the text line that the update
+# helpers write to is `progress_id` + "_text", so wait_modal() can replace the
+# hand-written dialogs without touching the step functions.
+wait_modal <- function(title, detail = NULL, extra = NULL, note = NULL,
+                       progress_id = NULL, cancel_id = NULL, total = 100) {
+  if (is.null(detail)) detail <- "Please wait, this may take a while..."
+  showModal(modalDialog(
+    title = tagList(icon("hourglass-start", class = "fa-spin"), " ", title),
+    tags$p(detail),
+    extra,
+    if (!is.null(progress_id)) {
+      shinyWidgets::progressBar(id = progress_id, value = 0, total = total,
+                                status = "success", striped = TRUE)
+    },
+    if (!is.null(progress_id)) {
+      tags$p(id = paste0(progress_id, "_text"), align = "center",
+             style = "margin-top: 10px;")
+    },
+    if (!is.null(note)) {
+      tags$small(note, style = "color: #6c757d; display: block; margin-top: 8px;")
+    },
+    footer = if (is.null(cancel_id)) {
+      NULL
+    } else {
+      tagList(actionButton(cancel_id, "Cancel", class = "btn-danger"))
+    },
+    size = "m"
+  ))
+}
+
+# Consistent error dialog: the footer is always "OK", and a raw error message
+# goes into <pre> instead of being pasted into a <p>.
+show_error <- function(title, detail, subtitle = NULL, code = NULL, size = "m") {
+  showModal(modalDialog(
+    title = tagList(icon("exclamation-triangle"), " ", title),
+    tags$div(
+      tags$p(detail),
+      if (!is.null(code)) {
+        tags$pre(style = "color: #dc3545; white-space: pre-wrap;", code)
+      },
+      if (!is.null(subtitle)) {
+        tags$small(style = "color: #6c757d;", subtitle)
+      }
+    ),
+    easyClose = TRUE,
+    footer = modalButton("OK"),
+    size = size
+  ))
 }
 
 

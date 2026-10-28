@@ -45,22 +45,22 @@ explorer_sidebar_ui <- function(){
   conditionalPanel(
     condition = "output.file_loaded",
     sidebarMenu(menuItem(text = "Explorer", tabName = "explorer", icon = shiny::icon("dashboard"), startExpanded = TRUE,
-                         menuSubItem(text = span(title = tooltips[["dimplot"]], "Dim Reduction Plot", tags$small(class = "label label-danger", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "HOT")), tabName = "dimplot", icon = shiny::icon("angle-right")),
-                         menuSubItem(text = span(title = tooltips[["featureplot"]], "Feature Plot", tags$small(class = "label label-danger", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "HOT")), tabName = "featureplot", icon = shiny::icon("angle-right")),
-                         menuSubItem(text = span(title = tooltips[["vlnplot"]], "Violin Plot", tags$small(class = "label label-danger", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "HOT")), tabName = "vlnplot", icon = shiny::icon("angle-right")),
-                         menuSubItem(text = span(title = tooltips[["dotplot"]], "Dot Plot", tags$small(class = "label label-success", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "UPDATED")), tabName = "dotplot", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span(title = tooltips[["dimplot"]], "Dim Reduction Plot"), tabName = "dimplot", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span(title = tooltips[["featureplot"]], "Feature Plot"), tabName = "featureplot", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span(title = tooltips[["vlnplot"]], "Violin Plot"), tabName = "vlnplot", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span(title = tooltips[["dotplot"]], "Dot Plot"), tabName = "dotplot", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["heatmap"]], "Heatmap Cell Level"), tabName = "heatmap", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["averagedheatmap"]], "Heatmap Group Averaged"), tabName = "averagedheatmap", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["ridgeplot"]], "Ridge Plot"), tabName = "ridgeplot", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["cellratioplot"]], "Cell Percentage Plot"), tabName = "cellratioplot", icon = shiny::icon("angle-right")),
-                         menuSubItem(text = span(title = tooltips[["degs"]], "DEGs Analysis", tags$small(class = "label label-danger", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "HOT")), tabName = "degs", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span(title = tooltips[["degs"]], "DEGs Analysis"), tabName = "degs", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["topgenes"]], "Top Expressed Features"), tabName = "topgenes", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["featuresummary"]], "Feature Summary"), tabName = "featuresummary", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["featurecorrelation"]], "Feature Correlation"), tabName = "featurecorrelation", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["renameclusters"]], "Rename Clusters"), tabName = "renameclusters", icon = shiny::icon("angle-right")),
-                         menuSubItem(text = span(title = tooltips[["geneclusters"]], "Gene Based Cluster", tags$small(class = "label label-info", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "geneclusters", icon = shiny::icon("angle-right")),
-                         menuSubItem(text = span(title = tooltips[["combinedclusters"]], "Combination Based Cluster", tags$small(class = "label label-info", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "combinedclusters", icon = shiny::icon("angle-right")),
-                         menuSubItem(text = span(title = tooltips[["addmodulescore"]], "Module Score", tags$small(class = "label label-info", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "addmodulescore", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span(title = tooltips[["geneclusters"]], "Gene Based Cluster", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "geneclusters", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span(title = tooltips[["combinedclusters"]], "Combination Based Cluster", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "combinedclusters", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span(title = tooltips[["addmodulescore"]], "Module Score", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "addmodulescore", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["featuresdf"]], "Search Features"), tabName = "featuresdf", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["cellmetadata"]], "Cells Metadata"), tabName = "cellmetadata", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["objectstructure"]], "Object Structure"), tabName = "objectstructure", icon = shiny::icon("angle-right")),
@@ -636,13 +636,15 @@ explorer_body_ui <- function(tab_list){
                                        actionButton(
                                          "close_degs_info",
                                          label = NULL,
-                                         icon = icon("times"),
+                                         title = "Hide or show the hints",
+                                         icon = icon("chevron-up"),
                                          style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #10b981; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
                                          class = "btn btn-link"
                                        )
                                      ),
                                      div(
                                        class = "box-body",
+                                       id = "degs_info_body",
                                        style = "padding: 15px 20px;",
                                        textOutput("degs_info")
                                      )
@@ -704,7 +706,7 @@ explorer_body_ui <- function(tab_list){
                                               h4(icon("sliders-h"), "Analysis Parameters", style = "color: #f59e0b; margin-bottom: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                               withSpinner(uiOutput("DEGsAssays.UI"), proxy.height = "10px"),
                                               div(style = "margin-top: 20px;",
-                                                sliderInput("logfcthreshold", label = "Logfc Threshold:", min = 0, max = 1, value = 0.1),
+                                                sliderInput("logfcthreshold", label = "logFC threshold:", min = 0, max = 1, value = 0.1),
                                                 selectInput("testuse","Test use:", choices = c(wilcox = "wilcox", wilcox_limma = "wilcox_limma",
                                                                                                        T_test = "t", negbinom = "negbinom", poisson = "poisson",
                                                                                                        LR = "LR", MAST = "MAST", DESeq2 = "DESeq2")),
@@ -866,13 +868,15 @@ explorer_body_ui <- function(tab_list){
                                        actionButton(
                                          "close_topgenes_info",
                                          label = NULL,
-                                         icon = icon("times"),
+                                         title = "Hide or show the hints",
+                                         icon = icon("chevron-up"),
                                          style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #10b981; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
                                          class = "btn btn-link"
                                        )
                                      ),
                                      div(
                                        class = "box-body",
+                                       id = "topgenes_info_body",
                                        style = "padding: 15px 20px;",
                                        textOutput("topgenes_info")
                                      )
@@ -994,13 +998,15 @@ explorer_body_ui <- function(tab_list){
                                        actionButton(
                                          "close_featuresummary_info",
                                          label = NULL,
-                                         icon = icon("times"),
+                                         title = "Hide or show the hints",
+                                         icon = icon("chevron-up"),
                                          style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #10b981; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
                                          class = "btn btn-link"
                                        )
                                      ),
                                      div(
                                        class = "box-body",
+                                       id = "featuresummary_info_body",
                                        style = "padding: 15px 20px;",
                                        textOutput("featuresummary_info")
                                      )
@@ -1141,13 +1147,15 @@ explorer_body_ui <- function(tab_list){
                                        actionButton(
                                          "close_featurecorrelation_info",
                                          label = NULL,
-                                         icon = icon("times"),
+                                         title = "Hide or show the hints",
+                                         icon = icon("chevron-up"),
                                          style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #10b981; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
                                          class = "btn btn-link"
                                        )
                                      ),
                                      div(
                                        class = "box-body",
+                                       id = "featurecorrelation_info_body",
                                        style = "padding: 15px 20px;",
                                        textOutput("featurecorrelation_info")
                                      )
@@ -1181,6 +1189,10 @@ explorer_body_ui <- function(tab_list){
                                        ),
                                        id = "tabset_featurecorrelation", width = 12,
                                        tabPanel("Find Top Correlated Gene Pairs",
+                                                div(style = "max-width: 280px; margin: 0 auto 5px auto;",
+                                                  numericInput("correlationTopN", "Top N gene pairs to return:",
+                                                               value = 1000, min = 10, max = 100000, step = 100, width = '100%')
+                                                ),
                                                 div(style = "text-align: center; margin-top: 25px;",
                                                   actionButton("TopCorrelationAnalysis",
                                                               icon = shiny::icon("magnifying-glass-chart"),
@@ -1549,6 +1561,7 @@ ui <-  function(){
 
   # Header ----
   header <- shinydashboard::dashboardHeader(title = p(strong(em("Seurat Explorer"))),
+                           tags$li(class = "dropdown", uiOutput("header_status")),
                            shinydashboard::dropdownMenu(type = "notifications", icon = shiny::icon("github"), headerText = "R packages on Github:",
                                         notificationItemWithAttr(icon = shiny::icon("github"), status = "info", text = "Seurat Explorer", href = "https://github.com/fentouxungui/SeuratExplorer", target = "_blank"),
                                         notificationItemWithAttr(icon = shiny::icon("github"), status = "info", text = "Seurat Explorer Server", href = "https://github.com/fentouxungui/SeuratExplorerServer", target = "_blank")))

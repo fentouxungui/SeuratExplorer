@@ -1940,25 +1940,30 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$degs_info = renderText({
     paste0('This usually takes longer, please wait patiently. Make sure to save current results before a new analysis!
   - FindMarkers for All Clusters: calculate markers for all groups.
-  - Find DEGs for two groups: comparison between two groups, support subet cells before a comparison.')
+  - Find DEGs for two groups: comparison between two groups; cells can be subset before the comparison.')
   })
 
-  # Close button for Information Box
+  # Collapse / expand the hint body; the box header stays visible so the hints
+  # can always be brought back. The chevron is swapped on the same click.
   observeEvent(input$close_degs_info, {
-    shinyjs::hide("degs-info-box", anim = TRUE, animType = "fade")
-  })
+    shinyjs::toggle("degs_info_body", anim = TRUE)
+    shinyjs::runjs("$('#close_degs_info i').toggleClass('fa-chevron-up fa-chevron-down');")
+  }, ignoreInit = TRUE)
 
   observeEvent(input$close_topgenes_info, {
-    shinyjs::hide("topgenes-info-box", anim = TRUE, animType = "fade")
-  })
+    shinyjs::toggle("topgenes_info_body", anim = TRUE)
+    shinyjs::runjs("$('#close_topgenes_info i').toggleClass('fa-chevron-up fa-chevron-down');")
+  }, ignoreInit = TRUE)
 
   observeEvent(input$close_featuresummary_info, {
-    shinyjs::hide("featuresummary-info-box", anim = TRUE, animType = "fade")
-  })
+    shinyjs::toggle("featuresummary_info_body", anim = TRUE)
+    shinyjs::runjs("$('#close_featuresummary_info i').toggleClass('fa-chevron-up fa-chevron-down');")
+  }, ignoreInit = TRUE)
 
   observeEvent(input$close_featurecorrelation_info, {
-    shinyjs::hide("featurecorrelation-info-box", anim = TRUE, animType = "fade")
-  })
+    shinyjs::toggle("featurecorrelation_info_body", anim = TRUE)
+    shinyjs::runjs("$('#close_featurecorrelation_info i').toggleClass('fa-chevron-up fa-chevron-down');")
+  }, ignoreInit = TRUE)
 
   DEGs <- reactiveValues(degs = NULL, degs_ready = FALSE)
 
@@ -2005,21 +2010,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         size = "m"
       ))
     }else{
-      showModal(modalDialog(
-        title = tagList(icon("hourglass-start", class = "fa-spin"), " Calculating Cluster Markers"),
-        tags$div(
-          tags$p("Please wait a moment!"),
-          presto_missing_ui(),
-          div(id = 'clustermarkers_log_output'),
-          shinyWidgets::progressBar(id = "clustermarkers_progress", value = 0, total = total_clusters,
-                                  status = "success", striped = TRUE),
-          tags$p(id = "clustermarkers_progress_text", align = "center", style = "margin-top: 10px;"),
-          tags$small("Cancel stops the run once the cluster currently being tested has finished.",
-                     style = "color: #6c757d; display: block; margin-top: 8px;")
-        ),
-        footer = tagList(actionButton("ClustermarkersCancel", "Cancel", class = "btn-danger")),
-        size = "m"
-      ))
+      wait_modal("Calculating Cluster Markers",
+                 detail = "Please wait a moment!",
+                 extra = tagList(presto_missing_ui(),
+                                 div(id = 'clustermarkers_log_output')),
+                 note = "Cancel stops the run once the cluster currently being tested has finished.",
+                 progress_id = "clustermarkers_progress",
+                 cancel_id = "ClustermarkersCancel",
+                 total = total_clusters)
       if (is.null(input$DEGsAssay)){
         if (DefaultAssay(cds) == 'SCT') {
           cds <- check_SCT_assay(cds)
@@ -2272,13 +2270,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         size = "m"
       ))
     }else{
-      showModal(modalDialog(
-        title = tagList(icon("hourglass-start", class = "fa-spin"), " alculating DEGs"),
-        tags$p("Please wait for a few minutes!"),
-        presto_missing_ui(),
-        footer = NULL,
-        size = "m"
-      ))
+      wait_modal("Calculating DEGs",
+                 detail = "Please wait, this comparison usually takes a few minutes.",
+                 extra = presto_missing_ui(),
+                 note = "This comparison cannot be cancelled once it has started.")
       cds <- data$obj
       # Apply all filter conditions as intersection
       for (i in seq_len(n)) {
@@ -2505,7 +2500,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # Warnings
   output$topgenes_info = renderText({
     paste0('This usually takes longer, please wait patiently. Save current results before a new analysis
-      - Find Top Genes by Cell: firstly, for each cell, find genes that has high UMI percentage, then summary those genes for each cluster, details see About page.
+      - Find Top Genes by Cell: for each cell, find genes with a high UMI percentage, then summarize those genes for each cluster; see the About page for details.
       - Find Top Genes by mean UMI Counts: for each cluster, calculate the top n highly expressed genes by mean UMI counts.')
   })
 
@@ -2533,17 +2528,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   observeEvent(input$TopGenesAnalysis, {
     if(verbose){message("SeuratExplorer: preparing TopGenesAnalysis...")}
-    showModal(modalDialog(
-      title = tagList(icon("hourglass-start", class = "fa-spin"), " Calculating Top Genes at Cell Level"),
-      tags$p("Please wait for a few minutes!"),
-      shinyWidgets::progressBar(id = "topgenes_progress", value = 0, total = 100,
-                                status = "success", striped = TRUE),
-      tags$p(id = "topgenes_progress_text", align = "center", style = "margin-top: 10px;"),
-      tags$small("Cancel stops the run after the current batch of cells.",
-                 style = "color: #6c757d; display: block; margin-top: 8px;"),
-      footer = tagList(actionButton("TopGenesCancel", "Cancel", class = "btn-danger")),
-      size = "m"
-    ))
+    wait_modal("Calculating Top Genes at Cell Level",
+               detail = "Please wait, this usually takes a few minutes.",
+               note = "Cancel stops the run after the current batch of cells.",
+               progress_id = "topgenes_progress",
+               cancel_id = "TopGenesCancel")
 
     cds <- data$obj
     Idents(cds) <- input$TopGenesClusterResolution
@@ -2659,15 +2648,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   observeEvent(input$TopAccumulatedGenesAnalysis, {
     if(verbose){message("SeuratExplorer: preparing TopAccumulatedGenesAnalysis...")}
-    showModal(modalDialog(
-      title = tagList(icon("hourglass-start", class = "fa-spin"), " Calculating Accumulated Top Genes"),
-      tags$p("Please wait for a few minutes!"),
-      shinyWidgets::progressBar(id = "topgenes_acc_progress", value = 0, total = 100,
-                                status = "success", striped = TRUE),
-      tags$p(id = "topgenes_acc_progress_text", align = "center", style = "margin-top: 10px;"),
-      footer = tagList(actionButton("TopGenesCancel", "Cancel", class = "btn-danger")),
-      size = "m"
-    ))
+    wait_modal("Calculating Accumulated Top Genes",
+               detail = "Please wait, this usually takes a few minutes.",
+               note = "Cancel stops the run after the current group has finished.",
+               progress_id = "topgenes_acc_progress",
+               cancel_id = "TopGenesCancel")
 
     cds <- data$obj
     Idents(cds) <- input$TopGenesClusterResolution
@@ -2813,12 +2798,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         size = "m"
       ))
     }else{
-      showModal(modalDialog(
-        title = tagList(icon("hourglass-start", class = "fa-spin"), " Summarizing Features"),
-        tags$p("Please wait for a few minutes!"),
-        footer = NULL,
-        size = "m"
-      ))
+      wait_modal("Summarizing Features",
+                 detail = "Please wait, summarizing features usually takes a few minutes.")
       cds <- data$obj
       Idents(cds) <- input$FeatureSummaryClusterResolution
       cds <- subset_Seurat(cds, idents = input$FeatureSummarySelectedClusters)
@@ -2864,10 +2845,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # Warning
   output$featurecorrelation_info = renderText({
     paste0('This usually takes longer, please wait patiently. Make sure to save current results before a new analysis!
-      - Find Top Correlated Gene Pairs: find top 1000 correlated gene pairs.
-      - Find Correlated Genes for A Gene: find the most correlated genes for input genes.
-      - Calculate Correlation for A Gene List: calculate the correlation value for each pair of the input genes.
-    if nothing return, this is caused by the low expression of the input genes, very low expressed genes will be removed before analysis.')
+      - Find Top Correlated Gene Pairs: return the top N correlated gene pairs (set N in Step 2).
+      - Find Top Correlated Genes for A Gene: find the genes most correlated with the input gene.
+      - Calculate Correlation of All Pairs in A Gene List: calculate the correlation value for each pair of the input genes.
+    If nothing is returned, the input genes are probably expressed too low; genes with very low expression are removed before the analysis.')
   })
 
   FeatureCorrelation <- reactiveValues(summary = NULL, summary_ready = FALSE)
@@ -2900,17 +2881,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     cor_res_col  <- input$FeatureCorrelationClusterResolution
     cor_idents   <- input$FeatureCorrelationIdentsSelected
 
-    showModal(modalDialog(
-      title = tagList(icon("hourglass-start", class = "fa-spin"), " Calculating Top Correlations"),
-      tags$p("Calculate top correlated gene pairs, which usually takes longer..."),
-      shinyWidgets::progressBar(id = "topcor_progress", value = 0, total = 100,
-                                status = "success", striped = TRUE),
-      tags$p(id = "topcor_progress_text", align = "center", style = "margin-top: 10px;"),
-      tags$small("Cancel stops the run after the current block of genes.",
-                 style = "color: #6c757d; display: block; margin-top: 8px;"),
-      footer = tagList(actionButton("TopCorrelationCancel", "Cancel", class = "btn-danger")),
-      size = "m"
-    ))
+    wait_modal("Calculating Top Correlations",
+               detail = "Calculating top correlated gene pairs, which usually takes longer...",
+               note = "Cancel stops the run after the current block of genes.",
+               progress_id = "topcor_progress",
+               cancel_id = "TopCorrelationCancel")
 
     cds <- data$obj
     Seurat::Idents(cds) <- cor_res_col
@@ -2935,7 +2910,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     } else {
       expr_t <- t(as.matrix(normalized.expr))
       n_genes <- ncol(expr_t)
-      keep_n <- 1000L
+      # Top N comes from the UI; fall back to 1000 when the input is not ready.
+      keep_n <- input$correlationTopN
+      if (is.null(keep_n) || length(keep_n) != 1 || !is.finite(keep_n)) keep_n <- 1000L
+      keep_n <- as.integer(max(10, min(keep_n, 100000)))
       block_size <- max(50L, ceiling(n_genes / 40))
       blocks <- split(seq_len(n_genes), ceiling(seq_len(n_genes) / block_size))
 
@@ -3034,12 +3012,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         size = "m"
       ))
     }else{
-      showModal(modalDialog(
-        title = tagList(icon("hourglass-start", class = "fa-spin"), " Calculating"),
-        tags$p("Calculate the most correlated genes for the input gene, which usually takes longer..."),
-        footer = NULL,
-        size = "m"
-      ))
+      wait_modal("Calculating Correlations",
+                 detail = "Calculating the genes most correlated with the input gene, which usually takes longer...",
+                 note = "This step runs in one pass and cannot be cancelled.")
       cds <- data$obj
       Seurat::Idents(cds) <- input$FeatureCorrelationClusterResolution
       cds <- subset_Seurat(cds, idents = input$FeatureCorrelationIdentsSelected)
@@ -3055,14 +3030,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           "Most correlated genes calculated successfully!"
         ), type = "message", duration = 5)
       }else{
-        showModal(modalDialog(title = tagList(icon("exclamation-triangle"), "Error"),
-                              tags$div(
-                                tags$p('No gene paris are found!'),
-                                tags$small(style = "color: #6c757d;", "Probably for some genes has very low expression values.")
-                              ),
-                              footer= modalButton("Dismiss"),
-                              easyClose = TRUE,
-                              size = "l"))
+        show_error("Error",
+                   "No gene pairs are found!",
+                   subtitle = "Probably some genes have very low expression values.",
+                   size = "l")
       }
     }
   })
@@ -3098,12 +3069,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         size = "m"
       ))
     }else{
-      showModal(modalDialog(
-        title = tagList(icon("hourglass-start", class = "fa-spin"), " Calculating"),
-        tags$p("Calculate the correlation for the specified gene list..."),
-        footer = NULL,
-        size = "m"
-      ))
+      wait_modal("Calculating Correlations",
+                 detail = "Calculating the correlation for the specified gene list...",
+                 note = "This step runs in one pass and cannot be cancelled.")
       cds <- data$obj
       Seurat::Idents(cds) <- input$FeatureCorrelationClusterResolution
       cds <- subset_Seurat(cds, idents = input$FeatureCorrelationIdentsSelected)
@@ -3417,7 +3385,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
     showModal(modalDialog(title = "Success",
       paste0("Annotation '", anno$col_name, "' added to metadata!"),
-      easyClose = TRUE, footer = modalButton("Continue")))
+      easyClose = TRUE, footer = modalButton("OK")))
     showNotification(ui = tagList(icon("check-circle"), "Gene-based clusters added!"),
       type = "message", duration = 5)
   })
@@ -3817,7 +3785,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     showModal(modalDialog(
       title = tagList(icon("check-circle", style = "color: #28a745;"), "Success"),
       paste0("Annotation '", new_col_name, "' added to metadata!"),
-      easyClose = TRUE, footer = modalButton("Continue")))
+      easyClose = TRUE, footer = modalButton("OK")))
     showNotification(ui = tagList(icon("check-circle"), "Combination clusters added!"),
       type = "message", duration = 5)
   })
@@ -3898,12 +3866,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else if (!all(sapply(cell_annotation_df()$New_Name, check_allowed_chars))) {
       error_names <- cell_annotation_df()$New_Name[!sapply(cell_annotation_df()$New_Name, check_allowed_chars)]
-      showModal(modalDialog(title = tagList(icon("exclamation-triangle"), "Error"),
-                            HTML(paste(c("Unsupported character found in New_Name! only support letters, numbers, whitespace, -, + and _. Please check names bellow:", error_names),
-                                  collapse = '<br>')),
-                            footer= modalButton("Dismiss"),
-                            easyClose = TRUE,
-                            size = "l"))
+      show_error("Error",
+                 HTML(paste(c("Unsupported character found in New_Name! only support letters, numbers, whitespace, -, + and _. Please check names below:", error_names),
+                            collapse = '<br>')),
+                 size = "l")
       output$renameclusterscheck_OK <- reactive(FALSE)
     } else  if (!check_allowed_chars(input$renameclustersNewClusterName, allowed_characters = "[^a-zA-Z0-9_]")) {
       showModal(modalDialog(
@@ -3957,7 +3923,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$renameclustersNewClusterNamehints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing renameclustersNewClusterNamehints.UI...")}
-    p(paste0("Avoid using already existed column names in meta data. And only support letters, numbers, whitespace, -, +, _; Whitespace at botch ends will be removed automatically!"),
+    p(paste0("Avoid using already existed column names in meta data. And only support letters, numbers, whitespace, -, +, _; Whitespace at both ends will be removed automatically!"),
       style = "font-size: 12px; margin: 0; color: #004085;")
   })
 
@@ -4010,7 +3976,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           tags$p("New annotation added!"),
           tags$small(style = "color: #6c757d;", "Your changes have been saved.")
         ),
-        footer = modalButton("Continue"),
+        footer = modalButton("OK"),
         easyClose = TRUE,
         size = "m"
       ))
@@ -4165,7 +4131,7 @@ server <- function(input, output, session) {
     used_cache <- file.exists(demo_dest) && file.size(demo_dest) > 0
     if (used_cache) {
       showModal(modalDialog(
-        title = tagList(icon("folder-open"), "Demo data found"),
+        title = tagList(icon("hourglass-start", class = "fa-spin"), " Loading Demo Data"),
         tags$div(
           style = "text-align: center; padding: 20px;",
           icon("circle-notch", class = "fa-spin fa-3x", style = "color: #3b82f6; margin-bottom: 15px;"),
@@ -4216,6 +4182,26 @@ server <- function(input, output, session) {
   observe({
     req(data$obj)
     data$loaded = !is.null(data$obj)
+  })
+
+  # Compact dataset status shown in the dashboard header.
+  # Only reads information from the object; it never modifies it.
+  output$header_status <- renderUI({
+    obj <- data$obj
+    if (is.null(obj)) {
+      return(tags$span(style = "color: #dfe6ec; font-size: 12px; padding-left: 10px;",
+                       "No dataset loaded"))
+    }
+    proj <- tryCatch(obj@project.name, error = function(e) NULL)
+    if (is.null(proj) || !nzchar(proj)) proj <- "Seurat object"
+    tags$span(
+      style = "color: #eaf2f8; font-size: 12px; padding-left: 10px; white-space: nowrap;",
+      tags$b(proj), " · ",
+      format(ncol(obj), big.mark = ","), " cells · ",
+      format(nrow(obj), big.mark = ","), " features · ",
+      "assay ", tags$b(tryCatch(SeuratObject::DefaultAssay(obj), error = function(e) "-")),
+      " · modified ", tags$b(data$version)
+    )
   })
 
   # Conditional panel control based on loaded obj, after loaded, show other UIs
