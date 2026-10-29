@@ -771,6 +771,20 @@ images:
 > misc:
 > A list for storing miscellaneous information not fitting into other specific slots.
 
+### Export Data
+
+Download the Seurat object exactly as it exists in the current session, including metadata columns added here (Rename Clusters, Gene Based Cluster, Combination Based Cluster, Module Score). The original file on disk is never modified.
+
+1. **Step 1 (optional) – Filter Cells**: add one or more conditions with the `+` button; each condition keeps the selected levels of a cluster/metadata column. Conditions are combined as an intersection, and two rows on the same column are intersected as well.
+2. **Step 2 – Output format**: `.qs2` (compression level 0–3) or `.rds` (gzip / xz / none).
+3. **Step 3 – Options**: drop `scale.data` to shrink the file, drop empty factor levels, and record the export parameters in `obj@misc$SeuratExplorer$export`.
+
+The preview shows how many cells will be exported, how many were excluded because a filter column is `NA`, the estimated object size, and a per-level breakdown. Leaving the filters untouched exports the whole object.
+
+Exporting copies and serializes the object, so a large object takes a while and the page stays unresponsive until the browser starts downloading.
+
+For shared or multi-user deployments this page can be hidden with `options(SeuratExplorerEnableObjectExport = FALSE)` before launching.
+
 ### About
 
 You're reading the tutorial right now!

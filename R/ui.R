@@ -49,7 +49,8 @@ explorer_sidebar_ui <- function(){
     addmodulescore = "Score cells with a gene set using AddModuleScore (Seurat) or AUCell.",
     featuresdf = "Search and browse feature / gene names across assays.",
     cellmetadata = "Browse and download cell-level metadata.",
-    objectstructure = "Inspect the structure of the Seurat object."
+    objectstructure = "Inspect the structure of the Seurat object.",
+    exportdata = "Export the current object (with in-session annotations), optionally subset by cluster metadata."
   )
 
   conditionalPanel(
@@ -77,6 +78,9 @@ explorer_sidebar_ui <- function(){
                          menuSubItem(text = span(title = tooltips[["featuresdf"]], "Search Features"), tabName = "featuresdf", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["cellmetadata"]], "Cells Metadata"), tabName = "cellmetadata", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["objectstructure"]], "Object Structure"), tabName = "objectstructure", icon = shiny::icon("angle-right")),
+                         if (isTRUE(getOption("SeuratExplorerEnableObjectExport", TRUE))) {
+                           menuSubItem(text = span(title = tooltips[["exportdata"]], "Export Data"), tabName = "exportdata", icon = shiny::icon("angle-right"))
+                         },
                          menuSubItem(text = "About", tabName = "about", icon = shiny::icon("angle-right"))
                          )
                 )
@@ -1550,6 +1554,130 @@ explorer_body_ui <- function(tab_list){
                                  )
                                )
   )
+  # Object export. Can be turned off for multi-user deployments with
+  # options(SeuratExplorerEnableObjectExport = FALSE).
+  if (isTRUE(getOption("SeuratExplorerEnableObjectExport", TRUE))) {
+    tab_list[["exportdata"]] = tabItem(tabName = "exportdata",
+      tags$style(type="text/css", "#close_exportdata_info:hover { color: #059669 !important; }"),
+      tags$style(type="text/css", "#exportdata_info {white-space: pre-wrap; color: #495057; line-height: 1.8;}"),
+      fluidRow(id = "exportdata-main-row",
+        # Information box
+        div(
+          id = "exportdata-info-box",
+          class = "col-xs-12",
+          style = "margin-bottom: 10px;",
+          div(
+            class = "box",
+            style = "background: white; border: 2px solid #10b981; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); position: relative;",
+            div(
+              class = "box-header",
+              style = "padding: 15px 20px; border-bottom: 2px solid #10b981; position: relative;",
+              div(
+                style = "display: flex; align-items: center; gap: 10px;",
+                icon("info-circle", style = "color: #10b981; font-size: 20px;"),
+                h4(style = "margin: 0; color: #10b981; font-weight: 600;", "Information")
+              ),
+              actionButton(
+                "close_exportdata_info",
+                label = NULL,
+                title = "Hide or show the hints",
+                icon = icon("chevron-up"),
+                style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #10b981; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
+                class = "btn btn-link"
+              )
+            ),
+            div(
+              class = "box-body",
+              id = "exportdata_info_body",
+              style = "padding: 15px 20px;",
+              textOutput("exportdata_info")
+            )
+          )
+        ),
+
+        # Settings
+        div(
+          class = "col-md-4",
+          style = "margin-bottom: 10px;",
+          div(
+            style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+            h4(icon("sliders-h"), "Settings", style = "color: #10b981; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+
+            h5(icon("filter"), "Step 1: Filter Cells (optional)",
+               style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+            p("Cells matching ALL conditions are kept. Two rows on the same column are intersected.",
+              style = "color: #6c757d; font-size: 12px; margin-bottom: 10px;"),
+            withSpinner(uiOutput("ExportFilterRows.UI"), proxy.height = "10px"),
+            uiOutput("ExportAddFilter.UI"),
+            checkboxInput("ExportKeepNA", "Keep cells with NA in a filter column", FALSE),
+
+            hr(),
+            h5(icon("file-arrow-down"), "Step 2: Output format",
+               style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+            radioButtons("ExportFormat", NULL,
+                         choices = c("qs2 (QSZ compression)" = "qs2", "rds (R data)" = "rds"),
+                         selected = "qs2", inline = TRUE),
+            conditionalPanel(
+              condition = "input.ExportFormat == 'rds'",
+              selectInput("ExportRdsCompress", "Compression:",
+                          choices = c("gzip (default)" = "gzip",
+                                      "xz (smallest, slowest)" = "xz",
+                                      "none (fastest, largest)" = "none"),
+                          selected = "gzip")
+            ),
+            conditionalPanel(
+              condition = "input.ExportFormat == 'qs2'",
+              selectInput("ExportQsLevel", "Compression level:",
+                          choices = c("3 (smallest, default)" = "3", "2 (balanced)" = "2",
+                                      "1 (fastest)" = "1", "0 (none)" = "0"),
+                          selected = "3")
+            ),
+
+            hr(),
+            h5(icon("cogs"), "Step 3: Options",
+               style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+            checkboxInput("ExportDropScaleData", "Drop scale.data (smaller file)", FALSE),
+            checkboxInput("ExportDroplevels", "Drop empty factor levels", FALSE),
+            checkboxInput("ExportWriteProvenance", "Record export parameters in obj@misc", TRUE),
+
+            div(style = "margin-top: 15px;",
+              actionButton("ExportResetFilters", "Reset filters",
+                           icon = icon("arrows-rotate"), class = "btn-warning",
+                           style = "width: 100%; padding: 10px; border-radius: 8px; font-weight: 600;")),
+            div(style = "margin-top: 15px;", uiOutput("ExportDownload.UI"))
+          )
+        ),
+
+        # Preview
+        div(
+          class = "col-md-8",
+          style = "margin-bottom: 10px;",
+          div(
+            class = "box",
+            style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);",
+            div(
+              class = "box-header",
+              style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+              div(
+                style = "display: flex; align-items: center; gap: 10px;",
+                icon("table", style = "color: #3b82f6; font-size: 18px;"),
+                h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Export Preview")
+              )
+            ),
+            div(
+              class = "box-body",
+              style = "padding: 20px;",
+              uiOutput("ExportSummary.UI"),
+              hr(),
+              div(style = "max-width: 320px;", withSpinner(uiOutput("ExportPreviewGroup.UI"))),
+              withSpinner(DT::dataTableOutput("export_preview_table"))
+            )
+          )
+        )
+      )
+    )
+  }
+
   tab_list[["about"]] = tabItem(tabName = "about",
                                 fluidRow(
                                   box(title = "About Seurat Explorer", solidHeader = TRUE, status = "primary", width = 12,
@@ -1650,14 +1778,16 @@ ui <-  function(){
         #degs-info-box,
         #topgenes-info-box,
         #featuresummary-info-box,
-        #featurecorrelation-info-box {
+        #featurecorrelation-info-box,
+        #exportdata-info-box {
           margin-bottom: 8px !important;
         }
 
         #degs-info-box > .box,
         #topgenes-info-box > .box,
         #featuresummary-info-box > .box,
-        #featurecorrelation-info-box > .box {
+        #featurecorrelation-info-box > .box,
+        #exportdata-info-box > .box {
           margin-bottom: 0 !important;
         }
 

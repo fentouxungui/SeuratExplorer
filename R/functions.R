@@ -1623,6 +1623,29 @@ run_info_line <- function(...) {
          paste(parts, collapse = "  ·  "))
 }
 
+# Remove the scale.data layer from every assay, used by the "Export Data" page
+# to produce a much smaller file when scaled data is not needed downstream.
+# Failures are ignored per assay: an untouched assay only makes the file bigger,
+# it never corrupts the export.
+drop_scale_data <- function(obj) {
+  for (assay_name in Seurat::Assays(obj)) {
+    obj[[assay_name]] <- tryCatch({
+      assay <- obj[[assay_name]]
+      if (inherits(assay, "Assay5")) {
+        layers <- tryCatch(SeuratObject::Layers(assay),
+                           error = function(e) character(0))
+        if ("scale.data" %in% layers) {
+          assay@layers[["scale.data"]] <- NULL
+        }
+      } else if (is(assay, "Assay")) {
+        assay@scale.data <- matrix(numeric(0), nrow = 0, ncol = 0)
+      }
+      assay
+    }, error = function(e) obj[[assay_name]])
+  }
+  obj
+}
+
 # NULL / non-finite / non-positive safe numeric accessor for plot dimensions.
 num_or <- function(x, default) {
   if (is.null(x) || length(x) != 1L || !is.numeric(x) || !is.finite(x) || x <= 0) {

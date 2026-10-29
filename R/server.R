@@ -4069,6 +4069,333 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     str(data$obj, max.level = input$ObjectStrutureLevel) # Display the structure of the data frame
   })
 
+  ################################ Export Data
+  # Can be turned off for multi-user deployments with
+  # options(SeuratExplorerEnableObjectExport = FALSE).
+  if (isTRUE(getOption("SeuratExplorerEnableObjectExport", TRUE))) {
+
+    output$exportdata_info <- renderText({
+      paste0('Export the Seurat object loaded in this session, including metadata columns added here
+      (Rename Clusters, Gene Based Cluster, Combination Based Cluster, Module Score).
+      The original file on disk is never modified.
+      - Step 1 (optional): keep only cells matching all filter conditions.
+      - Step 2: choose .qs2 or .rds.
+      - Step 3: optional size and clean-up settings.
+      Exporting copies and serializes the object, so a large object takes a while and the page
+      stays unresponsive until the browser starts downloading.')
+    })
+
+    observeEvent(input$close_exportdata_info, {
+      shinyjs::toggle("exportdata_info_body", anim = TRUE)
+      shinyjs::runjs("$('#close_exportdata_info i').toggleClass('fa-chevron-up fa-chevron-down');")
+    }, ignoreInit = TRUE)
+
+    ## ---- filter rows (same interaction as DEGs Step 1) --------------------
+    exportFilterState <- reactiveValues(count = 1)
+
+    export_max_filters <- function() {
+      n <- length(data$cluster_options)
+      max(1L, min(n, 50L))
+    }
+
+    observeEvent(input$ExportAddFilter, {
+      if (exportFilterState$count < export_max_filters()) {
+        exportFilterState$count <- exportFilterState$count + 1
+      }
+    }, ignoreInit = TRUE)
+
+    lapply(2:50, function(ii) {
+      observeEvent(input[[paste0("ExportRemoveFilter_", ii)]], {
+        if (ii <= exportFilterState$count) {
+          exportFilterState$count <- exportFilterState$count - 1
+        }
+      }, ignoreInit = TRUE)
+    })
+
+    lapply(1:50, function(ii) {
+      observeEvent(input[[paste0("ExportSubsetCells_", ii)]], {
+        req(data$obj)
+        col <- input[[paste0("ExportSubsetCells_", ii)]]
+        if (!is.null(col) && col %in% colnames(data$obj@meta.data)) {
+          shinyWidgets::updatePickerInput(session,
+            inputId = paste0("ExportSubsetCellsValues_", ii),
+            choices = levels(data$obj@meta.data[, col]),
+            selected = levels(data$obj@meta.data[, col]))
+        }
+      }, ignoreInit = FALSE, ignoreNULL = TRUE)
+    })
+
+    output$ExportFilterRows.UI <- renderUI({
+      req(data$obj)
+      if (length(data$cluster_options) == 0) {
+        return(p("No cluster/metadata column is available for filtering; the whole object will be exported.",
+                 style = "color: #6c757d; font-size: 12px;"))
+      }
+      n <- exportFilterState$count
+      if (!is.numeric(n) || length(n) != 1 || n < 1) n <- 1L
+      lapply(seq_len(n), function(i) {
+        cur_col <- isolate(input[[paste0("ExportSubsetCells_", i)]])
+        cur_vals <- isolate(input[[paste0("ExportSubsetCellsValues_", i)]])
+        eff_col <- if (!is.null(cur_col) && cur_col %in% colnames(data$obj@meta.data)) {
+          cur_col
+        } else {
+          data$cluster_options[1]
+        }
+        picker_choices <- levels(data$obj@meta.data[, eff_col])
+        picker_selected <- if (!is.null(cur_vals)) cur_vals else picker_choices
+
+        fluidRow(
+          column(6, selectInput(
+            paste0("ExportSubsetCells_", i),
+            label = if (i == 1) "Filter Cells By:" else paste0("Filter ", i, " By:"),
+            choices = data$cluster_options,
+            selected = cur_col
+          )),
+          column(5, shinyWidgets::pickerInput(
+            inputId = paste0("ExportSubsetCellsValues_", i),
+            label = "Keep:",
+            choices = picker_choices,
+            selected = picker_selected,
+            multiple = TRUE,
+            options = shinyWidgets::pickerOptions(actionsBox = TRUE, size = 10,
+                                                  selectedTextFormat = "count > 3")
+          )),
+          column(1, if (i > 1) actionLink(
+            paste0("ExportRemoveFilter_", i),
+            label = NULL, icon = icon("times-circle"),
+            style = "color: #dc3545; font-size: 16px; margin-top: 25px;"
+          ))
+        )
+      })
+    })
+
+    output$ExportAddFilter.UI <- renderUI({
+      if (exportFilterState$count < export_max_filters()) {
+        div(style = "margin-top: 8px;",
+          actionLink("ExportAddFilter", label = NULL, icon = icon("plus-circle"),
+                     style = "color: #10b981; font-size: 16px;"),
+          tags$span("Add filter condition",
+                    style = "color: #6c757d; font-size: 13px; margin-left: 4px;")
+        )
+      }
+    })
+
+    observeEvent(input$ExportResetFilters, {
+      req(data$obj)
+      exportFilterState$count <- 1
+      first_col <- data$cluster_options[1]
+      updateSelectInput(session, "ExportSubsetCells_1", selected = first_col)
+      if (!is.null(first_col) && first_col %in% colnames(data$obj@meta.data)) {
+        shinyWidgets::updatePickerInput(session, "ExportSubsetCellsValues_1",
+          choices = levels(data$obj@meta.data[, first_col]),
+          selected = levels(data$obj@meta.data[, first_col]))
+      }
+      updateCheckboxInput(session, "ExportKeepNA", value = FALSE)
+    }, ignoreInit = TRUE)
+
+    ## ---- cell selection --------------------------------------------------
+    # Only metadata is touched here, so the preview stays cheap even for
+    # objects with millions of cells: no Seurat subset is built until download.
+    export_filter_mask <- reactive({
+      req(data$obj)
+      meta <- data$obj@meta.data
+      n <- nrow(meta)
+      keep <- rep(TRUE, n)
+      na_mask <- rep(FALSE, n)
+      filters <- character(0)
+      n_rows <- exportFilterState$count
+      if (!is.numeric(n_rows) || length(n_rows) != 1 || n_rows < 1) n_rows <- 1L
+      keep_na <- isTRUE(input$ExportKeepNA)
+
+      for (i in seq_len(n_rows)) {
+        col <- input[[paste0("ExportSubsetCells_", i)]]
+        vals <- input[[paste0("ExportSubsetCellsValues_", i)]]
+        if (is.null(col) || is.null(vals) || length(vals) == 0 ||
+            !(col %in% colnames(meta))) next
+        col_values <- as.character(meta[[col]])
+        na_mask <- na_mask | (keep & is.na(col_values))
+        hit <- col_values %in% as.character(vals)
+        if (keep_na) hit <- hit | is.na(col_values)
+        keep <- keep & hit
+        filters <- c(filters, paste0(col, " in [", paste(vals, collapse = ", "), "]"))
+      }
+
+      list(keep = keep, n_keep = sum(keep), n_total = n,
+           n_na = sum(na_mask), keep_na = keep_na, filters = filters)
+    })
+
+    # object.size() walks the whole object, so evaluate it once per dataset
+    export_object_bytes <- reactive({
+      req(data$obj)
+      as.numeric(object.size(data$obj))
+    })
+
+    output$ExportSummary.UI <- renderUI({
+      st <- export_filter_mask()
+      pct <- if (st$n_total > 0) round(st$n_keep / st$n_total * 100, 1) else 0
+      est <- tryCatch({
+        bytes <- export_object_bytes() * st$n_keep / max(st$n_total, 1)
+        format(structure(bytes, class = "object_size"), units = "auto")
+      }, error = function(e) "unknown")
+
+      tagList(
+        h4(paste0(format(st$n_keep, big.mark = ","), " / ",
+                  format(st$n_total, big.mark = ","), " cells  (", pct, "%)"),
+           style = "color: #3b82f6; margin-top: 0;"),
+        p(paste0("Estimated object size: ~", est, " (before compression)"),
+          style = "color: #6c757d; font-size: 12px; margin-bottom: 4px;"),
+        if (isTRUE(st$keep_na) && st$n_na > 0) {
+          p(paste0(format(st$n_na, big.mark = ","),
+                   " cell(s) have NA in a filter column and are kept."),
+            style = "color: #856404; font-size: 12px; margin: 0;")
+        } else if (!isTRUE(st$keep_na) && st$n_na > 0) {
+          p(paste0(format(st$n_na, big.mark = ","),
+                   " cell(s) were excluded because a filter column is NA."),
+            style = "color: #b45309; font-size: 12px; margin: 0;")
+        }
+      )
+    })
+
+    output$ExportPreviewGroup.UI <- renderUI({
+      req(data$obj)
+      if (length(data$cluster_options) == 0) return(NULL)
+      selectInput("ExportPreviewGroup", "Preview grouped by:",
+                  choices = data$cluster_options,
+                  selected = if (!is.null(data$cluster_default) &&
+                                 data$cluster_default %in% data$cluster_options) {
+                    data$cluster_default
+                  } else {
+                    data$cluster_options[1]
+                  })
+    })
+
+    output$export_preview_table <- DT::renderDT(server = FALSE, {
+      req(data$obj)
+      st <- export_filter_mask()
+      g <- input$ExportPreviewGroup
+      if (is.null(g) || !(g %in% colnames(data$obj@meta.data))) return(NULL)
+
+      vals <- as.character(data$obj@meta.data[[g]])
+      vals[is.na(vals)] <- "(NA)"
+      lev <- sort(unique(vals))
+      total <- as.integer(table(factor(vals, levels = lev)))
+      kept <- as.integer(table(factor(vals[st$keep], levels = lev)))
+      df <- data.frame(
+        Level = lev,
+        `Total cells` = total,
+        `Kept cells` = kept,
+        `Kept (%)` = ifelse(total > 0, round(kept / total * 100, 1), 0),
+        check.names = FALSE, stringsAsFactors = FALSE
+      )
+      DT::datatable(df, rownames = FALSE,
+                    options = list(dom = "t", paging = FALSE, ordering = FALSE,
+                                   columnDefs = list(list(className = "dt-center",
+                                                          targets = "_all"))))
+    })
+
+    output$ExportDownload.UI <- renderUI({
+      st <- export_filter_mask()
+      if (st$n_keep < 1) {
+        return(tags$button(
+          class = "btn btn-primary btn-lg", disabled = "disabled",
+          style = "width: 100%; padding: 12px; border-radius: 8px; font-weight: 600;",
+          icon("ban"), " No cells to export"))
+      }
+      downloadButton("download_export_object",
+                     label = paste0("Download (", format(st$n_keep, big.mark = ","), " cells)"),
+                     class = "btn-primary btn-lg",
+                     style = "width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none;")
+    })
+
+    ## ---- state snapshot for the download handler -------------------------
+    # downloadHandler's content() runs outside a reactive context, so it must
+    # not read input$ directly. Everything it needs is mirrored here.
+    export_state <- new.env(parent = emptyenv())
+    export_state$mask <- NULL
+    export_state$n_keep <- 0L
+    export_state$n_total <- 0L
+    export_state$format <- "qs2"
+    export_state$label <- "SeuratObject"
+    export_state$filters <- character(0)
+    export_state$drop_scale <- FALSE
+    export_state$droplevels <- FALSE
+    export_state$provenance <- TRUE
+    export_state$rds_compress <- "gzip"
+    export_state$qs_level <- 3L
+
+    observe({
+      st <- export_filter_mask()
+      export_state$mask <- st$keep
+      export_state$n_keep <- st$n_keep
+      export_state$n_total <- st$n_total
+      export_state$filters <- st$filters
+      export_state$format <- if (identical(input$ExportFormat, "rds")) "rds" else "qs2"
+      export_state$drop_scale <- isTRUE(input$ExportDropScaleData)
+      export_state$droplevels <- isTRUE(input$ExportDroplevels)
+      export_state$provenance <- !identical(input$ExportWriteProvenance, FALSE)
+      if (!is.null(input$ExportRdsCompress)) {
+        export_state$rds_compress <- input$ExportRdsCompress
+      }
+      lvl <- suppressWarnings(as.integer(input$ExportQsLevel))
+      if (length(lvl) != 1 || is.na(lvl)) lvl <- 3L
+      export_state$qs_level <- lvl
+      label <- tryCatch(data$obj@project.name, error = function(e) NULL)
+      if (is.null(label) || !nzchar(label)) label <- "SeuratObject"
+      export_state$label <- gsub("[^A-Za-z0-9._-]+", "_", label)
+    })
+
+    output$download_export_object <- downloadHandler(
+      filename = function() {
+        paste0(export_state$label,
+               "_subset_", export_state$n_keep,
+               "_", format(Sys.Date(), "%Y%m%d"),
+               ".", export_state$format)
+      },
+      content = function(file) {
+        req(data$obj)
+        obj <- data$obj
+
+        keep <- export_state$mask
+        if (is.null(keep) || length(keep) != ncol(obj)) {
+          keep <- rep(TRUE, ncol(obj))
+        }
+        if (!all(keep)) {
+          obj <- subset_Seurat(obj, cells = colnames(obj)[keep])
+        }
+        if (isTRUE(export_state$drop_scale)) {
+          obj <- drop_scale_data(obj)
+        }
+        if (isTRUE(export_state$droplevels)) {
+          obj@meta.data[] <- lapply(obj@meta.data, function(x) {
+            if (is.factor(x)) droplevels(x) else x
+          })
+        }
+        if (isTRUE(export_state$provenance)) {
+          if (is.null(obj@misc$SeuratExplorer)) {
+            obj@misc$SeuratExplorer <- list()
+          }
+          obj@misc$SeuratExplorer$export <- list(
+            time = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
+            cells_exported = ncol(obj),
+            cells_total = export_state$n_total,
+            filters = export_state$filters,
+            format = export_state$format,
+            drop_scale_data = isTRUE(export_state$drop_scale),
+            seurat_explorer_version = as.character(utils::packageVersion("SeuratExplorer"))
+          )
+        }
+
+        if (identical(export_state$format, "rds")) {
+          compress <- export_state$rds_compress
+          if (identical(compress, "none")) compress <- FALSE
+          saveRDS(obj, file = file, compress = compress)
+        } else {
+          qs2::qs_save(obj, file = file, compress_level = export_state$qs_level)
+        }
+      }
+    )
+  }
+
 }
 
 
