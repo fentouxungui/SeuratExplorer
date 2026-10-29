@@ -777,7 +777,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                pt.size = input$VlnPointSize,
                                alpha = input$VlnPointAlpha) &
             ggplot2::theme(axis.text.x = ggplot2::element_text(size = input$VlnXlabelSize),
-                           axis.text.y = ggplot2::element_text(size = input$VlnYlabelSize))
+                           axis.text.y = ggplot2::element_text(size = input$VlnYlabelSize)) & ggplot2::labs(x = NULL)
         }else{ # multiple genes
           p <- Seurat::VlnPlot(cds,
                                features = features_vlnplot$features_current,
@@ -791,7 +791,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                pt.size = input$VlnPointSize,
                                alpha = input$VlnPointAlpha) &
             ggplot2::theme(axis.text.x = ggplot2::element_text(size = input$VlnXlabelSize),
-                           axis.text.y = ggplot2::element_text(size = input$VlnYlabelSize))
+                           axis.text.y = ggplot2::element_text(size = input$VlnYlabelSize)) & ggplot2::labs(x = NULL)
         }
         if (input$Vlnfillcolorplatte != 'default' & input$VlnSplitBy == 'None'){
           # color
