@@ -19,7 +19,7 @@ on:
         description: "Existing tag to attach bundles to"
         required: false
         type: string
-        default: "v0.1.9"
+        default: "v0.1.10"
 
 permissions:
   contents: write
@@ -44,6 +44,8 @@ jobs:
           - { os: macos-14,       platform: "mac-arm64" }
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -57,9 +59,11 @@ jobs:
       - name: Resolve version
         shell: bash
         run: |
-          V="${{ github.event.release.tag_name }}${{ inputs.tag }}"
+          V="${{ inputs.tag || github.event.release.tag_name || github.ref_name }}"
           V="${V#v}"
-          if [ -z "$V" ]; then V=$(grep '^Version:' DESCRIPTION | awk '{print $2}'); fi
+          if [ -z "$V" ] || [ "$V" = "master" ] || [ "$V" = "main" ]; then
+            V=$(grep '^Version:' DESCRIPTION | awk '{print $2}')
+          fi
           echo "VERSION=$V" >> "$GITHUB_ENV"
 
       - name: Build source tarball
@@ -99,8 +103,17 @@ jobs:
           })))
 
           db <- available.packages(repos = repos)
-          seed <- unique(c(loc_names, declared))
-          closure <- unique(c(unlist(tools::package_dependencies(seed, db = db, recursive = TRUE)), declared))
+          # Optional modules in the latest SeuratExplorer use these
+          # Suggests/Remotes packages. Install them so the desktop bundle
+          # exposes heatmaps, DE tests, gene-set scoring and ATAC support.
+          # presto is installed from dependency/ below.
+          extra_pkgs <- c("ComplexHeatmap", "patchwork", "MAST", "limma",
+                          "DESeq2", "AUCell", "Signac")
+          seed <- unique(c(loc_names, declared, extra_pkgs))
+          closure <- unique(c(
+            unlist(tools::package_dependencies(seed, db = db, recursive = TRUE)),
+            declared, extra_pkgs
+          ))
           # Exclude ONLY base-priority packages from the required closure: a
           # plain installed.packages() also drops toolchain packages installed by
           # the earlier step (jsonlite/zip/digest/BiocManager) that the app may
@@ -108,14 +121,26 @@ jobs:
           base_pkgs <- rownames(installed.packages(priority = "base"))
           closure <- setdiff(closure, c(loc_names, base_pkgs, basename(list.dirs(lib, recursive = FALSE))))
           if (length(closure)) {
-            install.packages(closure, lib = lib, repos = repos, type = "binary",
+            install.packages(closure, lib = lib, repos = repos, type = "both",
+                             dependencies = FALSE, Ncpus = 2)
+          }
+          have <- function() basename(list.dirs(lib, recursive = FALSE))
+          miss <- setdiff(closure, have())
+          if (length(miss)) {
+            cat("source retry:", paste(miss, collapse = ", "), "\n")
+            install.packages(miss, lib = lib, repos = repos, type = "source",
                              dependencies = FALSE, Ncpus = 2)
           }
           install.packages(local_paths, lib = lib, repos = NULL, type = "source", dependencies = FALSE)
 
-          missing <- setdiff(loc_names, basename(list.dirs(lib, recursive = FALSE)))
+          missing <- setdiff(loc_names, have())
           if (length(missing)) stop("local packages not installed: ", paste(missing, collapse = ", "))
-          cat("rlib packages:", length(list.dirs(lib, recursive = FALSE)), "\n")
+          missing_extra <- setdiff(extra_pkgs, have())
+          if (length(missing_extra)) {
+            cat("WARN optional packages not installed: ",
+                paste(missing_extra, collapse = ", "), "\n")
+          }
+          cat("rlib packages:", length(have()), "\n")
 
       - name: Assemble app + manifest.json
         shell: Rscript {0}
@@ -140,6 +165,12 @@ jobs:
             runtime = "r-shiny", entry = "app/app.R",
             platform = "${{ matrix.platform }}",
             r_version = Sys.getenv("R_VERSION"), min_shell_version = "0.1.0",
+            notes = paste(
+              "The demo dataset is downloaded only after the user clicks",
+              "'Download and Run a demo data'; the app starts without network.",
+              "Optional modules use ComplexHeatmap, patchwork, MAST, limma,",
+              "DESeq2, AUCell and Signac when installed."
+            ),
             packages = lapply(seq_len(nrow(pkgs)), function(i) list(
               name = pkgs$Package[i], version = pkgs$Version[i],
               path = file.path("rlib", pkgs$Package[i]), source = "cran"))
