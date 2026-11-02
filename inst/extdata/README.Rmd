@@ -113,6 +113,7 @@ You can customize the launch behavior with additional parameters:
 - `ReductionKeyWords`: Keywords for dimension reduction options (default: `c("umap","tsne","pca")`)
 - `SplitOptionMaxLevel`: Maximum levels for split options (default: `12`)
 - `MaxInputFileSize`: Maximum upload file size in bytes (default: `20*1024^3`, i.e., 20GB)
+- `EnableObjectExport`: Whether to show the **Export Data** page (default: `TRUE`); set to `FALSE` to hide it, e.g. on a shared machine
 - `DemoDataURL`: One or more URLs of the demo dataset used by the **Download and Run a demo data** button; they are tried in order until one succeeds
 - `DemoDataCacheDir`: Directory used to cache the downloaded demo data (default: a per-user cache directory)
 - `DemoDataMD5`: Expected MD5 checksum of the demo data; set to `NULL` to skip the integrity check
@@ -381,6 +382,8 @@ if (for_github) {
 - Supports adjusting the line width of group bars
 
 - Supports adjusting the font size of gene names
+
+- Group bar colours follow the palette defined in **Cluster Colors** (the expression gradient is unchanged)
 
 - Supports adjusting the height/width ratio of the plot
 
@@ -695,6 +698,27 @@ You can rename cluster names, and changes will take effect immediately. However,
 
 To rename clusters: select a cluster resolution, edit the ``New_Name`` column in the table, then click **Check** to preview the re-colored dimension-reduction plot, and finally **Update** to add the new annotation. You can download the old-to-new name mapping.
 
+### Cluster Colors
+
+Assign custom colours to the groups of one cluster resolution and use the same palette across plots.
+
+1. Choose a cluster resolution.
+2. Edit colours group by group, or apply one of the built-in palettes first and adjust a few. Groups you leave untouched keep their default colours.
+3. Click **Submit** to save the palette for the session and store it in `obj@misc$SeuratExplorer$cluster_colors`, so an object exported from the app keeps its colours.
+
+The preview shows a DimPlot drawn with the draft colours; cluster labels can be switched off. Duplicate colours are allowed but flagged with a warning. **Export colours (CSV)** writes two columns (`cluster`, `color`); **Import colours (CSV)** reads the same format, ignores groups that do not exist in the current resolution and reports them. **Remove saved colours for this resolution** clears the palette for the selected resolution.
+
+Colours are applied to:
+
+- **Dim Reduction Plot** (including split panels)
+- **Violin Plot** (unsplit, and side-by-side split violins; split violins keep the split colours)
+- **Cell Percentage Plot**
+- **Ridge Plot** when ridges are coloured by cluster
+- **Heatmap (cell level)** group bar (the expression gradient is unchanged)
+- **Average Heatmap** column annotation bar
+
+Dot Plot and Feature Plot use continuous expression colours, so they are not affected.
+
 ### Gene Based Cluster (BETA)
 
 Group cells into new clusters based on a single gene's expression level, or on a numeric metadata column such as a module score, using user-defined cutoffs.
@@ -783,7 +807,7 @@ The preview shows how many cells will be exported, how many were excluded becaus
 
 Exporting copies and serializes the object, so a large object takes a while and the page stays unresponsive until the browser starts downloading.
 
-For shared or multi-user deployments this page can be hidden with `options(SeuratExplorerEnableObjectExport = FALSE)` before launching.
+For shared or multi-user deployments this page can be hidden with `launchSeuratExplorer(EnableObjectExport = FALSE)` (or `options(SeuratExplorerEnableObjectExport = FALSE)` before launching).
 
 ### About
 

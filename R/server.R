@@ -289,6 +289,15 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }
     cds@meta.data[,isolate(input$DimClusterResolution)] <- factor(cds@meta.data[,isolate(input$DimClusterResolution)],
                                                          levels = DimClusterOrder.Safe())
+    # Custom cluster colours, ordered by the levels currently used for plotting
+    # so that reordering clusters never changes a group's colour. Skipped while
+    # highlighting cells, which uses its own two-colour scheme inside Seurat.
+    dim_cols <- NULL
+    dim_color_map <- get_cluster_color_map(data, isolate(input$DimClusterResolution))
+    if (!is.null(dim_color_map) && is.null(dim_cells_highlighted)) {
+      dim_lv <- levels(cds@meta.data[, isolate(input$DimClusterResolution)])
+      dim_cols <- unname(complete_cluster_colors(dim_color_map, dim_lv))
+    }
     if (is.null(DimSplit.Revised())) { # not split
       p <- Seurat::DimPlot(cds,
                            reduction = input$DimDimensionReduction,
@@ -296,6 +305,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                            pt.size = input$DimPointSize,
                            label.size = input$DimLabelSize,
                            group.by = isolate(input$DimClusterResolution),
+                           cols = dim_cols,
                            cells.highlight = dim_cells_highlighted)
       }else{ # split
       plot_numbers <- length(levels(cds@meta.data[,DimSplit.Revised()]))
@@ -305,6 +315,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                            group.by = isolate(input$DimClusterResolution),
                            split.by = DimSplit.Revised(),
                            ncol = ceiling(sqrt(plot_numbers)),
+                           cols = dim_cols,
                            cells.highlight = dim_cells_highlighted)
       }
     if(!input$DimShowLegend){
@@ -767,13 +778,25 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       if((!any(features_vlnplot$features_current %in% c(rownames(cds[[vln_groups$assay]]),data$extra_qc_options))) | is.null(vln_groups$order)){
         p <- empty_plot
       }else{
+        # Custom cluster colours. Seurat maps fill to split.by whenever it is
+        # set, and the fill also drives the violin dodge, so side-by-side split
+        # plots are coloured through Seurat's "interaction" option (which keeps
+        # the dodge) and the fill scale is then replaced with one colour per
+        # cluster. Split violins keep the split colours by design.
+        vln_color_map <- get_cluster_color_map(data, vln_groups$cluster)
+        vln_split <- VlnSplit.Revised()
+        vln_split_plot <- isTRUE(input$VlnSplitPlot)
+        vln_use_interaction <- !is.null(vln_color_map) && !is.null(vln_split) && !vln_split_plot
+        vln_cols_arg <- if (vln_use_interaction) "interaction" else NULL
+
         if(length(features_vlnplot$features_current) == 1) { # only One Gene
           p <- Seurat::VlnPlot(cds,
                                features = features_vlnplot$features_current,
                                assay = vln_groups$assay,
                                layer = input$VlnSlot,
-                               split.by = VlnSplit.Revised(),
+                               split.by = vln_split,
                                split.plot = input$VlnSplitPlot,
+                               cols = vln_cols_arg,
                                pt.size = input$VlnPointSize,
                                alpha = input$VlnPointAlpha) &
             ggplot2::theme(axis.text.x = ggplot2::element_text(size = input$VlnXlabelSize),
@@ -783,17 +806,43 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                features = features_vlnplot$features_current,
                                assay = vln_groups$assay,
                                layer = input$VlnSlot,
-                               split.by = VlnSplit.Revised(),
+                               split.by = vln_split,
                                split.plot = input$VlnSplitPlot,
                                stack = input$VlnStackPlot,
                                flip = input$VlnFlipPlot,
                                fill.by = input$VlnFillBy,
+                               cols = vln_cols_arg,
                                pt.size = input$VlnPointSize,
                                alpha = input$VlnPointAlpha) &
             ggplot2::theme(axis.text.x = ggplot2::element_text(size = input$VlnXlabelSize),
                            axis.text.y = ggplot2::element_text(size = input$VlnYlabelSize)) & ggplot2::labs(x = NULL)
         }
-        if (input$Vlnfillcolorplatte != 'default' & input$VlnSplitBy == 'None'){
+
+        if (!is.null(vln_color_map)) {
+          vln_idents <- levels(SeuratObject::Idents(cds))
+          vln_full <- complete_cluster_colors(vln_color_map, vln_idents)
+          if (is.null(vln_split)) {
+            p <- p & ggplot2::scale_fill_manual(values = vln_full, drop = FALSE)
+          } else if (!vln_split_plot) {
+            sp_lv <- levels(factor(cds@meta.data[[vln_split]]))
+            comb <- levels(interaction(factor(vln_idents, levels = vln_idents),
+                                       factor(sp_lv, levels = sp_lv)))
+            ident_of <- vapply(comb, function(L) {
+              cand <- vln_idents[vapply(vln_idents,
+                                        function(id) startsWith(L, paste0(id, ".")),
+                                        logical(1))]
+              if (length(cand) == 0) NA_character_ else cand[which.max(nchar(cand))]
+            }, character(1))
+            vals <- vln_full[ident_of]
+            if (anyNA(vals)) vals[is.na(vals)] <- scales::hue_pal()(sum(is.na(vals)))
+            names(vals) <- comb
+            brk <- comb[!duplicated(ident_of)]
+            lab <- ident_of[!duplicated(ident_of)]
+            p <- suppressMessages(
+              p & ggplot2::scale_fill_manual(values = vals, breaks = brk, labels = lab)
+            )
+          }
+        } else if (input$Vlnfillcolorplatte != 'default' & input$VlnSplitBy == 'None'){
           # color
           fill.colors <- getColors(color.platte = color_list,
                                    choice = input$Vlnfillcolorplatte,
@@ -1200,6 +1249,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                    features = unique(c(Seurat::VariableFeatures(cds),
                                                        features_heatmap$features_current)))
         }
+        # DoHeatmap() draws the group bar with annotation_raster() using the
+        # literal colours from `group.colors` (named by cluster level), so the
+        # custom palette applies without touching the expression gradient.
+        hm_map <- get_cluster_color_map(data, heatmap_groups$cluster)
+        hm_group_colors <- if (is.null(hm_map)) NULL else
+          complete_cluster_colors(hm_map, levels(Seurat::Idents(cds)))
         p <- Seurat::DoHeatmap(object = cds,
                                features = features_heatmap$features_current,
                                assay = heatmap_groups$assay,
@@ -1208,6 +1263,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                hjust = input$HeatmapTextHjust,
                                vjust = input$HeatmapTextVjust,
                                angle = input$HeatmapTextRatateAngle,
+                               group.colors = hm_group_colors,
                                group.bar.height = input$HeatmapGroupBarHeight,
                                lines.width = input$HeatmapLineWidth) &
           ggplot2::theme(axis.text.y = ggplot2::element_text(size = input$HeatmapFeatureTextSize))
@@ -1359,6 +1415,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       if(!any(features_heatmap_averaged$features_current %in% rownames(cds[[averaged_groups$assay]]))){
         p <- empty_plot
       }else{
+        # Custom cluster colours can be applied to the column annotation bar.
+        ah_map <- get_cluster_color_map(data, averaged_groups$cluster)
+        ah_anno <- if (is.null(ah_map)) {
+          list(annoCol = FALSE, myanCol = NULL)
+        } else {
+          list(annoCol = TRUE,
+               myanCol = complete_cluster_colors(ah_map, levels(Seurat::Idents(cds))))
+        }
         p <- suppressMessages(AverageHeatmap(object = cds,
                                              markerGene = features_heatmap_averaged$features_current,
                                              group.by = averaged_groups$cluster,
@@ -1367,7 +1431,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                              assays = averaged_groups$assay,
                                              column_names_rot = input$AveragedHeatmapClusterTextRatateAngle,
                                              cluster_columns = input$AveragedHeatmapClusterClusters,
-                                             cluster_rows = input$AveragedHeatmapClusterFeatures))
+                                             cluster_rows = input$AveragedHeatmapClusterFeatures,
+                                             annoCol = ah_anno$annoCol,
+                                             myanCol = ah_anno$myanCol))
       }
     }
     # ComplexHeatmap objects are not ggplots: the PDF is written by the
@@ -1595,6 +1661,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                ) &
           ggplot2::theme(axis.text.x = ggplot2::element_text(size = input$RidgeplotXlabelSize),
                          axis.text.y = ggplot2::element_text(size = input$RidgeplotYlabelSize))
+        # Custom cluster colours only apply when ridges are filled by cluster.
+        if (isTRUE(input$RidgeplotStackPlot) && identical(input$RidgeplotFillBy, "ident")) {
+          ridge_map <- get_cluster_color_map(data, ridge_groups$cluster)
+          if (!is.null(ridge_map)) {
+            p <- suppressMessages(p & ggplot2::scale_fill_manual(
+              values = complete_cluster_colors(ridge_map, levels(Seurat::Idents(cds)))))
+          }
+        }
       }
     }
     if (input$RidgeplotPlotMode) {
@@ -1774,6 +1848,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
     if(verbose){message("SeuratExplorer: preparing cellratioplot...")}
       cds <- data$obj
+    # Custom cluster colours take precedence over the palette selector.
+    cr_map <- get_cluster_color_map(data, isolate(input$CellratioFillChoice))
+    cr_fill <- if (is.null(cr_map)) NULL else
+      complete_cluster_colors(cr_map, CellratioFillOrder.Safe())
     if (is.null(FacetChoice.Revised())) { # not facet
       p <- cellRatioPlot(object = cds,
                          idents = CellratioFillOrder.Safe(),
@@ -1786,7 +1864,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                          col.width = input$CellratioColumnWidth,
                          flow.alpha = input$CellratioFlowAlpha,
                          flow.curve = input$CellratioFlowCurve,
-                         color.choice = input$Cellratiofillcolorplatte)
+                         color.choice = input$Cellratiofillcolorplatte,
+                         fill.values = cr_fill)
     }else{
       p <- cellRatioPlot(object = cds,
                          idents = CellratioFillOrder.Safe(),
@@ -1799,7 +1878,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                          col.width = input$CellratioColumnWidth,
                          flow.alpha = input$CellratioFlowAlpha,
                          flow.curve = input$CellratioFlowCurve,
-                         color.choice = input$Cellratiofillcolorplatte)
+                         color.choice = input$Cellratiofillcolorplatte,
+                         fill.values = cr_fill)
     }
     if (input$CellratioRotateAxis) {
       p <- p & ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
@@ -4069,6 +4149,297 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     str(data$obj, max.level = input$ObjectStrutureLevel) # Display the structure of the data frame
   })
 
+  ################################ Cluster Colours
+  output$clustercolors_info <- renderText({
+    paste0('Assign custom colours to the groups of one cluster resolution, then submit them so the same
+    colours are used by every plot that colours cells by cluster.
+    - Step 1: choose the cluster resolution.
+    - Step 2: edit colours one by one, or apply a palette first and adjust a few. Groups you leave
+      alone keep their default colours.
+    - Step 3: Submit saves the palette for this session and into
+      obj@misc$SeuratExplorer$cluster_colors, so an object exported from here keeps its colours.
+    Export or import a CSV (columns: cluster, color) to reuse a palette in another session or dataset.
+    Note: split violins (Split Plot) keep the split colours, because their two halves are coloured by group.')
+  })
+
+  observeEvent(input$close_clustercolors_info, {
+    shinyjs::toggle("clustercolors_info_body", anim = TRUE)
+    shinyjs::runjs("$('#close_clustercolors_info i').toggleClass('fa-chevron-up fa-chevron-down');")
+  }, ignoreInit = TRUE)
+
+  # Draft palette being edited in the UI (not yet submitted)
+  cluster_color_draft <- reactiveValues(col = NULL, levels = character(0), colors = character(0))
+
+  output$ClusterColorsResolution.UI <- renderUI({
+    req(data$obj)
+    selectInput("ClusterColorsResolution", "Cluster Resolution:",
+                choices = data$cluster_options,
+                selected = if (!is.null(data$cluster_default) &&
+                               data$cluster_default %in% data$cluster_options) {
+                  data$cluster_default
+                } else {
+                  data$cluster_options[1]
+                })
+  })
+
+  # `data$obj` is deliberately NOT part of the event list: Shiny would run
+  # identical() on the whole Seurat object on every flush. Path + version is a
+  # cheap proxy (version is bumped by every annotation change).
+  observeEvent(list(input$ClusterColorsResolution, data$Path, data$version,
+                    data$cluster_colors), {
+    req(data$obj, input$ClusterColorsResolution)
+    col <- input$ClusterColorsResolution
+    if (!(col %in% colnames(data$obj@meta.data))) return()
+    lv <- levels(data$obj@meta.data[[col]])
+    if (is.null(lv)) lv <- sort(unique(as.character(data$obj@meta.data[[col]])))
+    cluster_color_draft$col <- col
+    cluster_color_draft$levels <- lv
+    cluster_color_draft$colors <- complete_cluster_colors(data$cluster_colors[[col]], lv)
+  }, ignoreInit = FALSE)
+
+  output$ClusterColorPickers.UI <- renderUI({
+    lv <- cluster_color_draft$levels
+    # isolate(): editing one colour must not rebuild the whole picker list
+    # (that would close the colour popup). Palette/Reset/Import update the
+    # pickers explicitly with updateColourInput().
+    cols <- isolate(cluster_color_draft$colors)
+    if (length(lv) == 0) {
+      return(p("No cluster groups available.", style = "color: #6c757d; font-size: 12px;"))
+    }
+    if (length(cols) != length(lv)) cols <- complete_cluster_colors(NULL, lv)
+    lapply(seq_along(lv), function(i) {
+      fluidRow(
+        column(6, div(style = "padding-top: 6px; font-size: 13px; color: #374151; word-break: break-all;",
+                      lv[i])),
+        column(6, colourpicker::colourInput(
+          inputId = paste0("clustercolor_", i),
+          label = NULL,
+          value = if (is.na(cols[i])) "#808080" else cols[i],
+          showColour = "background",
+          palette = "limited"
+        ))
+      )
+    })
+  })
+
+  # Mirror the pickers into the draft. isolate() avoids a dependency on the
+  # draft itself, so writing it back does not re-trigger this observer.
+  observe({
+    req(data$obj)
+    lv <- cluster_color_draft$levels
+    n <- length(lv)
+    if (n == 0) return()
+    cur <- isolate(cluster_color_draft$colors)
+    if (length(cur) != n) return()
+    vals <- cur
+    changed <- FALSE
+    for (i in seq_len(n)) {
+      v <- input[[paste0("clustercolor_", i)]]
+      if (!is.null(v) && nzchar(v) && !identical(v, cur[[i]])) {
+        vals[[i]] <- v
+        changed <- TRUE
+      }
+    }
+    if (changed) cluster_color_draft$colors <- vals
+  })
+
+  observeEvent(input$ClusterColorApplyPalette, {
+    lv <- cluster_color_draft$levels
+    n <- length(lv)
+    if (n == 0) return()
+    choice <- input$ClusterColorPalette
+    pal <- if (identical(choice, "default")) {
+      scales::hue_pal()(n)
+    } else {
+      base <- color_list[[choice]]
+      if (is.null(base) || length(base) == 0) scales::hue_pal()(n) else rep_len(base, n)
+    }
+    cluster_color_draft$colors <- stats::setNames(pal, lv)
+    for (i in seq_len(n)) {
+      colourpicker::updateColourInput(session, paste0("clustercolor_", i), value = pal[i])
+    }
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$ClusterColorReset, {
+    req(data$obj)
+    col <- cluster_color_draft$col
+    lv <- cluster_color_draft$levels
+    if (is.null(col) || length(lv) == 0) return()
+    cols <- complete_cluster_colors(data$cluster_colors[[col]], lv)
+    cluster_color_draft$colors <- cols
+    for (i in seq_along(lv)) {
+      colourpicker::updateColourInput(session, paste0("clustercolor_", i), value = cols[i])
+    }
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$ClusterColorClearSaved, {
+    req(data$obj)
+    col <- cluster_color_draft$col
+    if (is.null(col)) return()
+    cc <- data$cluster_colors
+    if (is.null(cc)) cc <- list()
+    cc[[col]] <- NULL
+    data$cluster_colors <- cc
+
+    obj <- data$obj
+    if (!is.null(obj@misc$SeuratExplorer) &&
+        !is.null(obj@misc$SeuratExplorer$cluster_colors)) {
+      cc_obj <- obj@misc$SeuratExplorer$cluster_colors
+      cc_obj[[col]] <- NULL
+      obj@misc$SeuratExplorer$cluster_colors <-
+        if (length(cc_obj) == 0) NULL else cc_obj
+    }
+    data$obj <- obj
+    data$version <- data$version + 1
+    showNotification(ui = tagList(icon("trash", style = "margin-right: 5px;"),
+                                  "Saved colours removed for this resolution."),
+                     type = "message", duration = 5)
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$ClusterColorSubmit, {
+    req(data$obj)
+    col <- cluster_color_draft$col
+    lv <- cluster_color_draft$levels
+    cols <- isolate(cluster_color_draft$colors)
+    if (is.null(col) || length(lv) == 0 || length(cols) != length(lv)) {
+      show_error("Nothing to save", "Choose a cluster resolution first.")
+      return()
+    }
+    if (any(!nzchar(cols))) {
+      show_error("Invalid colours", "Every group needs a colour.")
+      return()
+    }
+    names(cols) <- lv
+    cc <- data$cluster_colors
+    if (is.null(cc)) cc <- list()
+    cc[[col]] <- cols
+    data$cluster_colors <- cc
+
+    # Persist inside the object too, so an exported object keeps its colours.
+    obj <- data$obj
+    if (is.null(obj@misc$SeuratExplorer)) obj@misc$SeuratExplorer <- list()
+    obj@misc$SeuratExplorer$cluster_colors <- cc
+    data$obj <- obj
+    data$version <- data$version + 1
+
+    dup <- sum(duplicated(unname(cols)))
+    showNotification(ui = tagList(
+      icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+      paste0("Colours saved for ", length(lv), " groups."),
+      if (dup > 0) paste0(" Warning: ", dup, " duplicate colour(s) are in use.")
+    ), type = if (dup > 0) "warning" else "message", duration = 6)
+  }, ignoreInit = TRUE)
+
+  output$ClusterColorStatus <- renderText({
+    lv <- cluster_color_draft$levels
+    if (length(lv) == 0) return("")
+    cols <- cluster_color_draft$colors
+    dup <- sum(duplicated(unname(cols)))
+    col <- cluster_color_draft$col
+    saved <- if (is.null(col)) NULL else data$cluster_colors[[col]]
+    base <- complete_cluster_colors(saved, lv)
+    dirty <- !identical(unname(base), unname(cols))
+    paste0(length(lv), " groups | ",
+           if (is.null(saved)) "no saved colours" else "saved colours loaded",
+           if (dirty) " | unsaved changes",
+           if (dup > 0) paste0(" | ", dup, " duplicate(s)"))
+  })
+
+  output$clustercolors_preview <- renderPlot({
+    req(data$obj)
+    col <- cluster_color_draft$col
+    if (is.null(col) || !(col %in% colnames(data$obj@meta.data))) return(empty_plot)
+    if (length(data$reduction_options) == 0) return(empty_plot_no_reduction)
+
+    red <- data$reduction_default
+    if (is.null(red) || !(red %in% data$reduction_options)) {
+      red <- data$reduction_options[1]
+    }
+
+    cds <- data$obj
+    lv <- levels(cds@meta.data[[col]])
+    if (is.null(lv)) lv <- sort(unique(as.character(cds@meta.data[[col]])))
+    draft <- cluster_color_draft$colors
+    names(draft) <- cluster_color_draft$levels
+    cols <- complete_cluster_colors(draft, lv)
+
+    Seurat::DimPlot(cds, reduction = red, group.by = col,
+                    label = isTRUE(input$ClusterColorShowLabels),
+                    cols = unname(cols), pt.size = 0.8)
+  })
+
+  # Snapshot for the download handler (which runs outside a reactive context).
+  cluster_color_snapshot <- new.env(parent = emptyenv())
+  cluster_color_snapshot$levels <- character(0)
+  cluster_color_snapshot$colors <- character(0)
+  cluster_color_snapshot$col <- NULL
+  observe({
+    cluster_color_snapshot$levels <- cluster_color_draft$levels
+    cluster_color_snapshot$colors <- cluster_color_draft$colors
+    cluster_color_snapshot$col <- cluster_color_draft$col
+  })
+
+  output$download_cluster_colors <- downloadHandler(
+    filename = function() {
+      col <- cluster_color_snapshot$col
+      paste0(gsub("[^A-Za-z0-9._-]+", "_", if (is.null(col)) "cluster" else col),
+             "_cluster_colors_", format(Sys.Date(), "%Y%m%d"), ".csv")
+    },
+    content = function(file) {
+      lv <- cluster_color_snapshot$levels
+      cols <- cluster_color_snapshot$colors
+      if (length(lv) == 0 || length(cols) != length(lv)) {
+        utils::write.csv(data.frame(cluster = character(0), color = character(0)),
+                         file, row.names = FALSE)
+        return(invisible(NULL))
+      }
+      utils::write.csv(data.frame(cluster = lv, color = unname(cols),
+                                  stringsAsFactors = FALSE),
+                       file, row.names = FALSE)
+    }
+  )
+
+  observeEvent(input$ClusterColorImportFile, {
+    req(input$ClusterColorImportFile)
+    lv <- cluster_color_draft$levels
+    if (length(lv) == 0) return()
+    df <- tryCatch(
+      utils::read.csv(input$ClusterColorImportFile$datapath, stringsAsFactors = FALSE),
+      error = function(e) NULL)
+    if (is.null(df) || ncol(df) < 2) {
+      show_error("Import failed",
+                 "The CSV must contain at least two columns: cluster and color.")
+      return()
+    }
+    names(df)[1:2] <- c("cluster", "color")
+    df$cluster <- trimws(as.character(df$cluster))
+    df$color <- trimws(as.character(df$color))
+    bad <- !is_hex_color(df$color)
+    if (any(bad)) {
+      show_error("Import failed",
+                 paste0(sum(bad), " row(s) do not contain a valid hex colour (e.g. #E41A1C)."))
+      return()
+    }
+    unknown <- setdiff(df$cluster, lv)
+    df <- df[df$cluster %in% lv, , drop = FALSE]
+
+    cols <- cluster_color_draft$colors
+    names(cols) <- lv
+    if (nrow(df) > 0) cols[df$cluster] <- df$color
+    cluster_color_draft$colors <- unname(cols[lv])
+    for (i in seq_along(lv)) {
+      colourpicker::updateColourInput(session, paste0("clustercolor_", i),
+                                      value = cols[[lv[i]]])
+    }
+    showNotification(ui = tagList(
+      icon("file-import", style = "margin-right: 5px;"),
+      paste0("Imported ", nrow(df), " colour(s). Click Submit to apply them."),
+      if (length(unknown) > 0) {
+        paste0(" Ignored ", length(unknown), " group(s) not in this resolution.")
+      }
+    ), type = "message", duration = 6)
+  }, ignoreInit = TRUE)
+
   ################################ Export Data
   # Can be turned off for multi-user deployments with
   # options(SeuratExplorerEnableObjectExport = FALSE).
@@ -4433,6 +4804,7 @@ server <- function(input, output, session) {
                         split_maxlevel = getOption("SeuratExplorerSplitOptionMaxLevel"),
                         split_options = NULL,
                         extra_qc_options = NULL,
+                        cluster_colors = list(),
                         version = 0)
 
   # reductions_options: xy axis coordinate

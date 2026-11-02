@@ -105,6 +105,7 @@ You can customize the launch behavior with additional parameters:
 - `ReductionKeyWords`: Keywords for dimension reduction options (default: `c("umap","tsne","pca")`)
 - `SplitOptionMaxLevel`: Maximum levels for split options (default: `12`)
 - `MaxInputFileSize`: Maximum upload file size in bytes (default: `20*1024^3`, i.e., 20GB)
+- `EnableObjectExport`: Whether to show the **Export Data** page (default: `TRUE`); set to `FALSE` to hide it, e.g. on a shared machine
 - `DemoDataURL`: One or more URLs of the demo dataset used by the **Download and Run a demo data** button; they are tried in order until one succeeds
 - `DemoDataCacheDir`: Directory used to cache the downloaded demo data (default: a per-user cache directory)
 - `DemoDataMD5`: Expected MD5 checksum of the demo data; set to `NULL` to skip the integrity check
@@ -371,6 +372,8 @@ Different visualization features support different assay slots:
 - Supports adjusting the line width of group bars
 
 - Supports adjusting the font size of gene names
+
+- Group bar colours follow the palette defined in **Cluster Colors** (the expression gradient is unchanged)
 
 - Supports adjusting the height/width ratio of the plot
 
@@ -651,6 +654,27 @@ You can rename cluster names, and changes will take effect immediately. However,
 
 To rename clusters: select a cluster resolution, edit the ``New_Name`` column in the table, then click **Check** to preview the re-colored dimension-reduction plot, and finally **Update** to add the new annotation. You can download the old-to-new name mapping.
 
+### Cluster Colors
+
+Assign custom colours to the groups of one cluster resolution and use the same palette across plots.
+
+1. Choose a cluster resolution.
+2. Edit colours group by group, or apply one of the built-in palettes first and adjust a few. Groups you leave untouched keep their default colours.
+3. Click **Submit** to save the palette for the session and store it in `obj@misc$SeuratExplorer$cluster_colors`, so an object exported from the app keeps its colours.
+
+The preview shows a DimPlot drawn with the draft colours; cluster labels can be switched off. Duplicate colours are allowed but flagged with a warning. **Export colours (CSV)** writes two columns (`cluster`, `color`); **Import colours (CSV)** reads the same format, ignores groups that do not exist in the current resolution and reports them. **Remove saved colours for this resolution** clears the palette for the selected resolution.
+
+Colours are applied to:
+
+- **Dim Reduction Plot** (including split panels)
+- **Violin Plot** (unsplit, and side-by-side split violins; split violins keep the split colours)
+- **Cell Percentage Plot**
+- **Ridge Plot** when ridges are coloured by cluster
+- **Heatmap (cell level)** group bar (the expression gradient is unchanged)
+- **Average Heatmap** column annotation bar
+
+Dot Plot and Feature Plot use continuous expression colours, so they are not affected.
+
 ### Gene Based Cluster (BETA)
 
 Group cells into new clusters based on a single gene's expression level, or on a numeric metadata column such as a module score, using user-defined cutoffs.
@@ -736,7 +760,7 @@ The preview shows how many cells will be exported, how many were excluded becaus
 
 Exporting copies and serializes the object, so a large object takes a while and the page stays unresponsive until the browser starts downloading.
 
-For shared or multi-user deployments this page can be hidden with `options(SeuratExplorerEnableObjectExport = FALSE)` before launching.
+For shared or multi-user deployments this page can be hidden with `launchSeuratExplorer(EnableObjectExport = FALSE)` (or `options(SeuratExplorerEnableObjectExport = FALSE)` before launching).
 
 ### About
 
@@ -906,32 +930,38 @@ SeuratExplorer is built upon excellent work by:
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] SeuratExplorer_0.1.9 shiny_1.14.0        
+#> [1] SeuratExplorer_0.1.10 shiny_1.14.0         
 #> 
 #> loaded via a namespace (and not attached):
-#>   [1] deldir_2.0-4           pbapply_1.7-5          gridExtra_2.3.1        rlang_1.3.0            magrittr_2.0.5        
-#>   [6] shinydashboard_0.7.3   RcppAnnoy_0.0.23       otel_0.2.0             matrixStats_1.5.0      ggridges_0.5.7        
-#>  [11] compiler_4.6.1         spatstat.geom_3.8-2    png_0.1-9              vctrs_0.7.3            reshape2_1.4.5        
-#>  [16] stringr_1.6.0          pkgconfig_2.0.3        fastmap_1.2.0          fontawesome_0.5.3      promises_1.5.0        
-#>  [21] markdown_2.0           purrr_1.2.2            xfun_0.60              cachem_1.1.0           litedown_0.11         
-#>  [26] jsonlite_2.0.0         goftest_1.2-3          later_1.4.8            spatstat.utils_3.2-5   irlba_2.3.7           
-#>  [31] parallel_4.6.1         cluster_2.1.8.2        R6_2.6.1               ica_1.0-3              bslib_0.12.0          
-#>  [36] stringi_1.8.9          RColorBrewer_1.1-3     spatstat.data_3.1-9    reticulate_1.47.0      parallelly_1.48.0     
-#>  [41] spatstat.univar_3.2-0  jquerylib_0.1.4        lmtest_0.9-40          scattermore_1.2        knitr_1.52            
-#>  [46] Rcpp_1.1.2             tensor_1.5.1           future.apply_1.20.2    zoo_1.9-0              sctransform_0.4.3     
-#>  [51] httpuv_1.6.17          Matrix_1.7-5           splines_4.6.1          igraph_2.3.3           tidyselect_1.2.1      
-#>  [56] yaml_2.3.12            rstudioapi_0.19.0      abind_1.4-8            codetools_0.2-20       spatstat.random_3.5-1 
-#>  [61] miniUI_0.1.2           spatstat.explore_3.8-2 listenv_1.0.0          lattice_0.22-9         tibble_3.3.1          
-#>  [66] plyr_1.8.9             S7_0.2.2               ROCR_1.0-12            evaluate_1.0.5         Rtsne_0.17            
-#>  [71] future_1.75.0          fastDummies_1.7.6      survival_3.8-6         polyclip_1.10-7        fitdistrplus_1.2-6    
-#>  [76] shinycssloaders_1.1.0  pillar_1.11.1          Seurat_5.5.1           KernSmooth_2.23-26     DT_0.34.0             
-#>  [81] shinyjs_2.1.1          plotly_4.12.1          generics_0.1.4         RcppHNSW_0.7.0         sp_2.2-3              
-#>  [86] ggplot2_4.0.3          scales_1.4.0           globals_0.19.1         xtable_1.8-8           glue_1.8.1            
-#>  [91] tools_4.6.1            data.table_1.18.6.1    RSpectra_0.16-2        colourpicker_1.3.0     RANN_2.6.3            
-#>  [96] dotCall64_1.2          cowplot_1.2.0          grid_4.6.1             tidyr_1.3.2            crosstalk_1.2.2       
-#> [101] shinyBS_0.65.0         nlme_3.1-169           patchwork_1.3.2        cli_3.6.6              spatstat.sparse_3.2-0 
-#> [106] spam_2.11-4            viridisLite_0.4.3      dplyr_1.2.1            uwot_0.2.5             gtable_0.3.6          
-#> [111] sass_0.4.10            digest_0.6.39          progressr_1.0.0        ggrepel_0.9.8          htmlwidgets_1.6.4     
-#> [116] SeuratObject_5.4.0     farver_2.1.2           memoise_2.0.1          htmltools_0.5.9        lifecycle_1.0.5       
-#> [121] shinyWidgets_0.9.1     httr_1.4.9             mime_0.13              MASS_7.3-65
+#>   [1] RcppAnnoy_0.0.23       splines_4.6.1          later_1.4.8            tibble_3.3.1           polyclip_1.10-7       
+#>   [6] fastDummies_1.7.6      lifecycle_1.0.5        shinyjqui_0.4.1        doParallel_1.0.17      globals_0.19.1        
+#>  [11] lattice_0.22-9         MASS_7.3-65            crosstalk_1.2.2        magrittr_2.0.5         plotly_4.12.1         
+#>  [16] sass_0.4.10            jquerylib_0.1.4        yaml_2.3.12            shinyBS_0.65.0         httpuv_1.6.17         
+#>  [21] otel_0.2.0             Seurat_5.5.1           sctransform_0.4.3      spam_2.11-4            sp_2.2-3              
+#>  [26] spatstat.sparse_3.2-0  reticulate_1.47.0      cowplot_1.2.0          pbapply_1.7-5          RColorBrewer_1.1-3    
+#>  [31] abind_1.4-8            Rtsne_0.17             purrr_1.2.2            BiocGenerics_0.58.1    circlize_0.4.18       
+#>  [36] IRanges_2.46.0         S4Vectors_0.50.3       ggrepel_0.9.8          irlba_2.3.7            listenv_1.0.0         
+#>  [41] spatstat.utils_3.2-5   goftest_1.2-3          RSpectra_0.16-2        spatstat.random_3.5-1  fitdistrplus_1.2-6    
+#>  [46] parallelly_1.48.0      commonmark_2.0.0       codetools_0.2-20       DT_0.34.0              tidyselect_1.2.1      
+#>  [51] shape_1.4.6.1          farver_2.1.2           shinyWidgets_0.9.1     matrixStats_1.5.0      stats4_4.6.1          
+#>  [56] spatstat.explore_3.8-2 jsonlite_2.0.0         GetoptLong_1.1.1       progressr_1.0.0        ggridges_0.5.7        
+#>  [61] ggalluvial_0.12.6      survival_3.8-6         iterators_1.0.14       systemfonts_1.3.2      foreach_1.5.2         
+#>  [66] tools_4.6.1            ragg_1.5.2             ica_1.0-3              Rcpp_1.1.2             glue_1.8.1            
+#>  [71] gridExtra_2.3.1        qs2_0.3.1              xfun_0.60              dplyr_1.2.1            shinydashboard_0.7.3  
+#>  [76] withr_3.0.3            fastmap_1.2.0          shinyjs_2.1.1          litedown_0.11          digest_0.6.39         
+#>  [81] R6_2.6.1               mime_0.13              textshaping_1.0.5      colorspace_2.1-3       scattermore_1.2       
+#>  [86] tensor_1.5.1           markdown_2.0           spatstat.data_3.1-9    tidyr_1.3.2            generics_0.1.4        
+#>  [91] data.table_1.18.6.1    httr_1.4.9             htmlwidgets_1.6.4      uwot_0.2.5             pkgconfig_2.0.3       
+#>  [96] gtable_0.3.6           ComplexHeatmap_2.28.0  lmtest_0.9-40          S7_0.2.2               htmltools_0.5.9       
+#> [101] dotCall64_1.2          clue_0.3-68            SeuratObject_5.4.0     scales_1.4.0           png_0.1-9             
+#> [106] spatstat.univar_3.2-0  knitr_1.52             rstudioapi_0.19.0      reshape2_1.4.5         rjson_0.2.23          
+#> [111] nlme_3.1-169           cachem_1.1.0           zoo_1.9-0              GlobalOptions_0.1.4    stringr_1.6.0         
+#> [116] KernSmooth_2.23-26     parallel_4.6.1         miniUI_0.1.2           shinycssloaders_1.1.0  pillar_1.11.1         
+#> [121] grid_4.6.1             vctrs_0.7.3            RANN_2.6.3             promises_1.5.0         stringfish_0.19.2     
+#> [126] xtable_1.8-8           cluster_2.1.8.2        evaluate_1.0.5         magick_2.9.1           cli_3.6.6             
+#> [131] compiler_4.6.1         rlang_1.3.0            crayon_1.5.3           future.apply_1.20.2    labeling_0.4.3        
+#> [136] plyr_1.8.9             stringi_1.8.9          viridisLite_0.4.3      deldir_2.0-4           spatstat.geom_3.8-2   
+#> [141] colourpicker_1.3.0     Matrix_1.7-5           RcppHNSW_0.7.0         patchwork_1.3.2        future_1.75.0         
+#> [146] ggplot2_4.0.3          ROCR_1.0-12            fontawesome_0.5.3      igraph_2.3.3           memoise_2.0.1         
+#> [151] RcppParallel_6.2.1     bslib_0.12.0
 ```

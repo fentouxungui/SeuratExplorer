@@ -379,7 +379,8 @@ cellRatioPlot <- function(object = NULL,
                           col.width = 0.7,
                           flow.alpha = 0.25,
                           flow.curve = 0,
-                          color.choice = NULL) {
+                          color.choice = NULL,
+                          fill.values = NULL) {
   requireNamespace("dplyr")
   # Input validation
   if (is.null(object)) stop("object cannot be NULL")
@@ -434,7 +435,12 @@ cellRatioPlot <- function(object = NULL,
 
   # color
   # fill.col <- getColors(color.platte = color_list, choice = color.choice, n = length(unique(meta[, celltype.name])))
-  fill.col <- getColors(color.platte = color_list, choice = color.choice, n = length(idents))
+  # `fill.values` (named by cell type) takes precedence over the palette choice.
+  fill.col <- if (!is.null(fill.values)) {
+    fill.values
+  } else {
+    getColors(color.platte = color_list, choice = color.choice, n = length(idents))
+  }
 
 
   # plot
@@ -1001,6 +1007,13 @@ load_seurat_object <- function(path, data, verbose = FALSE){
 
   data$obj <- prepare_seurat_object(obj = obj,
                                     verbose = verbose)
+
+  # Restore custom colours from an object that was exported by this app.
+  data$cluster_colors <- tryCatch(data$obj@misc$SeuratExplorer$cluster_colors,
+                                  error = function(e) NULL)
+  if (is.null(data$cluster_colors) || !is.list(data$cluster_colors)) {
+    data$cluster_colors <- list()
+  }
 
   data$reduction_options <- prepare_reduction_options(obj = data$obj,
                                                       keywords = getOption("SeuratExplorerReductionKeyWords"),
@@ -1644,6 +1657,35 @@ drop_scale_data <- function(obj) {
     }, error = function(e) obj[[assay_name]])
   }
   obj
+}
+
+# Saved custom colours for one cluster column (named: level -> hex), or NULL.
+get_cluster_color_map <- function(data, col) {
+  if (is.null(col) || is.null(data$cluster_colors)) return(NULL)
+  map <- data$cluster_colors[[col]]
+  if (is.null(map) || length(map) == 0) return(NULL)
+  map
+}
+
+# Expand a partial colour map to every level. Groups without a custom colour
+# keep the default ggplot hue colour for their position, so partial palettes
+# look exactly like the default plot for the untouched groups. The result is
+# ordered like `levels`.
+complete_cluster_colors <- function(map, levels) {
+  n <- length(levels)
+  if (n == 0) return(character(0))
+  defaults <- scales::hue_pal()(n)
+  names(defaults) <- levels
+  if (!is.null(map) && length(map) > 0) {
+    hit <- intersect(names(map), levels)
+    if (length(hit) > 0) defaults[hit] <- unname(map[hit])
+  }
+  defaults
+}
+
+# TRUE for "#RRGGBB" or "#RRGGBBAA".
+is_hex_color <- function(x) {
+  grepl("^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$", x)
 }
 
 # NULL / non-finite / non-positive safe numeric accessor for plot dimensions.

@@ -16,7 +16,8 @@ cellRatioPlot(
   col.width = 0.7,
   flow.alpha = 0.25,
   flow.curve = 0,
-  color.choice = NULL
+  color.choice = NULL,
+  fill.values = NULL
 )
 }
 \arguments{

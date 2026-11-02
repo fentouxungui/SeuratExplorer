@@ -44,6 +44,7 @@ explorer_sidebar_ui <- function(){
     featuresummary = "Summarize gene expression (mean / median / percentage) per cluster.",
     featurecorrelation = "Calculate gene-gene expression correlations.",
     renameclusters = "Interactively rename cluster labels.",
+    clustercolors = "Assign custom colours to the groups of a cluster resolution and share them across plots.",
     geneclusters = "Group cells by a gene's expression level with custom cutoffs.",
     combinedclusters = "Combine two cluster annotations into a new grouping.",
     addmodulescore = "Score cells with a gene set using AddModuleScore (Seurat) or AUCell.",
@@ -72,6 +73,7 @@ explorer_sidebar_ui <- function(){
                          menuSubItem(text = span(title = tooltips[["addmodulescore"]], "Module Score", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "addmodulescore", icon = shiny::icon("angle-right")),
                          menu_divider(),
                          menuSubItem(text = span(title = tooltips[["renameclusters"]], "Rename Clusters"), tabName = "renameclusters", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span(title = tooltips[["clustercolors"]], "Cluster Colors"), tabName = "clustercolors", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["geneclusters"]], "Gene Based Cluster", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "geneclusters", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["combinedclusters"]], "Combination Based Cluster", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "combinedclusters", icon = shiny::icon("angle-right")),
                          menu_divider(),
@@ -1353,6 +1355,127 @@ explorer_body_ui <- function(tab_list){
                                  )
                                )
   )
+  tab_list[["clustercolors"]] = tabItem(tabName = "clustercolors",
+    tags$style(type="text/css", "#close_clustercolors_info:hover { color: #059669 !important; }"),
+    tags$style(type="text/css", "#clustercolors_info {white-space: pre-wrap; color: #495057; line-height: 1.8;}"),
+    fluidRow(id = "clustercolors-main-row",
+      # Information box
+      div(
+        id = "clustercolors-info-box",
+        class = "col-xs-12",
+        style = "margin-bottom: 10px;",
+        div(
+          class = "box",
+          style = "background: white; border: 2px solid #10b981; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); position: relative;",
+          div(
+            class = "box-header",
+            style = "padding: 15px 20px; border-bottom: 2px solid #10b981; position: relative;",
+            div(
+              style = "display: flex; align-items: center; gap: 10px;",
+              icon("info-circle", style = "color: #10b981; font-size: 20px;"),
+              h4(style = "margin: 0; color: #10b981; font-weight: 600;", "Information")
+            ),
+            actionButton(
+              "close_clustercolors_info",
+              label = NULL,
+              title = "Hide or show the hints",
+              icon = icon("chevron-up"),
+              style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #10b981; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
+              class = "btn btn-link"
+            )
+          ),
+          div(
+            class = "box-body",
+            id = "clustercolors_info_body",
+            style = "padding: 15px 20px;",
+            textOutput("clustercolors_info")
+          )
+        )
+      ),
+
+      # Settings
+      div(
+        class = "col-md-4",
+        style = "margin-bottom: 10px;",
+        div(
+          style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+          h4(icon("palette"), "Settings", style = "color: #10b981; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+
+          h5(icon("layer-group"), "Step 1: Cluster resolution",
+             style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+          withSpinner(uiOutput("ClusterColorsResolution.UI"), proxy.height = "10px"),
+
+          hr(),
+          h5(icon("palette"), "Step 2: Colours",
+             style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+          div(style = "display: flex; gap: 10px; align-items: flex-end;",
+            div(style = "flex: 1;", selectInput("ClusterColorPalette", "Palette:",
+                                                choices = color_choice_vector, selected = "default")),
+            div(actionButton("ClusterColorApplyPalette", "Apply",
+                             icon = icon("wand-magic-sparkles"), class = "btn-primary",
+                             style = "margin-bottom: 15px; border-radius: 6px;"))
+          ),
+          div(style = "max-height: 320px; overflow-y: auto; padding-right: 4px;",
+            uiOutput("ClusterColorPickers.UI")),
+          checkboxInput("ClusterColorShowLabels", "Show cluster labels in preview", TRUE),
+
+          hr(),
+          h5(icon("floppy-disk"), "Step 3: Save",
+             style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+          div(style = "display: flex; gap: 8px;",
+            actionButton("ClusterColorSubmit", "Submit", icon = icon("check"),
+                         class = "btn-primary",
+                         style = "flex: 1; padding: 10px; border-radius: 8px; font-weight: 600;"),
+            actionButton("ClusterColorReset", "Reset", icon = icon("arrows-rotate"),
+                         class = "btn-warning",
+                         style = "flex: 1; padding: 10px; border-radius: 8px; font-weight: 600;")
+          ),
+          div(style = "margin-top: 8px;",
+            actionLink("ClusterColorClearSaved", "Remove saved colours for this resolution",
+                       style = "color: #dc3545; font-size: 12px;")),
+          div(style = "margin-top: 8px;", textOutput("ClusterColorStatus")),
+
+          hr(),
+          downloadButton("download_cluster_colors", "Export colours (CSV)",
+                         class = "btn-primary",
+                         style = "width: 100%; padding: 10px; border-radius: 8px; font-weight: 600;"),
+          div(style = "margin-top: 10px;",
+            fileInput("ClusterColorImportFile", "Import colours (CSV)",
+                      accept = ".csv", buttonLabel = "Browse...",
+                      placeholder = "Two columns: cluster,color")),
+          p("CSV format: two columns named cluster and color (hex, e.g. #E41A1C).",
+            style = "font-size: 11px; color: #6c757d; margin: 0;")
+        )
+      ),
+
+      # Preview
+      div(
+        class = "col-md-8",
+        style = "margin-bottom: 10px;",
+        div(
+          class = "box",
+          style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);",
+          div(
+            class = "box-header",
+            style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+            div(
+              style = "display: flex; align-items: center; gap: 10px;",
+              icon("image", style = "color: #3b82f6; font-size: 18px;"),
+              h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Preview")
+            )
+          ),
+          div(
+            class = "box-body",
+            style = "padding: 20px;",
+            withSpinner(plotOutput("clustercolors_preview", height = "520px")),
+            p("Colours are applied to Dim Reduction Plot, Violin Plot (un-split and side-by-side split), Cell Percentage Plot, Ridge Plot (coloured by cluster), the Heatmap Cell Level group bar and the Average Heatmap annotation bar. Split violins keep the split colours.",
+              style = "font-size: 12px; color: #6c757d; margin-top: 10px;")
+          )
+        )
+      )
+    )
+  )
+
   tab_list[["geneclusters"]] = tabItem(tabName = "geneclusters",
     fluidRow(
       box(title = "Gene Expression Histogram",
@@ -1779,6 +1902,7 @@ ui <-  function(){
         #topgenes-info-box,
         #featuresummary-info-box,
         #featurecorrelation-info-box,
+        #clustercolors-info-box,
         #exportdata-info-box {
           margin-bottom: 8px !important;
         }
@@ -1787,6 +1911,7 @@ ui <-  function(){
         #topgenes-info-box > .box,
         #featuresummary-info-box > .box,
         #featurecorrelation-info-box > .box,
+        #clustercolors-info-box > .box,
         #exportdata-info-box > .box {
           margin-bottom: 0 !important;
         }
