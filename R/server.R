@@ -59,10 +59,18 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                  style = "margin-top: 6px; margin-bottom: 0; font-size: 12px;")
         )
       } else {
+        # Keep the user's current choice when this selector is rebuilt
+        # (annotations write data$obj, which invalidates this renderUI).
+        current <- isolate(input[[dimension_reduction_df$UIID[i]]])
+        selected <- if (!is.null(current) && current %in% data$reduction_options) {
+          current
+        } else {
+          data$reduction_default
+        }
         selectInput(dimension_reduction_df$UIID[i],
                     'Dimension Reduction:',
                     choices = data$reduction_options,
-                    selected = data$reduction_default) # set default reduction
+                    selected = selected) # set default reduction
       }
     })
   })
@@ -86,9 +94,20 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     output[[resolution_df$Element[i]]] <- renderUI({
       req(data$obj)
       if(verbose){message(paste0("SeuratExplorer: preparing ", resolution_df$Element[i], "..."))}
+      # Keep the user's current choice when this selector is rebuilt
+      # (annotations write data$obj, which invalidates this renderUI).
+      current <- isolate(input[[resolution_df$UIID[i]]])
+      selected <- if (!is.null(current) && current %in% data$cluster_options) {
+        current
+      } else if (!is.null(data$cluster_default) &&
+                 data$cluster_default %in% data$cluster_options) {
+        data$cluster_default
+      } else {
+        data$cluster_options[1]
+      }
       selectInput(resolution_df$UIID[i], 'Cluster Resolution:',
                   choices = data$cluster_options,
-                  selected = data$cluster_default)
+                  selected = selected)
     })
   })
 
@@ -147,12 +166,19 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       if(verbose){message(paste0("SeuratExplorer: preparing ", assay_df$Element[i], "..."))}
       assays_options <- filter_assay(assay_info = data$assays_slots_options,
                                      allowed_slots = assay_allowed_slots[[assay_df$UIID[i]]])
+      # Keep the user's current choice when this selector is rebuilt.
+      current <- isolate(input[[assay_df$UIID[i]]])
+      selected <- if (!is.null(current) && current %in% assays_options) {
+        current
+      } else if (data$assay_default %in% assays_options) {
+        data$assay_default
+      } else {
+        assays_options[1]
+      }
       selectInput(assay_df$UIID[i],
                   "Assay:",
                   choices = assays_options,
-                  selected = ifelse(data$assay_default %in% assays_options,
-                                    data$assay_default,
-                                    assays_options[1]))
+                  selected = selected)
     })
   })
 
@@ -4004,7 +4030,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         } else {
           output$renameclusterdimplot <- renderPlot(Seurat::DimPlot(cds,
                                                                     reduction = input$renameclustersDimensionReduction,
-                                                                    label = TRUE))
+                                                                    label = TRUE,
+                                                                    label.size = num_or(input$renameclustersLabelSize, 7)))
         }
         new_anno_mapping$NewClusterName <- input$renameclustersNewClusterName
         new_anno_mapping$OldClusterName = input$renameclustersClusterResolution
@@ -4154,8 +4181,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     paste0('Assign custom colours to the groups of one cluster resolution, then submit them so the same
     colours are used by every plot that colours cells by cluster.
     - Step 1: choose the cluster resolution.
-    - Step 2: edit colours one by one, or apply a palette first and adjust a few. Groups you leave
-      alone keep their default colours.
+    - Step 2: edit colours one by one, or apply a palette first and adjust a few. Each picker accepts
+      any colour: type a hex value (e.g. #E41A1C) or choose from the full colour square. Groups you
+      leave alone keep their default colours.
     - Step 3: Submit saves the palette for this session and into
       obj@misc$SeuratExplorer$cluster_colors, so an object exported from here keeps its colours.
     Export or import a CSV (columns: cluster, color) to reuse a palette in another session or dataset.
@@ -4169,17 +4197,27 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   # Draft palette being edited in the UI (not yet submitted)
   cluster_color_draft <- reactiveValues(col = NULL, levels = character(0), colors = character(0))
+  # Bumped when the whole palette changes at once (Apply / Reset / Import) so
+  # the picker list is rebuilt from the draft values.
+  cluster_color_picker_version <- reactiveVal(0L)
 
   output$ClusterColorsResolution.UI <- renderUI({
     req(data$obj)
+    choices <- data$cluster_options
+    # Keep the user's current selection when this selector is rebuilt (Submit
+    # writes data$obj, which invalidates this renderUI). isolate() reads the
+    # value without adding a dependency on the input itself.
+    current <- isolate(input$ClusterColorsResolution)
+    selected <- if (!is.null(current) && current %in% choices) {
+      current
+    } else if (!is.null(data$cluster_default) &&
+               data$cluster_default %in% choices) {
+      data$cluster_default
+    } else {
+      choices[1]
+    }
     selectInput("ClusterColorsResolution", "Cluster Resolution:",
-                choices = data$cluster_options,
-                selected = if (!is.null(data$cluster_default) &&
-                               data$cluster_default %in% data$cluster_options) {
-                  data$cluster_default
-                } else {
-                  data$cluster_options[1]
-                })
+                choices = choices, selected = selected)
   })
 
   # `data$obj` is deliberately NOT part of the event list: Shiny would run
@@ -4198,10 +4236,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   }, ignoreInit = FALSE)
 
   output$ClusterColorPickers.UI <- renderUI({
+    # Rebuild only when the level set changes or Apply/Reset/Import changed the
+    # whole palette. Ordinary edits do not bump this value, so dragging in one
+    # picker is not interrupted.
+    cluster_color_picker_version()
     lv <- cluster_color_draft$levels
-    # isolate(): editing one colour must not rebuild the whole picker list
-    # (that would close the colour popup). Palette/Reset/Import update the
-    # pickers explicitly with updateColourInput().
     cols <- isolate(cluster_color_draft$colors)
     if (length(lv) == 0) {
       return(p("No cluster groups available.", style = "color: #6c757d; font-size: 12px;"))
@@ -4214,9 +4253,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         column(6, colourpicker::colourInput(
           inputId = paste0("clustercolor_", i),
           label = NULL,
-          value = if (is.na(cols[i])) "#808080" else cols[i],
-          showColour = "background",
-          palette = "limited"
+          value = if (is.na(cols[i])) "#808080" else unname(cols[i]),
+          # "both" + "square": a hex text field plus a full colour picker, so
+          # any colour can be typed or picked (not just a fixed swatch list).
+          showColour = "both",
+          palette = "square",
+          width = "100%"
         ))
       )
     })
@@ -4235,7 +4277,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     changed <- FALSE
     for (i in seq_len(n)) {
       v <- input[[paste0("clustercolor_", i)]]
-      if (!is.null(v) && nzchar(v) && !identical(v, cur[[i]])) {
+      # only accept a complete hex value: partial typed input must not
+      # re-render the preview on every keystroke
+      if (!is.null(v) && is_hex_color(v) && !identical(v, cur[[i]])) {
         vals[[i]] <- v
         changed <- TRUE
       }
@@ -4248,16 +4292,26 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     n <- length(lv)
     if (n == 0) return()
     choice <- input$ClusterColorPalette
-    pal <- if (identical(choice, "default")) {
+    base <- if (identical(choice, "default")) {
       scales::hue_pal()(n)
     } else {
-      base <- color_list[[choice]]
-      if (is.null(base) || length(base) == 0) scales::hue_pal()(n) else rep_len(base, n)
+      color_list[[choice]]
     }
-    cluster_color_draft$colors <- stats::setNames(pal, lv)
-    for (i in seq_len(n)) {
-      colourpicker::updateColourInput(session, paste0("clustercolor_", i), value = pal[i])
-    }
+    if (is.null(base) || length(base) == 0) base <- scales::hue_pal()(n)
+
+    # Apply the palette positionally to as many groups as it has colours; the
+    # remaining groups keep the colours they already had (no recycling).
+    cols <- isolate(cluster_color_draft$colors)
+    if (length(cols) != n) cols <- complete_cluster_colors(NULL, lv)
+    k <- min(n, length(base))
+    cols[seq_len(k)] <- base[seq_len(k)]
+    cluster_color_draft$colors <- unname(cols)
+    cluster_color_picker_version(isolate(cluster_color_picker_version()) + 1L)
+    showNotification(ui = tagList(
+      icon("palette", style = "margin-right: 5px;"),
+      paste0("Applied ", k, " colour(s) to the first ", k, " group(s)."),
+      if (n > k) paste0(" ", n - k, " group(s) kept their previous colours.")
+    ), type = "message", duration = 5)
   }, ignoreInit = TRUE)
 
   observeEvent(input$ClusterColorReset, {
@@ -4267,9 +4321,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (is.null(col) || length(lv) == 0) return()
     cols <- complete_cluster_colors(data$cluster_colors[[col]], lv)
     cluster_color_draft$colors <- cols
-    for (i in seq_along(lv)) {
-      colourpicker::updateColourInput(session, paste0("clustercolor_", i), value = cols[i])
-    }
+    cluster_color_picker_version(isolate(cluster_color_picker_version()) + 1L)
   }, ignoreInit = TRUE)
 
   observeEvent(input$ClusterColorClearSaved, {
@@ -4365,6 +4417,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
     Seurat::DimPlot(cds, reduction = red, group.by = col,
                     label = isTRUE(input$ClusterColorShowLabels),
+                    label.size = num_or(input$ClusterColorLabelSize, 7),
                     cols = unname(cols), pt.size = 0.8)
   })
 
@@ -4427,10 +4480,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     names(cols) <- lv
     if (nrow(df) > 0) cols[df$cluster] <- df$color
     cluster_color_draft$colors <- unname(cols[lv])
-    for (i in seq_along(lv)) {
-      colourpicker::updateColourInput(session, paste0("clustercolor_", i),
-                                      value = cols[[lv[i]]])
-    }
+    cluster_color_picker_version(isolate(cluster_color_picker_version()) + 1L)
     showNotification(ui = tagList(
       icon("file-import", style = "margin-right: 5px;"),
       paste0("Imported ", nrow(df), " colour(s). Click Submit to apply them."),
@@ -4630,14 +4680,18 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     output$ExportPreviewGroup.UI <- renderUI({
       req(data$obj)
       if (length(data$cluster_options) == 0) return(NULL)
+      current <- isolate(input$ExportPreviewGroup)
+      selected <- if (!is.null(current) && current %in% data$cluster_options) {
+        current
+      } else if (!is.null(data$cluster_default) &&
+                 data$cluster_default %in% data$cluster_options) {
+        data$cluster_default
+      } else {
+        data$cluster_options[1]
+      }
       selectInput("ExportPreviewGroup", "Preview grouped by:",
                   choices = data$cluster_options,
-                  selected = if (!is.null(data$cluster_default) &&
-                                 data$cluster_default %in% data$cluster_options) {
-                    data$cluster_default
-                  } else {
-                    data$cluster_options[1]
-                  })
+                  selected = selected)
     })
 
     output$export_preview_table <- DT::renderDT(server = FALSE, {
@@ -4904,13 +4958,13 @@ server <- function(input, output, session) {
   output$header_status <- renderUI({
     obj <- data$obj
     if (is.null(obj)) {
-      return(tags$span(style = "color: #dfe6ec; font-size: 12px; padding-left: 10px;",
+      return(tags$span(style = "color: #dfe6ec; font-size: 12px; padding-left: 10px; display: inline-block; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; white-space: nowrap;",
                        "No dataset loaded"))
     }
     proj <- tryCatch(obj@project.name, error = function(e) NULL)
     if (is.null(proj) || !nzchar(proj)) proj <- "Seurat object"
     tags$span(
-      style = "color: #eaf2f8; font-size: 12px; padding-left: 10px; white-space: nowrap;",
+      style = "color: #eaf2f8; font-size: 12px; padding-left: 10px; white-space: nowrap; display: inline-block; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;",
       tags$b(proj), " · ",
       format(ncol(obj), big.mark = ","), " cells · ",
       format(nrow(obj), big.mark = ","), " features · ",

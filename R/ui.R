@@ -196,8 +196,8 @@ explorer_body_ui <- function(tab_list){
                                             param_group_collapse(
                                               id = "featureplot_color", title = "Color Settings",
                                               icon_name = "palette", color = "#8b5cf6",
-                                              colourpicker::colourInput("FeaturePlotLowestExprColor", "Lowest expression color:", "#E5E5E5", palette = "limited"),
-                                              colourpicker::colourInput("FeaturePlotHighestExprColor", "Highest expression color:", "#FF0000", palette = "limited")
+                                              colourpicker::colourInput("FeaturePlotLowestExprColor", "Lowest expression color:", "#E5E5E5", showColour = "both", palette = "square", width = "100%"),
+                                              colourpicker::colourInput("FeaturePlotHighestExprColor", "Highest expression color:", "#FF0000", showColour = "both", palette = "square", width = "100%")
                                             ),
                                             # Advanced Settings Group
                                             param_group_collapse(
@@ -341,8 +341,8 @@ explorer_body_ui <- function(tab_list){
                                           checkboxInput("DotFlipCoordinate",label = "Flip XY Coordinate", FALSE),
                                           conditionalPanel(
                                             condition = "output.DotPlot_Split_isNone",
-                                            colourpicker::colourInput("DotPlotLowestExprColor", "Pick Color for lowest expression:", "#E5E5E5", palette = "limited"),
-                                            colourpicker::colourInput("DotPlotHighestExprColor", "Pick Color for highest expression:", "#0000FF",palette = "limited"),
+                                            colourpicker::colourInput("DotPlotLowestExprColor", "Pick Color for lowest expression:", "#E5E5E5", showColour = "both", palette = "square", width = "100%"),
+                                            colourpicker::colourInput("DotPlotHighestExprColor", "Pick Color for highest expression:", "#0000FF", showColour = "both", palette = "square", width = "100%"),
                                           ),
                                           sliderInput("DotDotScale", label = "Dot Scale:", min = 1, max = 12, value = 6),
                                           sliderInput("DotXlabelSize", label = "X Axis Label Size:", min = 0, max = 20, value = 14),
@@ -1318,6 +1318,7 @@ explorer_body_ui <- function(tab_list){
                                      h4(icon("sliders-h"), "Settings", style = "color: #10b981; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      withSpinner(uiOutput("renameclustersClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("renameclustersDimensionReduction.UI"), proxy.height = "10px"),
+                                     sliderInput("renameclustersLabelSize", "Preview label size:", min = 1, max = 14, value = 7, step = 0.5),
                                      textInput('renameclustersNewClusterName', 'Input Cluster name:', value = "group"),
                                      div(
                                        style = "background: #eff6ff; padding: 10px; border-radius: 4px; margin-top: 15px;",
@@ -1333,7 +1334,7 @@ explorer_body_ui <- function(tab_list){
                                      conditionalPanel(
                                        condition = "output.renameclusterscheck_OK",
                                        div(style = "margin-top: 15px;",
-                                         div(style = "display: flex; gap: 10px; justify-content: center;",
+                                         div(style = "display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;",
                                            actionButton("renameclustersSubmit",
                                                        icon = shiny::icon("arrows-rotate"),
                                                        label = "Update",
@@ -1408,27 +1409,38 @@ explorer_body_ui <- function(tab_list){
           hr(),
           h5(icon("palette"), "Step 2: Colours",
              style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
-          div(style = "display: flex; gap: 10px; align-items: flex-end;",
-            div(style = "flex: 1;", selectInput("ClusterColorPalette", "Palette:",
-                                                choices = color_choice_vector, selected = "default")),
-            div(actionButton("ClusterColorApplyPalette", "Apply",
+          # flex-wrap + min-width:0 let the row shrink with the box: on a
+          # narrow page the Apply button drops below the select instead of
+          # being pushed outside the Settings box.
+          div(style = "display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;",
+            div(style = "flex: 1 1 150px; min-width: 0;",
+                selectInput("ClusterColorPalette", "Palette:",
+                            choices = color_choice_vector, selected = "default",
+                            width = "100%")),
+            div(style = "flex: 0 0 auto;",
+                actionButton("ClusterColorApplyPalette", "Apply",
                              icon = icon("wand-magic-sparkles"), class = "btn-primary",
                              style = "margin-bottom: 15px; border-radius: 6px;"))
           ),
           div(style = "max-height: 320px; overflow-y: auto; padding-right: 4px;",
             uiOutput("ClusterColorPickers.UI")),
           checkboxInput("ClusterColorShowLabels", "Show cluster labels in preview", TRUE),
+          conditionalPanel(
+            condition = "input.ClusterColorShowLabels == true",
+            sliderInput("ClusterColorLabelSize", "Label size:", min = 1, max = 14,
+                        value = 7, step = 0.5)
+          ),
 
           hr(),
           h5(icon("floppy-disk"), "Step 3: Save",
              style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
-          div(style = "display: flex; gap: 8px;",
+          div(style = "display: flex; flex-wrap: wrap; gap: 8px;",
             actionButton("ClusterColorSubmit", "Submit", icon = icon("check"),
                          class = "btn-primary",
-                         style = "flex: 1; padding: 10px; border-radius: 8px; font-weight: 600;"),
+                         style = "flex: 1 1 110px; padding: 10px; border-radius: 8px; font-weight: 600;"),
             actionButton("ClusterColorReset", "Reset", icon = icon("arrows-rotate"),
                          class = "btn-warning",
-                         style = "flex: 1; padding: 10px; border-radius: 8px; font-weight: 600;")
+                         style = "flex: 1 1 110px; padding: 10px; border-radius: 8px; font-weight: 600;")
           ),
           div(style = "margin-top: 8px;",
             actionLink("ClusterColorClearSaved", "Remove saved colours for this resolution",

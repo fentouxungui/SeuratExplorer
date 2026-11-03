@@ -1783,7 +1783,11 @@ create_resizable_plot_ui <- function(plot_id, initial_width = 800, initial_heigh
         border-radius: 8px;
         padding: 20px;
         position: relative;
-        overflow: visible;
+        max-width: 100%;
+        /* A fixed-width plot (800 px by default) must scroll inside its box
+           instead of widening the page on a narrow screen. The resize handles
+           sit within the 20 px padding, so they are not clipped. */
+        overflow: auto;
       ",
     shinyjqui::jqui_resizable(
       div(
