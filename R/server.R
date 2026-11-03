@@ -901,6 +901,22 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       save_cached_plot(plot_cache, "vlnplot", file)
     })
 
+  # The built-in palette selector is ignored once the current resolution has
+  # custom colours; disable it and say why instead of silently ignoring it.
+  observe({
+    has_custom <- !is.null(get_cluster_color_map(data, input$VlnClusterResolution))
+    if (isTRUE(has_custom)) {
+      shinyjs::disable("Vlnfillcolorplatte")
+    } else {
+      shinyjs::enable("Vlnfillcolorplatte")
+    }
+  })
+  output$VlnPaletteHint.UI <- renderUI({
+    if (is.null(get_cluster_color_map(data, input$VlnClusterResolution))) return(NULL)
+    p("Custom cluster colors are in use. Edit them in Cluster Colors.",
+      style = "font-size: 11px; color: #6c757d; margin: 2px 0 0 0;")
+  })
+
   ################################ Dot Plot
 
   # refresh the parsed feature cache when the gene input or the loaded data changes
@@ -1726,7 +1742,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # define Fill choices
   output$CellratioFillChoice.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing CellratioFillChoice.UI...")}
-    selectInput("CellratioFillChoice","Fill in choice:",
+    selectInput("CellratioFillChoice","Fill by:",
                 choices = data$cluster_options,
                 selected = data$cluster_default)
   })
@@ -1776,7 +1792,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     req(input$CellratioFillChoice)
     if(verbose){message("SeuratExplorer: preparing CellratioXChoice.UI...")}
     selectInput("CellratioXChoice",
-                "X axis choice:",
+                "X axis (sample):",
                 choices = data$cluster_options[!data$cluster_options %in% input$CellratioFillChoice])
   })
 
@@ -1795,7 +1811,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$CellratioFacetChoice.UI <- renderUI({
     req(input$CellratioXChoice)
     if(verbose){message("SeuratExplorer: preparing CellratioFacetChoice.UI...")}
-    selectInput("CellratioFacetChoice","Facet choice:",
+    selectInput("CellratioFacetChoice","Facet by:",
                 choices = c("None" = "None",
                             data$cluster_options[!data$cluster_options %in%
                                                    c(input$CellratioFillChoice, input$CellratioXChoice)]),
@@ -1935,6 +1951,22 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     content = function(file) {
       save_cached_plot(plot_cache, "cellratioplot", file)
     })
+
+  # Same rule as the violin plot: custom colours take precedence over the
+  # built-in palette selector, so disable it and explain.
+  observe({
+    has_custom <- !is.null(get_cluster_color_map(data, input$CellratioFillChoice))
+    if (isTRUE(has_custom)) {
+      shinyjs::disable("Cellratiofillcolorplatte")
+    } else {
+      shinyjs::enable("Cellratiofillcolorplatte")
+    }
+  })
+  output$CellratioPaletteHint.UI <- renderUI({
+    if (is.null(get_cluster_color_map(data, input$CellratioFillChoice))) return(NULL)
+    p("Custom cluster colors are in use. Edit them in Cluster Colors.",
+      style = "font-size: 11px; color: #6c757d; margin: 2px 0 0 0;")
+  })
 
   output$cellratiodata <-  DT::renderDT(server=FALSE,{
     req(input$CellratioFillChoice)
@@ -4176,18 +4208,31 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     str(data$obj, max.level = input$ObjectStrutureLevel) # Display the structure of the data frame
   })
 
-  ################################ Cluster Colours
+  # The About tab knits the README. It is rendered on demand (the tab is hidden
+  # until opened, so Shiny suspends this output), which keeps app startup fast.
+  output$about_page <- renderUI({
+    tryCatch(
+      HTML(markdown::markdownToHTML(
+        knitr::knit(system.file("extdata", "README.Rmd", package = "SeuratExplorer"),
+                    quiet = TRUE),
+        fragment.only = TRUE)),
+      error = function(e) {
+        p(paste("Could not render the About page:", conditionMessage(e)))
+      })
+  })
+
+  ################################ Cluster Colors
   output$clustercolors_info <- renderText({
-    paste0('Assign custom colours to the groups of one cluster resolution, then submit them so the same
-    colours are used by every plot that colours cells by cluster.
+    paste0('Assign custom colors to the groups of one cluster resolution, then submit them so the same
+    colors are used by every plot that colors cells by cluster.
     - Step 1: choose the cluster resolution.
-    - Step 2: edit colours one by one, or apply a palette first and adjust a few. Each picker accepts
-      any colour: type a hex value (e.g. #E41A1C) or choose from the full colour square. Groups you
-      leave alone keep their default colours.
+    - Step 2: edit colors one by one, or apply a palette first and adjust a few. Each picker accepts
+      any color: type a hex value (e.g. #E41A1C) or choose from the full color square. Groups you
+      leave alone keep their default colors.
     - Step 3: Submit saves the palette for this session and into
-      obj@misc$SeuratExplorer$cluster_colors, so an object exported from here keeps its colours.
+      obj@misc$SeuratExplorer$cluster_colors, so an object exported from here keeps its colors.
     Export or import a CSV (columns: cluster, color) to reuse a palette in another session or dataset.
-    Note: split violins (Split Plot) keep the split colours, because their two halves are coloured by group.')
+    Note: split violins (Split Plot) keep the split colors, because their two halves are colored by group.')
   })
 
   observeEvent(input$close_clustercolors_info, {
@@ -4248,9 +4293,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (length(cols) != length(lv)) cols <- complete_cluster_colors(NULL, lv)
     lapply(seq_along(lv), function(i) {
       fluidRow(
-        column(6, div(style = "padding-top: 6px; font-size: 13px; color: #374151; word-break: break-all;",
+        column(5, div(style = "padding-top: 6px; font-size: 13px; color: #374151; word-break: break-all;",
                       lv[i])),
-        column(6, colourpicker::colourInput(
+        column(7, colourpicker::colourInput(
           inputId = paste0("clustercolor_", i),
           label = NULL,
           value = if (is.na(cols[i])) "#808080" else unname(cols[i]),
@@ -4309,8 +4354,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     cluster_color_picker_version(isolate(cluster_color_picker_version()) + 1L)
     showNotification(ui = tagList(
       icon("palette", style = "margin-right: 5px;"),
-      paste0("Applied ", k, " colour(s) to the first ", k, " group(s)."),
-      if (n > k) paste0(" ", n - k, " group(s) kept their previous colours.")
+      paste0("Applied ", k, " color(s) to the first ", k, " group(s)."),
+      if (n > k) paste0(" ", n - k, " group(s) kept their previous colors.")
     ), type = "message", duration = 5)
   }, ignoreInit = TRUE)
 
@@ -4325,6 +4370,24 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   }, ignoreInit = TRUE)
 
   observeEvent(input$ClusterColorClearSaved, {
+    req(data$obj)
+    col <- cluster_color_draft$col
+    if (is.null(col)) return()
+    # Destructive: ask before removing the saved palette.
+    showModal(modalDialog(
+      title = "Remove saved colors?",
+      tags$p(paste0("Saved colors for '", col,
+                    "' will be removed. You can set them again and Submit.")),
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("ClusterColorClearSavedConfirm", "Remove", class = "btn-danger")
+      ),
+      easyClose = TRUE
+    ))
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$ClusterColorClearSavedConfirm, {
+    removeModal()
     req(data$obj)
     col <- cluster_color_draft$col
     if (is.null(col)) return()
@@ -4344,7 +4407,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     data$obj <- obj
     data$version <- data$version + 1
     showNotification(ui = tagList(icon("trash", style = "margin-right: 5px;"),
-                                  "Saved colours removed for this resolution."),
+                                  "Saved colors removed for this resolution."),
                      type = "message", duration = 5)
   }, ignoreInit = TRUE)
 
@@ -4358,7 +4421,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       return()
     }
     if (any(!nzchar(cols))) {
-      show_error("Invalid colours", "Every group needs a colour.")
+      show_error("Invalid colors", "Every group needs a color.")
       return()
     }
     names(cols) <- lv
@@ -4377,8 +4440,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     dup <- sum(duplicated(unname(cols)))
     showNotification(ui = tagList(
       icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
-      paste0("Colours saved for ", length(lv), " groups."),
-      if (dup > 0) paste0(" Warning: ", dup, " duplicate colour(s) are in use.")
+      paste0("Colors saved for ", length(lv), " groups."),
+      if (dup > 0) paste0(" Warning: ", dup, " duplicate color(s) are in use.")
     ), type = if (dup > 0) "warning" else "message", duration = 6)
   }, ignoreInit = TRUE)
 
@@ -4392,7 +4455,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     base <- complete_cluster_colors(saved, lv)
     dirty <- !identical(unname(base), unname(cols))
     paste0(length(lv), " groups | ",
-           if (is.null(saved)) "no saved colours" else "saved colours loaded",
+           if (is.null(saved)) "no saved colors" else "saved colors loaded",
            if (dirty) " | unsaved changes",
            if (dup > 0) paste0(" | ", dup, " duplicate(s)"))
   })
@@ -4470,7 +4533,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     bad <- !is_hex_color(df$color)
     if (any(bad)) {
       show_error("Import failed",
-                 paste0(sum(bad), " row(s) do not contain a valid hex colour (e.g. #E41A1C)."))
+                 paste0(sum(bad), " row(s) do not contain a valid hex color (e.g. #E41A1C)."))
       return()
     }
     unknown <- setdiff(df$cluster, lv)
@@ -4483,7 +4546,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     cluster_color_picker_version(isolate(cluster_color_picker_version()) + 1L)
     showNotification(ui = tagList(
       icon("file-import", style = "margin-right: 5px;"),
-      paste0("Imported ", nrow(df), " colour(s). Click Submit to apply them."),
+      paste0("Imported ", nrow(df), " color(s). Click Submit to apply them."),
       if (length(unknown) > 0) {
         paste0(" Ignored ", length(unknown), " group(s) not in this resolution.")
       }

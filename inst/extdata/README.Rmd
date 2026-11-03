@@ -502,7 +502,7 @@ Before running the analysis you can adjust the following parameters (in the **Cu
 
 Above the result table, a one-line provenance record (timestamp, analysis name and the main parameters) shows which settings produced the table currently on screen.
 
-#### External gene annotation links (Only avaliable for github version)
+#### External gene annotation links (Only available for github version)
 
 After results are shown, selecting a row in the results table reveals links to external gene databases. For **Human**, **Mouse** and **Fly**, links to GeneCards, Ensembl, HGNC, MGI, FlyBase, NCBI and UniProt are provided based on the selected feature type (Symbol, Ensembl ID, or Entrez ID).
 
@@ -700,24 +700,24 @@ To rename clusters: select a cluster resolution, edit the ``New_Name`` column in
 
 ### Cluster Colors
 
-Assign custom colours to the groups of one cluster resolution and use the same palette across plots.
+Assign custom colors to the groups of one cluster resolution and use the same palette across plots.
 
 1. Choose a cluster resolution.
-2. Edit colours group by group, or apply one of the built-in palettes first and adjust a few. Each picker accepts any colour: type a hex value (e.g. `#E41A1C`) or choose from the full colour square. Groups you leave untouched keep their default colours.
-3. Click **Submit** to save the palette for the session and store it in `obj@misc$SeuratExplorer$cluster_colors`, so an object exported from the app keeps its colours.
+2. Edit colors group by group, or apply one of the built-in palettes first and adjust a few. Each picker accepts any color: type a hex value (e.g. `#E41A1C`) or choose from the full color square. Groups you leave untouched keep their default colors.
+3. Click **Submit** to save the palette for the session and store it in `obj@misc$SeuratExplorer$cluster_colors`, so an object exported from the app keeps its colors.
 
-The preview shows a DimPlot drawn with the draft colours; cluster labels can be switched off. Duplicate colours are allowed but flagged with a warning. **Export colours (CSV)** writes two columns (`cluster`, `color`); **Import colours (CSV)** reads the same format, ignores groups that do not exist in the current resolution and reports them. **Remove saved colours for this resolution** clears the palette for the selected resolution.
+The preview shows a DimPlot drawn with the draft colors; cluster labels can be switched off. Duplicate colors are allowed but flagged with a warning. **Export colors (CSV)** writes two columns (`cluster`, `color`); **Import colors (CSV)** reads the same format, ignores groups that do not exist in the current resolution and reports them. **Remove saved colors for this resolution** clears the palette for the selected resolution.
 
-Colours are applied to:
+Colors are applied to:
 
 - **Dim Reduction Plot** (including split panels)
-- **Violin Plot** (unsplit, and side-by-side split violins; split violins keep the split colours)
+- **Violin Plot** (unsplit, and side-by-side split violins; split violins keep the split colors)
 - **Cell Percentage Plot**
-- **Ridge Plot** when ridges are coloured by cluster
+- **Ridge Plot** when ridges are colored by cluster
 - **Heatmap (cell level)** group bar (the expression gradient is unchanged)
 - **Average Heatmap** column annotation bar
 
-Dot Plot and Feature Plot use continuous expression colours, so they are not affected.
+Dot Plot and Feature Plot use continuous expression colors, so they are not affected.
 
 ### Gene Based Cluster (BETA)
 

@@ -1742,7 +1742,6 @@ save_cached_plot <- function(cache, key, file, dpi = getOption("SeuratExplorerPd
 #' @param icon_name Character string passed to `shiny::icon()`.
 #' @param color Hex color string for the left border and title accent. Default: "#3b82f6".
 #' @param ... UI elements to place inside the collapsible content area.
-#'   Groups always start expanded.
 #'
 #' @import shiny
 #' @return A `shiny.tag` div representing the collapsible parameter group.

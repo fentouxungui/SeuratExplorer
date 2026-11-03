@@ -15,8 +15,7 @@ param_group_collapse(id, title, icon_name, color = "#3b82f6", ...)
 
 \item{color}{Hex color string for the left border and title accent. Default: "#3b82f6".}
 
-\item{...}{UI elements to place inside the collapsible content area.
-Groups always start expanded.}
+\item{...}{UI elements to place inside the collapsible content area.}
 }
 \value{
 A \code{shiny.tag} div representing the collapsible parameter group.

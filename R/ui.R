@@ -44,7 +44,7 @@ explorer_sidebar_ui <- function(){
     featuresummary = "Summarize gene expression (mean / median / percentage) per cluster.",
     featurecorrelation = "Calculate gene-gene expression correlations.",
     renameclusters = "Interactively rename cluster labels.",
-    clustercolors = "Assign custom colours to the groups of a cluster resolution and share them across plots.",
+    clustercolors = "Assign custom colors to the groups of a cluster resolution and share them across plots.",
     geneclusters = "Group cells by a gene's expression level with custom cutoffs.",
     combinedclusters = "Combine two cluster annotations into a new grouping.",
     addmodulescore = "Score cells with a gene set using AddModuleScore (Seurat) or AUCell.",
@@ -78,7 +78,7 @@ explorer_sidebar_ui <- function(){
                          menuSubItem(text = span(title = tooltips[["combinedclusters"]], "Combination Based Cluster", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "combinedclusters", icon = shiny::icon("angle-right")),
                          menu_divider(),
                          menuSubItem(text = span(title = tooltips[["featuresdf"]], "Search Features"), tabName = "featuresdf", icon = shiny::icon("angle-right")),
-                         menuSubItem(text = span(title = tooltips[["cellmetadata"]], "Cells Metadata"), tabName = "cellmetadata", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span(title = tooltips[["cellmetadata"]], "Cell Metadata"), tabName = "cellmetadata", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["objectstructure"]], "Object Structure"), tabName = "objectstructure", icon = shiny::icon("angle-right")),
                          if (isTRUE(getOption("SeuratExplorerEnableObjectExport", TRUE))) {
                            menuSubItem(text = span(title = tooltips[["exportdata"]], "Export Data"), tabName = "exportdata", icon = shiny::icon("angle-right"))
@@ -134,7 +134,7 @@ explorer_body_ui <- function(tab_list){
                                         param_group_collapse(
                                           id = "dimplot_size", title = "Size Settings",
                                           icon_name = "adjust", color = "#f59e0b",
-                                          sliderInput("DimLabelSize", label = "Label Size:", min = 0, max = 10, value = 7),
+                                          sliderInput("DimLabelSize", label = "Label Size:", min = 0, max = 20, value = 7),
                                           sliderInput("DimPointSize", label = "Point Size:", min = 0.001, max = 2, value = 0.8)
                                         ),
                                         # Advanced Options
@@ -148,7 +148,9 @@ explorer_body_ui <- function(tab_list){
                                                                               withSpinner(uiOutput("DimClusterOrder.UI"), proxy.height = "10px"),
                                                                               style = "info")),
                                           checkboxInput("DimPlotMode",label = "Automatically adjust plotting area", TRUE),
-                                          uiOutput("dimplot_size_ui")
+                                          uiOutput("dimplot_size_ui"),
+                                          p("Colors can be set in Cluster Colors (sidebar).",
+                                            style = "font-size: 11px; color: #6c757d; margin: 6px 0 0 0;")
                                         )
                                     )
                                   )
@@ -190,7 +192,7 @@ explorer_body_ui <- function(tab_list){
                                               icon_name = "eye", color = "#f59e0b",
                                               checkboxInput("FeatureShowLabel",label = "Show cluster label", FALSE),
                                               withSpinner(uiOutput("FeatureSplit.UI"), proxy.height = "10px"),
-                                              sliderInput("FeatureLabelSize", label = "Label Size:", min = 1, max = 12, value = 4)
+                                              sliderInput("FeatureLabelSize", label = "Label Size:", min = 1, max = 20, value = 4)
                                             ),
                                             # Color Settings Group
                                             param_group_collapse(
@@ -207,7 +209,7 @@ explorer_body_ui <- function(tab_list){
                                               sliderInput("FeatureMinCutoff", label = "Min expression cutoff (%):", min = 0, max = 100, value = 0),
                                               sliderInput("FeatureMaxCutoff", label = "Max expression cutoff (%):", min = 0, max = 100, value = 100),
                                               sliderInput("FeaturePointSize", label = "Point Size:", min = 0.001, max = 5, value = 0.8),
-                                              checkboxInput("FeaturePlotMode",label = "Auto-adjust plotting area", TRUE),
+                                              checkboxInput("FeaturePlotMode",label = "Automatically adjust plotting area", TRUE),
                                               uiOutput("featureplot_size_ui")
                                             )
                                         )
@@ -261,12 +263,17 @@ explorer_body_ui <- function(tab_list){
                                             checkboxInput("VlnSplitPlot",label = "Split Plot", FALSE)
                                           ),
                                           conditionalPanel(
+                                            condition = "input.VlnSplitPlot == true",
+                                            p("Split violins keep the split colors; cluster colors apply to unsplit and side-by-side split plots.",
+                                              style = "font-size: 11px; color: #856404; margin: -4px 0 10px 0;")
+                                          ),
+                                          conditionalPanel(
                                             condition = "output.Vlnplot_multiple_genes",
                                             checkboxInput("VlnStackPlot",label = "Stack Plot", FALSE)
                                           ),
                                           conditionalPanel(
                                             condition = "output.Vlnplot_StackPlot",
-                                            checkboxInput("VlnFlipPlot",label = "Flip Plot", FALSE)
+                                            checkboxInput("VlnFlipPlot",label = "Flip axes", FALSE)
                                           ),
                                           conditionalPanel(
                                             condition = "output.Vlnplot_StackPlot && input.VlnSplitBy == 'None'",
@@ -274,7 +281,8 @@ explorer_body_ui <- function(tab_list){
                                           ),
                                           conditionalPanel(
                                             condition = "input.VlnSplitBy == 'None'",
-                                            selectInput("Vlnfillcolorplatte","select color plate:", choices = color_choice_vector, selected = "Default")
+                                            selectInput("Vlnfillcolorplatte","Color palette:", choices = color_choice_vector, selected = "default"),
+                                            uiOutput("VlnPaletteHint.UI")
                                           ),
                                           sliderInput("VlnPointSize", label = "Point Size:", min = 0, max = 4, value = 0),
                                           sliderInput("VlnPointAlpha", label = "Point Alpha:", min = 0, max = 1, value = 1),
@@ -322,7 +330,7 @@ explorer_body_ui <- function(tab_list){
                                                             bsCollapsePanel(title = "Change Cluster Order",
                                                                                      withSpinner(uiOutput("DotClusterOrder.UI"), proxy.height = "10px"),
                                                                                      style = "info", value = "0")),
-                                          checkboxInput("DotClusterIdents",label = "Cluster the Clusters", FALSE)
+                                          checkboxInput("DotClusterIdents",label = "Cluster x-axis groups", FALSE)
                                         ),
 
                                         # Filter Cells
@@ -337,8 +345,8 @@ explorer_body_ui <- function(tab_list){
                                         param_group_collapse(
                                           id = "dotplot_plot", title = "Plot Options",
                                           icon_name = "sliders-h", color = "#f59e0b",
-                                          checkboxInput("DotRotateAxis",label = "Rotate x Axis Labels", FALSE),
-                                          checkboxInput("DotFlipCoordinate",label = "Flip XY Coordinate", FALSE),
+                                          checkboxInput("DotRotateAxis",label = "Rotate x-axis labels", FALSE),
+                                          checkboxInput("DotFlipCoordinate",label = "Flip axes", FALSE),
                                           conditionalPanel(
                                             condition = "output.DotPlot_Split_isNone",
                                             colourpicker::colourInput("DotPlotLowestExprColor", "Pick Color for lowest expression:", "#E5E5E5", showColour = "both", palette = "square", width = "100%"),
@@ -395,7 +403,7 @@ explorer_body_ui <- function(tab_list){
                                         param_group_collapse(
                                           id = "heatmap_plot", title = "Plot Options",
                                           icon_name = "sliders-h", color = "#f59e0b",
-                                          sliderInput("HeatmapTextSize", label = "Cluster Text Size:", min = 1, max = 12, value = 6, step = 0.5),
+                                          sliderInput("HeatmapTextSize", label = "Cluster Text Size:", min = 1, max = 20, value = 6, step = 0.5),
                                           sliderInput("HeatmapTextHjust", label = "Cluster Text Hjust:", min = -10, max = 20, value = 0, step = 0.5),
                                           sliderInput("HeatmapTextVjust", label = "Cluster Text Vjust:", min = -5, max = 5, value = 0, step = 0.1),
                                           sliderInput("HeatmapTextRatateAngle", label = "Cluster Text Rotate Angle:", min = -90, max = 90, value = 0, step = 1),
@@ -561,8 +569,9 @@ explorer_body_ui <- function(tab_list){
                                           param_group_collapse(
                                             id = "cellratio_plot", title = "Plot Options",
                                             icon_name = "sliders-h", color = "#f59e0b",
-                                            selectInput("Cellratiofillcolorplatte","select color plate:", choices = color_choice_vector, selected = "Default"),
-                                            checkboxInput("CellratioRotateAxis",label = "Rotate X Axis", FALSE),
+                                            selectInput("Cellratiofillcolorplatte","Color palette:", choices = color_choice_vector, selected = "default"),
+                                            uiOutput("CellratioPaletteHint.UI"),
+                                            checkboxInput("CellratioRotateAxis",label = "Rotate x-axis labels", FALSE),
                                             sliderInput("CellratioColumnWidth", label = "Column width:", min = 0, max = 1, value = 0.7),
                                             sliderInput("CellratioFlowAlpha", label = "Flow alpha:", min = 0, max = 1, value = 0.3),
                                             sliderInput("CellratioFlowCurve", label = "Flow curve:", min = 0, max = 1, value = 0.3),
@@ -736,7 +745,7 @@ explorer_body_ui <- function(tab_list){
                                             div(style = "text-align: center;",
                                               actionButton("SetDefault",
                                                           icon = shiny::icon("save"),
-                                                          label = "Set to Default",
+                                                          label = "Reset to defaults",
                                                           class = "btn-warning",
                                                           style = "padding: 10px 30px; border-radius: 8px; font-weight: 600;")
                                             ))
@@ -934,7 +943,7 @@ explorer_body_ui <- function(tab_list){
                                        tabPanel("Find Top Genes by Cell",
                                                 div(
                                                   style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
-                                                  sliderInput("TopGenesTopPercent", "UMI percentage cutoff(%):", min = 1, max = 50, value = 1, step = 1,  width = "100%")
+                                                  sliderInput("TopGenesTopPercent", "UMI percentage cutoff (%):", min = 1, max = 50, value = 1, step = 1,  width = "100%")
                                                 ),
                                                 div(style = "text-align: center; margin-top: 25px;",
                                                   actionButton("TopGenesAnalysis",
@@ -946,7 +955,7 @@ explorer_body_ui <- function(tab_list){
                                        tabPanel("Find Top Genes by Accumulated UMI Counts",
                                                 div(
                                                   style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
-                                                  sliderInput("TopGenesTopN", "Top n:", min = 10, max = 1000, value = 100, step = 10,  width = "100%")
+                                                  sliderInput("TopGenesTopN", "Top N:", min = 10, max = 1000, value = 100, step = 10,  width = "100%")
                                                 ),
                                                 div(style = "text-align: center; margin-top: 25px;",
                                                   actionButton("TopAccumulatedGenesAnalysis",
@@ -1318,8 +1327,8 @@ explorer_body_ui <- function(tab_list){
                                      h4(icon("sliders-h"), "Settings", style = "color: #10b981; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      withSpinner(uiOutput("renameclustersClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("renameclustersDimensionReduction.UI"), proxy.height = "10px"),
-                                     sliderInput("renameclustersLabelSize", "Preview label size:", min = 1, max = 14, value = 7, step = 0.5),
-                                     textInput('renameclustersNewClusterName', 'Input Cluster name:', value = "group"),
+                                     sliderInput("renameclustersLabelSize", "Preview label size:", min = 1, max = 20, value = 7, step = 0.5),
+                                     textInput('renameclustersNewClusterName', 'New column name:', value = "group"),
                                      div(
                                        style = "background: #eff6ff; padding: 10px; border-radius: 4px; margin-top: 15px;",
                                        uiOutput("renameclustersNewClusterNamehints.UI")
@@ -1407,7 +1416,7 @@ explorer_body_ui <- function(tab_list){
           withSpinner(uiOutput("ClusterColorsResolution.UI"), proxy.height = "10px"),
 
           hr(),
-          h5(icon("palette"), "Step 2: Colours",
+          h5(icon("palette"), "Step 2: Colors",
              style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
           # flex-wrap + min-width:0 let the row shrink with the box: on a
           # narrow page the Apply button drops below the select instead of
@@ -1427,7 +1436,7 @@ explorer_body_ui <- function(tab_list){
           checkboxInput("ClusterColorShowLabels", "Show cluster labels in preview", TRUE),
           conditionalPanel(
             condition = "input.ClusterColorShowLabels == true",
-            sliderInput("ClusterColorLabelSize", "Label size:", min = 1, max = 14,
+            sliderInput("ClusterColorLabelSize", "Label size:", min = 1, max = 20,
                         value = 7, step = 0.5)
           ),
 
@@ -1443,16 +1452,16 @@ explorer_body_ui <- function(tab_list){
                          style = "flex: 1 1 110px; padding: 10px; border-radius: 8px; font-weight: 600;")
           ),
           div(style = "margin-top: 8px;",
-            actionLink("ClusterColorClearSaved", "Remove saved colours for this resolution",
+            actionLink("ClusterColorClearSaved", "Remove saved colors for this resolution",
                        style = "color: #dc3545; font-size: 12px;")),
           div(style = "margin-top: 8px;", textOutput("ClusterColorStatus")),
 
           hr(),
-          downloadButton("download_cluster_colors", "Export colours (CSV)",
+          downloadButton("download_cluster_colors", "Export colors (CSV)",
                          class = "btn-primary",
                          style = "width: 100%; padding: 10px; border-radius: 8px; font-weight: 600;"),
           div(style = "margin-top: 10px;",
-            fileInput("ClusterColorImportFile", "Import colours (CSV)",
+            fileInput("ClusterColorImportFile", "Import colors (CSV)",
                       accept = ".csv", buttonLabel = "Browse...",
                       placeholder = "Two columns: cluster,color")),
           p("CSV format: two columns named cluster and color (hex, e.g. #E41A1C).",
@@ -1480,7 +1489,7 @@ explorer_body_ui <- function(tab_list){
             class = "box-body",
             style = "padding: 20px;",
             withSpinner(plotOutput("clustercolors_preview", height = "520px")),
-            p("Colours are applied to Dim Reduction Plot, Violin Plot (un-split and side-by-side split), Cell Percentage Plot, Ridge Plot (coloured by cluster), the Heatmap Cell Level group bar and the Average Heatmap annotation bar. Split violins keep the split colours.",
+            p("Colors are applied to Dim Reduction Plot, Violin Plot (un-split and side-by-side split), Cell Percentage Plot, Ridge Plot (colored by cluster), the Heatmap Cell Level group bar and the Average Heatmap annotation bar. Split violins keep the split colors.",
               style = "font-size: 12px; color: #6c757d; margin-top: 10px;")
           )
         )
@@ -1640,7 +1649,7 @@ explorer_body_ui <- function(tab_list){
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
                                          icon("table", style = "color: #3b82f6; font-size: 18px;"),
-                                         h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Metadata of Cells")
+                                         h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Cell Metadata")
                                        )
                                      ),
                                      div(
@@ -1816,7 +1825,7 @@ explorer_body_ui <- function(tab_list){
   tab_list[["about"]] = tabItem(tabName = "about",
                                 fluidRow(
                                   box(title = "About Seurat Explorer", solidHeader = TRUE, status = "primary", width = 12,
-                                      HTML(markdown::markdownToHTML(knitr::knit(system.file("extdata", "README.Rmd", package ="SeuratExplorer"), quiet=T),fragment.only = T)))
+                                      withSpinner(uiOutput("about_page")))
                                 )
   )
   return(tab_list)
