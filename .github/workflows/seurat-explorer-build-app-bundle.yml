@@ -16,13 +16,12 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to attach bundles to"
+        description: "Existing tag to attach bundles to (e.g. v0.1.10)"
         required: false
         type: string
-        default: "v0.1.10"
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   APP_ID: seurat-explorer
@@ -32,6 +31,9 @@ env:
   APP_HOMEPAGE: "https://github.com/fentouxungui/SeuratExplorer"
   APP_LICENSE: "GPL-3.0-or-later"
   R_VERSION: "4.6.1"
+  CRAN_SNAPSHOT: "2026-10-01"
+  SMOKE: "on"
+  SMOKE_TIMEOUT_SEC: "300"
 
 jobs:
   bundle:
@@ -41,30 +43,52 @@ jobs:
       matrix:
         include:
           - { os: windows-latest, platform: "win-x64" }
-          - { os: macos-14,       platform: "mac-arm64" }
+          - { os: macos-15,       platform: "mac-arm64" }
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 0
 
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ env.R_VERSION }}
-          use-public-rspm: true
+          use-public-rspm: false
 
       - name: Install build helpers
-        shell: bash
-        run: Rscript -e 'install.packages(c("jsonlite","zip","digest","BiocManager"), repos="https://cloud.r-project.org")'
-
-      - name: Resolve version
-        shell: bash
+        shell: Rscript {0}
         run: |
-          V="${{ inputs.tag || github.event.release.tag_name || github.ref_name }}"
+          snap <- Sys.getenv("CRAN_SNAPSHOT")
+          cran <- if (nzchar(snap)) sprintf("https://packagemanager.posit.co/cran/%s", snap) else "https://cloud.r-project.org"
+          install.packages(c("jsonlite","zip","digest","BiocManager","callr","curl"), repos = cran)
+
+      - name: Resolve and validate version
+        shell: bash
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          V="${INPUT_TAG:-${RELEASE_TAG:-}}"
           V="${V#v}"
-          if [ -z "$V" ] || [ "$V" = "master" ] || [ "$V" = "main" ]; then
-            V=$(grep '^Version:' DESCRIPTION | awk '{print $2}')
+          if [ -z "$V" ]; then V="$(grep '^Version:' DESCRIPTION | awk '{print $2}' | head -n1)"; fi
+          if [ -z "$V" ]; then echo "::error::cannot resolve version"; exit 1; fi
+          TAG="v$V"
+          if [ -n "${INPUT_TAG}${RELEASE_TAG}" ]; then
+            if ! git rev-parse --verify "refs/tags/$TAG" >/dev/null 2>&1; then
+              echo "::error::tag $TAG does not exist in this checkout"
+              exit 1
+            fi
+            TAG_COMMIT="$(git rev-parse "$TAG^{commit}")"
+            HEAD_COMMIT="$(git rev-parse HEAD)"
+            if [ "$TAG_COMMIT" != "$HEAD_COMMIT" ]; then
+              echo "::error::checked-out commit $HEAD_COMMIT does not match $TAG ($TAG_COMMIT)"
+              exit 1
+            fi
           fi
           echo "VERSION=$V" >> "$GITHUB_ENV"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "SOURCE_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "building $TAG at $(git rev-parse HEAD)"
 
       - name: Build source tarball
         shell: bash
@@ -76,8 +100,13 @@ jobs:
           bundle <- file.path(getwd(), "bundle")
           unlink(bundle, recursive = TRUE); dir.create(bundle, recursive = TRUE)
           lib <- file.path(bundle, "rlib"); dir.create(lib, recursive = TRUE)
-          repos <- BiocManager::repositories()
+          snap <- Sys.getenv("CRAN_SNAPSHOT")
+          cran <- if (nzchar(snap)) sprintf("https://packagemanager.posit.co/cran/%s", snap) else "https://cloud.r-project.org"
+          bioc <- BiocManager::repositories()
+          if (!is.null(names(bioc))) bioc <- bioc[!grepl("cran", names(bioc), ignore.case = TRUE)]
+          repos <- c(CRAN = cran, bioc)
           options(repos = repos)
+          cat("CRAN:", cran, "\n")
 
           tb <- list.files(".", pattern = sprintf("^SeuratExplorer_%s[.]tar[.]gz$", Sys.getenv("VERSION")), full.names = TRUE)
           if (length(tb) == 0) {
@@ -186,13 +215,66 @@ jobs:
           zip::zipr(out, files = list.files(".", all.files = TRUE, no.. = TRUE))
           entries <- utils::unzip(out, list = TRUE)$Name
           if (!any(grepl("^rlib/", entries))) stop("zip is missing rlib/ -- aborting")
+          if (!any(grepl("^app/app[.]R$", entries))) stop("zip is missing app/app.R -- aborting")
           setwd(old)
           file.rename(file.path(bundle, out), out)
           sha <- digest::digest(out, algo = "sha256", file = TRUE)
-          writeLines(sprintf('{"platform":"%s","file":"%s","sha256":"%s","size":%d}',
-                     "${{ matrix.platform }}", out, sha, file.size(out)),
-                     sprintf("meta-%s.json", "${{ matrix.platform }}"))
+          jsonlite::write_json(list(
+            app_id = Sys.getenv("APP_ID"), version = Sys.getenv("VERSION"),
+            platform = "${{ matrix.platform }}", file = out, sha256 = sha, size = file.size(out),
+            source_repository = Sys.getenv("GITHUB_REPOSITORY"),
+            source_commit = Sys.getenv("SOURCE_COMMIT"),
+            source_tag = Sys.getenv("TAG"),
+            cran_snapshot = Sys.getenv("CRAN_SNAPSHOT")
+          ), sprintf("meta-%s.json", "${{ matrix.platform }}"), pretty = TRUE, auto_unbox = TRUE)
           cat("bundle zip size:", file.size(out), "\n")
+
+      - name: Smoke test (start the bundle like the ShinyApps shell)
+        if: ${{ env.SMOKE != 'off' }}
+        timeout-minutes: 12
+        shell: Rscript {0}
+        run: |
+          app_id <- Sys.getenv("APP_ID"); ver <- Sys.getenv("VERSION"); plat <- "${{ matrix.platform }}"
+          zip <- sprintf("%s-%s-%s.zip", app_id, ver, plat)
+          if (!file.exists(zip)) stop("smoke: bundle not found: ", zip)
+          tmp <- tempfile("smoke"); dir.create(tmp)
+          utils::unzip(zip, exdir = tmp)
+          appdir <- file.path(tmp, "app"); lib <- file.path(tmp, "rlib")
+          if (!dir.exists(appdir) || !dir.exists(lib)) stop("smoke: unexpected bundle layout")
+          .libPaths(c(lib, .libPaths()))
+          timeout <- suppressWarnings(as.integer(Sys.getenv("SMOKE_TIMEOUT_SEC", "300"))); if (is.na(timeout) || timeout < 30) timeout <- 300
+          serve <- function(appdir, lib, port) {
+            .libPaths(c(lib, .Library))
+            old <- setwd(appdir); on.exit(setwd(old), add = TRUE)
+            shiny::runApp(".", port = port, host = "127.0.0.1", launch.browser = FALSE, quiet = TRUE)
+          }
+          port <- httpuv::randomPort()
+          proc <- callr::r_bg(serve, args = list(appdir = appdir, lib = lib, port = port),
+                              supervise = TRUE, env = c(R_LIBS_USER = "", R_LIBS_SITE = ""))
+          on.exit(try(proc$kill(), silent = TRUE), add = TRUE)
+          url <- sprintf("http://127.0.0.1:%d/", port)
+          deadline <- Sys.time() + timeout
+          out <- character()
+          repeat {
+            out <- c(out, proc$read_output_lines(), proc$read_error_lines())
+            if (!proc$is_alive()) {
+              cat(paste(out, collapse = "\n"), "\n")
+              stop("smoke test FAILED: the app exited before serving a page")
+            }
+            served <- tryCatch({
+              h <- curl::new_handle(connecttimeout = 5L, timeout = 10L)
+              r <- curl::curl_fetch_memory(url, handle = h)
+              r$status_code == 200L && length(r$content) > 0 &&
+                grepl("<!doctype|<html", rawToChar(r$content), ignore.case = TRUE)
+            }, error = function(e) FALSE)
+            if (isTRUE(served)) break
+            if (Sys.time() >= deadline) {
+              cat(paste(out, collapse = "\n"), "\n")
+              stop("smoke test FAILED: ", url, " did not serve a page within ", timeout, "s")
+            }
+            Sys.sleep(1)
+          }
+          cat("SMOKE OK:", url, "served an HTML page\n")
 
       - uses: actions/upload-artifact@v4
         with:
@@ -203,7 +285,7 @@ jobs:
 
   release:
     needs: bundle
-    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v') || inputs.tag != ''
+    if: github.event_name == 'release' || github.event.inputs.tag != ''
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -212,7 +294,68 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
+      - name: Consolidate release metadata
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import datetime, glob, json, os
+
+          metas = {}
+          for path in sorted(glob.glob("artifacts/meta-*.json")):
+              platform = os.path.basename(path)[5:-5]
+              metas[platform] = json.load(open(path))
+          first = next(iter(metas.values()), {})
+          info = {
+              "app_id": first.get("app_id", "seurat-explorer"),
+              "version": first.get("version", ""),
+              "source_repository": first.get("source_repository", ""),
+              "source_commit": first.get("source_commit", ""),
+              "generated_at": datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+              "platforms": metas,
+          }
+          with open("artifacts/build-info.json", "w") as fh:
+              json.dump(info, fh, indent=2)
+              fh.write("\n")
+          PY
+          cd artifacts && sha256sum *.zip > SHA256SUMS
+          rm -f meta-*.json
+      - name: Refuse to overwrite published assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          ERR="$(mktemp)"
+          set +e
+          release_json="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets,name 2>"$ERR")"
+          rc=$?
+          set -e
+          if [ "$rc" -eq 0 ]; then
+            existing="$(printf '%s' "$release_json" | jq -r '.assets[]?.name')"
+            for f in artifacts/*; do
+              n="$(basename "$f")"
+              if printf '%s\n' "$existing" | grep -qxF "$n"; then
+                echo "::error::release asset already exists: $n"
+                exit 1
+              fi
+            done
+          elif grep -qiE 'release not found|HTTP 404' "$ERR"; then
+            echo "release $TAG does not exist yet; the upload step will create it"
+          else
+            echo "::error::could not read release $TAG; refusing to guess"
+            cat "$ERR"
+            exit 1
+          fi
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.tag || github.ref_name }}
-          files: artifacts/*.zip
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: ${{ github.event.release.name || github.event.inputs.tag || github.ref_name }}
+          files: |
+            artifacts/*.zip
+            artifacts/SHA256SUMS
+            artifacts/build-info.json
+          overwrite_files: false
+          fail_on_unmatched_files: true
+          generate_release_notes: false
