@@ -1,7 +1,7 @@
 prepare_seurat_object <- function(obj, verbose = FALSE){
   requireNamespace("Seurat")
   # trans the none-factor columns in meta.data to factor
-  # if the unique counts less than 1/20 of total cells, and not more than 50, in chr or num type columns，will be forced to factor type.
+  # if the unique counts less than 1/20 of total cells, and not more than 50, in chr or num type columns, will be forced to factor type.
   # possible problem: unique_max_percent = 0.05 may not suitable for a data has 100 cells but more than 5 clusters.
   obj@meta.data <- modify_columns_types(df = obj@meta.data, types_to_check = c("numeric", "character"), unique_max_counts = 200, unique_max_percent = 0.1, verbose = verbose)
   # remove zero count levels
@@ -1690,7 +1690,7 @@ presto_missing_ui <- function() {
     tags$strong("presto is not installed."),
     " The Wilcoxon rank sum test will use Seurat's slower implementation, so this step may take much longer.",
     tags$br(),
-    tags$code(style = "font-size: 11px;", "devtools::install_github('immunogenomics/presto')"),
+    tags$code(style = "font-size: 11px;", "install.packages('presto')"),
     " and restart the app to enable the fast version."
   )
 }
@@ -1751,12 +1751,12 @@ show_error <- function(title, detail, subtitle = NULL, code = NULL, size = "m") 
 
 # One-line provenance shown above result tables, so a result can always be
 # traced back to the analysis and the main parameters that produced it:
-# "2026-10-28 14:05 · Cluster markers · 1234 markers · test: wilcox · assay: RNA"
+# "2026-10-28 14:05 \u00b7 Cluster markers \u00b7 1234 markers \u00b7 test: wilcox \u00b7 assay: RNA"
 run_info_line <- function(...) {
   parts <- as.character(unlist(list(...), use.names = FALSE))
   parts <- parts[!is.na(parts) & nzchar(parts)]
-  paste0(format(Sys.time(), "%Y-%m-%d %H:%M"), "  ·  ",
-         paste(parts, collapse = "  ·  "))
+  paste0(format(Sys.time(), "%Y-%m-%d %H:%M"), "  \u00b7  ",
+         paste(parts, collapse = "  \u00b7  "))
 }
 
 # Remove the scale.data layer from every assay, used by the "Export Data" page

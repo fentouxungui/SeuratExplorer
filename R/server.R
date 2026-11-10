@@ -10,9 +10,9 @@
 #' @param data the Seurat object and related parameters
 #'
 #' @import Seurat SeuratObject
-#' @importFrom utils str head
+#' @importFrom utils str head object.size
 #' @importFrom grDevices dev.off pdf
-#' @importFrom stats na.omit setNames
+#' @importFrom stats na.omit setNames ave
 #' @importFrom shinyjs hide html runjs
 #' @export
 #' @return server side functions related to `explorer_sidebar_ui`
@@ -5072,11 +5072,11 @@ server <- function(input, output, session) {
     if (is.null(proj) || !nzchar(proj)) proj <- "Seurat object"
     tags$span(
       style = "color: #eaf2f8; font-size: 12px; padding-left: 10px; white-space: nowrap; display: inline-block; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;",
-      tags$b(proj), " · ",
-      format(ncol(obj), big.mark = ","), " cells · ",
-      format(nrow(obj), big.mark = ","), " features · ",
+      tags$b(proj), " \u00b7 ",
+      format(ncol(obj), big.mark = ","), " cells \u00b7 ",
+      format(nrow(obj), big.mark = ","), " features \u00b7 ",
       "assay ", tags$b(tryCatch(SeuratObject::DefaultAssay(obj), error = function(e) "-")),
-      " · modified ", tags$b(data$version)
+      " \u00b7 modified ", tags$b(data$version)
     )
   })
 

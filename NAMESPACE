@@ -49,11 +49,13 @@ importFrom(shinyjs,
   useShinyjs
 )
 importFrom(stats,
+  ave,
   na.omit,
   setNames
 )
 importFrom(utils,
   head,
+  object.size,
   str,
   write.csv
 )

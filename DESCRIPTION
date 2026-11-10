@@ -50,7 +50,6 @@ Suggests:
     Signac
 Remotes:
     bioc::release/ComplexHeatmap,
-    github::immunogenomics/presto,
     bioc::release/MAST,
     bioc::release/limma,
     bioc::release/DESeq2,
