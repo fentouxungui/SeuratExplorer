@@ -572,6 +572,24 @@ explorer_body_ui <- function(tab_list){
                                             selectInput("Cellratiofillcolorplatte","Color palette:", choices = color_choice_vector, selected = "default"),
                                             uiOutput("CellratioPaletteHint.UI"),
                                             checkboxInput("CellratioRotateAxis",label = "Rotate x-axis labels", FALSE),
+                                            conditionalPanel(
+                                              condition = "input.CellratioFacetChoice == 'None'",
+                                              checkboxInput("CellratioShowSampleSize", label = "Show sample sizes on x-axis", FALSE)
+                                            ),
+                                            checkboxInput("CellratioShowPercent", label = "Show percentages", FALSE),
+                                            conditionalPanel(
+                                              condition = "input.CellratioShowPercent == true",
+                                              sliderInput("CellratioPercentCutoff", "Hide labels below (%):",
+                                                          min = 0, max = 20, value = 2.5, step = 0.5),
+                                              sliderInput("CellratioPercentSize", "Label size:",
+                                                          min = 1, max = 12, value = 4, step = 0.5),
+                                              selectInput("CellratioPercentDigits", "Decimal places:",
+                                                          choices = c("0" = 0, "1" = 1, "2" = 2), selected = 1),
+                                              selectInput("CellratioPercentColor", "Label color:",
+                                                          choices = c("Automatic" = "auto", "Black" = "black", "White" = "white"),
+                                                          selected = "auto"),
+                                              checkboxInput("CellratioPercentListRare", "List small segments below plot", FALSE)
+                                            ),
                                             sliderInput("CellratioColumnWidth", label = "Column width:", min = 0, max = 1, value = 0.7),
                                             sliderInput("CellratioFlowAlpha", label = "Flow alpha:", min = 0, max = 1, value = 0.3),
                                             sliderInput("CellratioFlowCurve", label = "Flow curve:", min = 0, max = 1, value = 0.3),

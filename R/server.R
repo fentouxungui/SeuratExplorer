@@ -1894,6 +1894,18 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     cr_map <- get_cluster_color_map(data, isolate(input$CellratioFillChoice))
     cr_fill <- if (is.null(cr_map)) NULL else
       complete_cluster_colors(cr_map, CellratioFillOrder.Safe())
+    # Optional percentage labels (see cellRatioPlot())
+    show_pct <- isTRUE(input$CellratioShowPercent)
+    pct_cutoff <- if (is.null(input$CellratioPercentCutoff)) 2.5 else input$CellratioPercentCutoff
+    pct_size <- num_or(input$CellratioPercentSize, 4)
+    # selectInput() values arrive as strings ("0"/"1"/"2"); cellRatioPlot()
+    # converts them with as.integer(), so pass them through unchanged.
+    pct_digits <- input$CellratioPercentDigits
+    if (is.null(pct_digits)) pct_digits <- 1
+    pct_text_col <- input$CellratioPercentColor
+    if (is.null(pct_text_col)) pct_text_col <- "auto"
+    pct_list_rare <- isTRUE(input$CellratioPercentListRare)
+    show_sample_n <- isTRUE(input$CellratioShowSampleSize)
     if (is.null(FacetChoice.Revised())) { # not facet
       p <- cellRatioPlot(object = cds,
                          idents = CellratioFillOrder.Safe(),
@@ -1907,7 +1919,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                          flow.alpha = input$CellratioFlowAlpha,
                          flow.curve = input$CellratioFlowCurve,
                          color.choice = input$Cellratiofillcolorplatte,
-                         fill.values = cr_fill)
+                         fill.values = cr_fill,
+                         show_percent = show_pct,
+                         percent_cutoff = pct_cutoff,
+                         percent_size = pct_size,
+                         percent_digits = pct_digits,
+                         percent_text_color = pct_text_col,
+                         list_rare = pct_list_rare,
+                         show_sample_size = show_sample_n)
     }else{
       p <- cellRatioPlot(object = cds,
                          idents = CellratioFillOrder.Safe(),
@@ -1921,7 +1940,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                          flow.alpha = input$CellratioFlowAlpha,
                          flow.curve = input$CellratioFlowCurve,
                          color.choice = input$Cellratiofillcolorplatte,
-                         fill.values = cr_fill)
+                         fill.values = cr_fill,
+                         show_percent = show_pct,
+                         percent_cutoff = pct_cutoff,
+                         percent_size = pct_size,
+                         percent_digits = pct_digits,
+                         percent_text_color = pct_text_col,
+                         list_rare = pct_list_rare,
+                         show_sample_size = FALSE)
     }
     if (input$CellratioRotateAxis) {
       p <- p & ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
@@ -1984,18 +2010,36 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       df <- reshape2::melt(table(meta[,input$CellratioFacetChoice], meta[, input$CellratioFillChoice], meta[, input$CellratioXChoice]))
       colnames(df) <- c(input$CellratioFacetChoice, input$CellratioFillChoice, input$CellratioXChoice, 'cell_counts')
     }
-    return(DT::datatable(df,
-                         extensions = 'Buttons',
-                         options = list(scrollX=TRUE,
-                                          paging = TRUE,
-                                          searching = TRUE,
-                                          fixedColumns = TRUE,
-                                          autoWidth = TRUE,
-                                          ordering = TRUE,
-                                          dom = 'Bfrtip',
-                                          buttons = list('copy',
-                                                         list(extend = 'csv', title = "DEGs"),
-                                                         list(extend = 'excel', title = "DEGs")))))
+    # Percentages within the same group used by cellRatioPlot(): per x-axis
+    # sample, or per sample x facet when faceting. They therefore match the
+    # labels drawn inside the bars. The decimal places follow the plot setting.
+    grp <- if (is.null(FacetChoice.Revised())) {
+      df[[input$CellratioXChoice]]
+    } else {
+      interaction(df[[input$CellratioFacetChoice]], df[[input$CellratioXChoice]],
+                  drop = TRUE)
+    }
+    denom <- ave(df$cell_counts, grp, FUN = sum)
+    df$percent <- ifelse(denom > 0, df$cell_counts / denom, NA_real_)
+    pct_digits_tbl <- input$CellratioPercentDigits
+    if (is.null(pct_digits_tbl)) pct_digits_tbl <- 1
+    pct_digits_tbl <- suppressWarnings(as.integer(pct_digits_tbl))
+    if (length(pct_digits_tbl) != 1L || is.na(pct_digits_tbl) ||
+        pct_digits_tbl < 0 || pct_digits_tbl > 2) pct_digits_tbl <- 1L
+    return(DT::formatPercentage(
+      DT::datatable(df,
+                    extensions = 'Buttons',
+                    options = list(scrollX=TRUE,
+                                     paging = TRUE,
+                                     searching = TRUE,
+                                     fixedColumns = TRUE,
+                                     autoWidth = TRUE,
+                                     ordering = TRUE,
+                                     dom = 'Bfrtip',
+                                     buttons = list('copy',
+                                                    list(extend = 'csv', title = "CellPercentage"),
+                                                    list(extend = 'excel', title = "CellPercentage")))),
+      'percent', pct_digits_tbl))
   })
   # bugs
   # fill in choice will trigger Cluster used and X axis choice and facet choice

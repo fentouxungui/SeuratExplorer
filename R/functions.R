@@ -342,6 +342,15 @@ getColors <- function(color.platte = NULL,
   }
 }
 
+# Relative luminance (WCAG) of hex colours. Used to pick black or white text
+# for percentage labels drawn on top of a coloured segment.
+color_luminance <- function(hex) {
+  if (length(hex) == 0) return(numeric(0))
+  rgb <- grDevices::col2rgb(hex) / 255
+  lin <- ifelse(rgb <= 0.03928, rgb / 12.92, ((rgb + 0.055) / 1.055)^2.4)
+  colSums(lin * c(0.2126, 0.7152, 0.0722))
+}
+
 globalVariables(c("num"))
 
 #' @title plot cell percentage barplot
@@ -360,6 +369,20 @@ globalVariables(c("num"))
 #' @param flow.alpha transparency for flow
 #' @param flow.curve curve for flow
 #' @param color.choice color choice for fill
+#' @param fill.values optional named vector of fill colours; takes precedence
+#'   over \code{color.choice}
+#' @param show_percent draw percentage labels inside the bars
+#' @param percent_cutoff segments smaller than this percentage (0-100) are not
+#'   labelled
+#' @param percent_size text size of the percentage labels
+#' @param percent_digits number of decimals in the percentage labels
+#' @param percent_text_color label colour: "auto" picks black or white from the
+#'   fill colour, "black"/"white" forces that colour
+#' @param list_rare list segments below \code{percent_cutoff} in the plot
+#'   caption instead of on the bars
+#' @param show_sample_size append the number of cells to the x-axis tick labels,
+#'   e.g. "WT (n = 1,234)"; ignored when \code{facet.name} is set because the
+#'   panels have different cell counts
 #' @import dplyr
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
@@ -380,7 +403,14 @@ cellRatioPlot <- function(object = NULL,
                           flow.alpha = 0.25,
                           flow.curve = 0,
                           color.choice = NULL,
-                          fill.values = NULL) {
+                          fill.values = NULL,
+                          show_percent = FALSE,
+                          percent_cutoff = 2.5,
+                          percent_size = 4,
+                          percent_digits = 1,
+                          percent_text_color = "auto",
+                          list_rare = FALSE,
+                          show_sample_size = FALSE) {
   requireNamespace("dplyr")
   # Input validation
   if (is.null(object)) stop("object cannot be NULL")
@@ -465,6 +495,99 @@ cellRatioPlot <- function(object = NULL,
     p <- p +
       ggplot2::facet_grid(stats::as.formula(paste0(facet.name, "~ ."))) +
       ggplot2::theme(panel.spacing = grid::unit(0.8, "cm", data = NULL))
+  }
+
+  # Cell counts on the x-axis tick labels. Facets are skipped because the x
+  # labels are shared by panels whose cell counts differ.
+  if (isTRUE(show_sample_size) && is.null(facet.name) &&
+      (is.factor(meta[[sample.name]]) || is.character(meta[[sample.name]]))) {
+    n_by_sample <- table(meta[[sample.name]])
+    n_fmt <- format(as.integer(n_by_sample), big.mark = ",", scientific = FALSE,
+                    trim = TRUE)
+    names(n_fmt) <- names(n_by_sample)
+    p <- p + ggplot2::scale_x_discrete(labels = function(x) {
+      n <- n_fmt[as.character(x)]
+      ifelse(is.na(n), as.character(x), paste0(as.character(x), " (n = ", n, ")"))
+    })
+  }
+
+  # Percentage labels inside the bars. Labels are drawn from the full data with
+  # position_stack(), so each label sits at the centre of its segment exactly
+  # like the bar; segments below `percent_cutoff` get an empty label instead of
+  # being dropped (dropping them would shift the remaining labels).
+  if (isTRUE(show_percent)) {
+    pd <- suppressWarnings(as.integer(percent_digits))
+    if (length(pd) != 1L || is.na(pd) || pd < 0) pd <- 1L
+    if (length(percent_cutoff) != 1L || is.na(percent_cutoff)) percent_cutoff <- 2.5
+    if (length(percent_size) != 1L || is.na(percent_size)) percent_size <- 4
+
+    lab <- ratio.info
+    lab$label_text <- ifelse(
+      lab$rel_num * 100 >= percent_cutoff,
+      sprintf(paste0("%.", pd, "f%%"), lab$rel_num * 100),
+      ""
+    )
+
+    # Resolve each cell type's fill colour to choose black or white text, or
+    # use the colour forced by the user.
+    tcol <- percent_text_color[1]
+    if (is.na(tcol) || !tcol %in% c("auto", "black", "white")) tcol <- "auto"
+    if (identical(tcol, "auto")) {
+      fill_lookup <- fill.col
+      if (is.null(names(fill_lookup))) {
+        lv_fill <- levels(meta[[celltype.name]])
+        if (is.null(lv_fill)) lv_fill <- unique(as.character(meta[[celltype.name]]))
+        if (length(lv_fill) == length(fill_lookup)) names(fill_lookup) <- lv_fill
+      }
+      ct_col <- fill_lookup[as.character(lab[[celltype.name]])]
+      ct_col[is.na(ct_col)] <- "#000000"
+      lab$label_col <- ifelse(color_luminance(ct_col) < 0.35, "white", "black")
+    } else {
+      lab$label_col <- tcol
+    }
+
+    p <- p + ggplot2::geom_text(
+      data = lab,
+      mapping = ggplot2::aes(x = .data[[sample.name]], y = .data[["rel_num"]],
+                             label = .data[["label_text"]],
+                             colour = .data[["label_col"]],
+                             group = .data[[celltype.name]]),
+      position = ggplot2::position_stack(vjust = 0.5),
+      size = percent_size, fontface = "bold", show.legend = FALSE,
+      inherit.aes = FALSE
+    ) +
+      ggplot2::scale_colour_identity()
+
+    # List the segments that are too small to be labelled on the bars.
+    if (isTRUE(list_rare)) {
+      rare <- lab[lab$rel_num * 100 < percent_cutoff, , drop = FALSE]
+      if (nrow(rare) > 0) {
+        rare$one_label <- sprintf("%s %.2f%%", as.character(rare[[celltype.name]]),
+                                  rare$rel_num * 100)
+        grp_vars <- c(sample.name, if (!is.null(facet.name)) facet.name)
+        grp_key <- do.call(paste, c(lapply(grp_vars, function(v) as.character(rare[[v]])),
+                                    sep = " / "))
+        rare_lines <- vapply(unique(grp_key), function(k) {
+          d <- rare[grp_key == k, , drop = FALSE]
+          head_label <- vapply(grp_vars, function(v) as.character(d[[v]][1]),
+                               character(1))
+          paste0(paste(head_label, collapse = " / "),
+                 " - ", paste(d$one_label, collapse = "; "))
+        }, character(1))
+        caption_text <- paste0(
+          sprintf("Percentages are within each group. Segments below %s%% are listed here instead of on the bars:\n",
+                  format(percent_cutoff)),
+          paste(rare_lines, collapse = "\n")
+        )
+        p <- p + ggplot2::labs(caption = caption_text) +
+          ggplot2::theme(
+            plot.caption = ggplot2::element_text(
+              hjust = 0, size = ggplot2::rel(0.8), colour = "grey30",
+              lineheight = 1.15, margin = ggplot2::margin(t = 6)
+            )
+          )
+      }
+    }
   }
   return(p)
 }

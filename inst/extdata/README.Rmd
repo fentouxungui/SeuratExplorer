@@ -463,6 +463,18 @@ if (for_github) {
 
 - Supports faceting
 
+- Optionally shows the percentage of each segment inside the bars (**Show percentages**), with:
+  - a cutoff to hide labels for very small segments (**Hide labels below (%)**)
+  - adjustable label size and decimal places (0/1/2)
+  - label color: **Automatic** (black or white chosen from the segment fill color, so custom cluster colors keep the labels readable), or forced black/white
+  - an option to list the hidden small segments in the plot caption (**List small segments below plot**)
+
+- Optionally appends the number of cells to the x-axis labels, e.g. `WT (n = 1,234)` (**Show sample sizes on x-axis**); this option is hidden when faceting, because the x-axis labels are shared by panels with different cell counts
+
+- The table below the plot reports cell counts together with the percentage of each segment, calculated within the same groups as the plot (per sample, or per sample × facet) and with the same number of decimals, so it always matches the labels drawn in the bars
+
+- Segment colors follow the palette selected here, or the custom cluster colors when a palette has been set in **Cluster Colors**
+
 - Supports adjusting the height/width ratio of the plot
 
 - Supports downloading plots in PDF format (WYSIWYG)

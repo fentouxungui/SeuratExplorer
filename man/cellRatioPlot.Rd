@@ -17,7 +17,14 @@ cellRatioPlot(
   flow.alpha = 0.25,
   flow.curve = 0,
   color.choice = NULL,
-  fill.values = NULL
+  fill.values = NULL,
+  show_percent = FALSE,
+  percent_cutoff = 2.5,
+  percent_size = 4,
+  percent_digits = 1,
+  percent_text_color = "auto",
+  list_rare = FALSE,
+  show_sample_size = FALSE
 )
 }
 \arguments{
@@ -44,6 +51,28 @@ cellRatioPlot(
 \item{flow.curve}{curve for flow}
 
 \item{color.choice}{color choice for fill}
+
+\item{fill.values}{optional named vector of fill colours; takes precedence
+over \code{color.choice}}
+
+\item{show_percent}{draw percentage labels inside the bars}
+
+\item{percent_cutoff}{segments smaller than this percentage (0-100) are not
+labelled}
+
+\item{percent_size}{text size of the percentage labels}
+
+\item{percent_digits}{number of decimals in the percentage labels}
+
+\item{percent_text_color}{label colour: "auto" picks black or white from the
+fill colour, "black"/"white" forces that colour}
+
+\item{list_rare}{list segments below \code{percent_cutoff} in the plot
+caption instead of on the bars}
+
+\item{show_sample_size}{append the number of cells to the x-axis tick labels,
+e.g. "WT (n = 1,234)"; ignored when \code{facet.name} is set because the
+panels have different cell counts}
 }
 \value{
 a ggplot2 object
