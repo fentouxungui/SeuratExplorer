@@ -32,6 +32,7 @@ Remove files bellow:
 # 6. 整个data目录
 # 7. R/data.R
 # 8. 整个tutorials目录
+# 9. Build-Desktop-software-by-shinyelectron.R
 ```
 
 ## 3. Remove About page
@@ -39,6 +40,8 @@ Remove files bellow:
 Remove 'About' UI page and related server codes.
 comment the tab_list[["about"]] in UI.R
 comment the SeuratExplorer::GenesDB and output$ExternalLinks.UI in server.R
+
+DESCRIPTION file： 从 Imports 移出`knitr` / `markdown`
 
 ## 4. change package version
 
@@ -52,4 +55,4 @@ Build - More- Build Source Package.
 
 
 
-Attention： update the CRAN package each two month.
+**Attention**： update the CRAN package each two month.
