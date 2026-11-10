@@ -42,11 +42,11 @@ Depends:
     shiny
 Suggests:
     ComplexHeatmap,
-    patchwork (>= 1.3.2),
     MAST,
     limma,
     DESeq2,
     AUCell,
+    presto,
     Signac
 Remotes:
     bioc::release/ComplexHeatmap,
