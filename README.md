@@ -127,6 +127,8 @@ You can customize the launch behavior with additional parameters:
   `12`)
 - `MaxInputFileSize`: Maximum upload file size in bytes (default:
   `20*1024^3`, i.e., 20GB)
+- `EnableObjectExport`: Whether to show the **Export Data** page
+  (default: `TRUE`); set to `FALSE` to hide it, e.g. on a shared machine
 - `DemoDataURL`: One or more URLs of the demo dataset used by the
   **Download and Run a demo data** button; they are tried in order until
   one succeeds
@@ -386,6 +388,9 @@ Different visualization features support different assay slots:
 
 - Supports adjusting the font size of gene names
 
+- Group bar colours follow the palette defined in **Cluster Colors**
+  (the expression gradient is unchanged)
+
 - Supports adjusting the height/width ratio of the plot
 
 - Supports downloading plots in PDF format (WYSIWYG)
@@ -448,6 +453,31 @@ Different visualization features support different assay slots:
 
 - Supports faceting
 
+- Optionally shows the percentage of each segment inside the bars
+  (**Show percentages**), with:
+
+  - a cutoff to hide labels for very small segments (**Hide labels below
+    (%)**)
+  - adjustable label size and decimal places (0/1/2)
+  - label color: **Automatic** (black or white chosen from the segment
+    fill color, so custom cluster colors keep the labels readable), or
+    forced black/white
+  - an option to list the hidden small segments in the plot caption
+    (**List small segments below plot**)
+
+- Optionally appends the number of cells to the x-axis labels,
+  e.g. `WT (n = 1,234)` (**Show sample sizes on x-axis**); this option
+  is hidden when faceting, because the x-axis labels are shared by
+  panels with different cell counts
+
+- The table below the plot reports cell counts together with the
+  percentage of each segment, calculated within the same groups as the
+  plot (per sample, or per sample × facet) and with the same number of
+  decimals, so it always matches the labels drawn in the bars
+
+- Segment colors follow the palette selected here, or the custom cluster
+  colors when a palette has been set in **Cluster Colors**
+
 - Supports adjusting the height/width ratio of the plot
 
 - Supports downloading plots in PDF format (WYSIWYG)
@@ -496,7 +526,7 @@ Above the result table, a one-line provenance record (timestamp,
 analysis name and the main parameters) shows which settings produced the
 table currently on screen.
 
-#### External gene annotation links (Only avaliable for github version)
+#### External gene annotation links (Only available for github version)
 
 After results are shown, selecting a row in the results table reveals
 links to external gene databases. For **Human**, **Mouse** and **Fly**,
@@ -704,6 +734,42 @@ column in the table, then click **Check** to preview the re-colored
 dimension-reduction plot, and finally **Update** to add the new
 annotation. You can download the old-to-new name mapping.
 
+### Cluster Colors
+
+Assign custom colors to the groups of one cluster resolution and use the
+same palette across plots.
+
+1.  Choose a cluster resolution.
+2.  Edit colors group by group, or apply one of the built-in palettes
+    first and adjust a few. Each picker accepts any color: type a hex
+    value (e.g. `#E41A1C`) or choose from the full color square. Groups
+    you leave untouched keep their default colors.
+3.  Click **Submit** to save the palette for the session and store it in
+    `obj@misc$SeuratExplorer$cluster_colors`, so an object exported from
+    the app keeps its colors.
+
+The preview shows a DimPlot drawn with the draft colors; cluster labels
+can be switched off. Duplicate colors are allowed but flagged with a
+warning. **Export colors (CSV)** writes two columns (`cluster`,
+`color`); **Import colors (CSV)** reads the same format, ignores groups
+that do not exist in the current resolution and reports them. **Remove
+saved colors for this resolution** clears the palette for the selected
+resolution.
+
+Colors are applied to:
+
+- **Dim Reduction Plot** (including split panels)
+- **Violin Plot** (unsplit, and side-by-side split violins; split
+  violins keep the split colors)
+- **Cell Percentage Plot**
+- **Ridge Plot** when ridges are colored by cluster
+- **Heatmap (cell level)** group bar (the expression gradient is
+  unchanged)
+- **Average Heatmap** column annotation bar
+
+Dot Plot and Feature Plot use continuous expression colors, so they are
+not affected.
+
 ### Gene Based Cluster (BETA)
 
 Group cells into new clusters based on a single gene’s expression level,
@@ -803,6 +869,36 @@ filtering, integrating, and visualizing single-cell RNA-seq data.
 
 > misc: A list for storing miscellaneous information not fitting into
 > other specific slots.
+
+### Export Data
+
+Download the Seurat object exactly as it exists in the current session,
+including metadata columns added here (Rename Clusters, Gene Based
+Cluster, Combination Based Cluster, Module Score). The original file on
+disk is never modified.
+
+1.  **Step 1 (optional) – Filter Cells**: add one or more conditions
+    with the `+` button; each condition keeps the selected levels of a
+    cluster/metadata column. Conditions are combined as an intersection,
+    and two rows on the same column are intersected as well.
+2.  **Step 2 – Output format**: `.qs2` (compression level 0–3) or `.rds`
+    (gzip / xz / none).
+3.  **Step 3 – Options**: drop `scale.data` to shrink the file, drop
+    empty factor levels, and record the export parameters in
+    `obj@misc$SeuratExplorer$export`.
+
+The preview shows how many cells will be exported, how many were
+excluded because a filter column is `NA`, the estimated object size, and
+a per-level breakdown. Leaving the filters untouched exports the whole
+object.
+
+Exporting copies and serializes the object, so a large object takes a
+while and the page stays unresponsive until the browser starts
+downloading.
+
+For shared or multi-user deployments this page can be hidden with
+`launchSeuratExplorer(EnableObjectExport = FALSE)` (or
+`options(SeuratExplorerEnableObjectExport = FALSE)` before launching).
 
 ### About
 
