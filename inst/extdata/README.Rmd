@@ -724,6 +724,18 @@ Colors are applied to:
 
 Dot Plot and Feature Plot use continuous expression colors, so they are not affected.
 
+**Example plots:**
+
+```{r  echo = FALSE, out.width="100%"}
+if(for_github){
+  knitr::include_graphics('./inst/extdata/www/UnitedColors.png')
+}else{
+  knitr::include_graphics(system.file("extdata", 
+                                      'www/UnitedColors.png', 
+                                      package ="SeuratExplorer"), rel_path = FALSE)
+}
+```
+
 ### Gene Based Cluster (BETA)
 
 Group cells into new clusters based on a single gene's expression level, or on a numeric metadata column such as a module score, using user-defined cutoffs.

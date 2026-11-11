@@ -759,6 +759,10 @@ Colors are applied to:
 Dot Plot and Feature Plot use continuous expression colors, so they are
 not affected.
 
+**Example plots:**
+
+<img src="./inst/extdata/www/UnitedColors.png" alt="" width="100%" />
+
 ### Gene Based Cluster (BETA)
 
 Group cells into new clusters based on a single gene’s expression level,
