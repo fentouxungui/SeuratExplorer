@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">SeuratExplorer hex sticker, mint</title>
+  <desc id="desc">A light mint hexagonal sticker with a dark green magnifying glass over colorful cell clusters and the text SeuratExplorer.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#ecfdf5"/>
+      <stop offset="1" stop-color="#a7f3d0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.28" cy="0.18" r="0.9">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="hexclip">
+      <path d="M256 16 L464 136 L464 376 L256 496 L48 376 L48 136 Z"/>
+    </clipPath>
+  </defs>
+  <path d="M256 24 L456 140 L456 372 L256 488 L56 372 L56 140 Z" fill="#064e3b" opacity="0.16"/>
+  <path d="M256 16 L464 136 L464 376 L256 496 L48 376 L48 136 Z" fill="url(#bg)" stroke="#047857" stroke-width="10" stroke-linejoin="round"/>
+  <g clip-path="url(#hexclip)">
+    <rect x="40" y="10" width="432" height="492" fill="url(#glow)"/>
+    <g transform="translate(216 150) scale(0.78) translate(-216 -190)">
+    <g stroke="#047857" stroke-opacity="0.28" stroke-width="3" fill="none">
+      <path d="M198 160 L230 148"/>
+      <path d="M230 148 L252 178"/>
+      <path d="M252 178 L218 208"/>
+      <path d="M218 208 L186 202"/>
+      <path d="M186 202 L198 160"/>
+      <path d="M218 208 L244 216"/>
+    </g>
+    <path d="M286 260 L360 334" stroke="#047857" stroke-width="30" stroke-linecap="round"/>
+    <path d="M286 260 L360 334" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-opacity="0.65"/>
+    <circle cx="216" cy="190" r="86" fill="#ffffff" fill-opacity="0.55" stroke="#047857" stroke-width="14"/>
+    <circle cx="216" cy="190" r="70" fill="#d1fae5" fill-opacity="0.7"/>
+    <path d="M156 154 A78 78 0 0 1 214 112" stroke="#047857" stroke-opacity="0.35" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <g stroke="#ffffff" stroke-width="3">
+      <circle cx="198" cy="160" r="14" fill="#ef4444"/>
+      <circle cx="230" cy="148" r="12" fill="#f59e0b"/>
+      <circle cx="252" cy="178" r="11" fill="#3b82f6"/>
+      <circle cx="218" cy="208" r="12" fill="#8b5cf6"/>
+      <circle cx="186" cy="202" r="10" fill="#14b8a6"/>
+      <circle cx="244" cy="216" r="9" fill="#ec4899"/>
+    </g>
+    <g fill="#047857" fill-opacity="0.35">
+      <circle cx="120" cy="110" r="4"/>
+      <circle cx="360" cy="160" r="5"/>
+      <circle cx="130" cy="300" r="3"/>
+      <circle cx="380" cy="300" r="4"/>
+    </g>
+    </g>
+  </g>
+  <path d="M256 16 L464 136 L464 376 L256 496 L48 376 L48 136 Z" fill="none" stroke="#047857" stroke-opacity="0.3" stroke-width="3" stroke-linejoin="round"/>
+  <text x="256" y="356" text-anchor="middle" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="60" font-weight="700" fill="#064e3b" letter-spacing="-3">SeuratExplorer</text>
+  <text x="256" y="412" text-anchor="middle" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="600" fill="#047857" letter-spacing="2.5">scRNA-seq</text>
+</svg>
