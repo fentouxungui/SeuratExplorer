@@ -741,14 +741,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # how to make sure renderPlot run after the observe(input$VlnSplitBy)[Warning: Error in SingleExIPlot: Unknown plot type: splitViolin,
   # for the VlnSplitPlot is not updated
 
-  # seurat related bug
-  # VlnPlot(cds,features = c("CD4","CD8A"),split.by = "orig.ident", stack = TRUE,group.by = "cca_clusters_res_0.2",flip = FALSE,split.plot = TRUE)
-  # Error:
-  # Error in `vln.geom()`:
-  #   ! Problem while converting geom to grob.
-  # Caused by error in `$<-.data.frame`:
-  # Run `rlang::last_trace()` to see where the error occurred
-  # not related to ggplot2, pathcwork, rlang versions
+  # Seurat can only draw split violins inside stacked multi-feature facets
+  # when the axes are flipped (identity on x, expression on y). With
+  # flip = FALSE, VlnPlot(cds, features = c("CD4", "CD8A"),
+  # split.by = "orig.ident", stack = TRUE, split.plot = TRUE) fails while
+  # converting the geom to a grob ("replacement has 0 rows"). The violin
+  # renderer below therefore keeps split violins when stacking + flipping,
+  # and falls back to side-by-side split violins when stacking without flip.
 
   # Store the current plot dimensions
   vlnplot_dims <- reactiveValues(width = 800, height = 720)
@@ -811,7 +810,20 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         # cluster. Split violins keep the split colours by design.
         vln_color_map <- get_cluster_color_map(data, vln_groups$cluster)
         vln_split <- VlnSplit.Revised()
-        vln_split_plot <- isTRUE(input$VlnSplitPlot)
+        vln_multi <- length(features_vlnplot$features_current) > 1
+        vln_stack <- vln_multi && isTRUE(input$VlnStackPlot)
+        vln_flip <- isTRUE(input$VlnFlipPlot)
+        # GeomSplitViolin needs the identity on the x axis. In a stacked layout
+        # that is only true when axes are flipped; without flip, draw_group
+        # fails converting the geom to a grob ("replacement has 0 rows"). Fall
+        # back to side-by-side split violins only in that unflipped case.
+        vln_split_plot <- isTRUE(input$VlnSplitPlot) && (!vln_stack || vln_flip)
+        # "Color By" only applies to stacked plots; every other violin keeps
+        # clusters on the fill scale. Seurat >= 5.6 honours fill.by for
+        # non-stacked multi-feature plots as well, so passing the default
+        # "feature" here would make the cluster colour scale below target a
+        # feature scale and ggplot falls back to grey.
+        vln_fill_by <- if (vln_stack && identical(input$VlnFillBy, "feature")) "feature" else "ident"
         vln_use_interaction <- !is.null(vln_color_map) && !is.null(vln_split) && !vln_split_plot
         vln_cols_arg <- if (vln_use_interaction) "interaction" else NULL
 
@@ -821,7 +833,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                assay = vln_groups$assay,
                                layer = input$VlnSlot,
                                split.by = vln_split,
-                               split.plot = input$VlnSplitPlot,
+                               split.plot = vln_split_plot,
                                cols = vln_cols_arg,
                                pt.size = input$VlnPointSize,
                                alpha = input$VlnPointAlpha) &
@@ -833,10 +845,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                assay = vln_groups$assay,
                                layer = input$VlnSlot,
                                split.by = vln_split,
-                               split.plot = input$VlnSplitPlot,
-                               stack = input$VlnStackPlot,
-                               flip = input$VlnFlipPlot,
-                               fill.by = input$VlnFillBy,
+                               split.plot = vln_split_plot,
+                               stack = vln_stack,
+                               flip = vln_flip,
+                               fill.by = vln_fill_by,
                                cols = vln_cols_arg,
                                pt.size = input$VlnPointSize,
                                alpha = input$VlnPointAlpha) &
@@ -848,7 +860,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           vln_idents <- levels(SeuratObject::Idents(cds))
           vln_full <- complete_cluster_colors(vln_color_map, vln_idents)
           if (is.null(vln_split)) {
-            p <- p & ggplot2::scale_fill_manual(values = vln_full, drop = FALSE)
+            if (identical(vln_fill_by, "ident")) {
+              p <- p & ggplot2::scale_fill_manual(values = vln_full, drop = FALSE)
+            }
           } else if (!vln_split_plot) {
             sp_lv <- levels(factor(cds@meta.data[[vln_split]]))
             comb <- levels(interaction(factor(vln_idents, levels = vln_idents),
@@ -868,7 +882,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
               p & ggplot2::scale_fill_manual(values = vals, breaks = brk, labels = lab)
             )
           }
-        } else if (input$Vlnfillcolorplatte != 'default' & input$VlnSplitBy == 'None'){
+        } else if (input$Vlnfillcolorplatte != 'default' & input$VlnSplitBy == 'None' &
+                   identical(vln_fill_by, "ident")){
           # color
           fill.colors <- getColors(color.platte = color_list,
                                    choice = input$Vlnfillcolorplatte,
@@ -1689,13 +1704,19 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       if((!any(features_ridgeplot$features_current %in% c(rownames(cds[[ridge_groups$assay]]), data$extra_qc_options))) | is.null(ridge_groups$order) ){
         p <- empty_plot
       }else{
+        ridge_stack <- length(features_ridgeplot$features_current) > 1 && isTRUE(input$RidgeplotStackPlot)
+        # "Color By" is only shown for stacked plots; every other ridge plot
+        # fills by cluster. Seurat >= 5.6 honours fill.by for non-stacked plots
+        # too, and the hidden selector defaults to "feature", which would give
+        # every cluster the same ridge colour.
+        ridge_fill_by <- if (ridge_stack && identical(input$RidgeplotFillBy, "feature")) "feature" else "ident"
         p <- Seurat::RidgePlot(object = cds,
                                features = features_ridgeplot$features_current,
                                assay = ridge_groups$assay,
                                layer = input$RidgeplotSlot,
                                ncol = input$RidgeplotNumberOfColumns,
-                               stack = input$RidgeplotStackPlot,
-                               fill.by = input$RidgeplotFillBy
+                               stack = ridge_stack,
+                               fill.by = ridge_fill_by
                                # not use group.by, use Idents(cds) <- input$RidgeplotClusterResolution
                                # because if only one level in existed in the Idents, will throw an error!
                                # group.by = input$RidgeplotClusterResolution
@@ -1703,8 +1724,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                ) &
           ggplot2::theme(axis.text.x = ggplot2::element_text(size = input$RidgeplotXlabelSize),
                          axis.text.y = ggplot2::element_text(size = input$RidgeplotYlabelSize))
-        # Custom cluster colours only apply when ridges are filled by cluster.
-        if (isTRUE(input$RidgeplotStackPlot) && identical(input$RidgeplotFillBy, "ident")) {
+        # Custom cluster colours apply whenever ridges are filled by cluster,
+        # including single and non-stacked multi-feature plots.
+        if (identical(ridge_fill_by, "ident")) {
           ridge_map <- get_cluster_color_map(data, ridge_groups$cluster)
           if (!is.null(ridge_map)) {
             p <- suppressMessages(p & ggplot2::scale_fill_manual(

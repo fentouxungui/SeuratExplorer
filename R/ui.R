@@ -263,8 +263,13 @@ explorer_body_ui <- function(tab_list){
                                             checkboxInput("VlnSplitPlot",label = "Split Plot", FALSE)
                                           ),
                                           conditionalPanel(
-                                            condition = "input.VlnSplitPlot == true",
+                                            condition = "input.VlnSplitPlot == true && (input.VlnStackPlot != true || input.VlnFlipPlot == true)",
                                             p("Split violins keep the split colors; cluster colors apply to unsplit and side-by-side split plots.",
+                                              style = "font-size: 11px; color: #856404; margin: -4px 0 10px 0;")
+                                          ),
+                                          conditionalPanel(
+                                            condition = "input.VlnSplitPlot == true && input.VlnStackPlot == true && input.VlnFlipPlot != true",
+                                            p("Split violins in the stacked layout require Flip axes. Without it, split groups are shown side by side instead.",
                                               style = "font-size: 11px; color: #856404; margin: -4px 0 10px 0;")
                                           ),
                                           conditionalPanel(
