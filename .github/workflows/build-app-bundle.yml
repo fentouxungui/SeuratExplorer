@@ -105,19 +105,19 @@ jobs:
           any_rs <- list.files(root, pattern = "(^|[/\\\\])Rscript(\\.exe)?$", recursive = TRUE, full.names = TRUE)
           bin_rs <- any_rs[grepl("[/\\\\]bin[/\\\\]", any_rs)]
           rscript <- if (length(bin_rs)) bin_rs[[1]] else if (length(any_rs)) any_rs[[1]] else NA_character_
-          if (!is.na(rscript)) cat("portable Rscript:", rscript, "\n")
+          if (!is.na(rscript)) cat("portable Rscript: ", rscript, "\n", sep = "")
           if (is.na(rscript)) {
             cat("Extracted files under ", root, ":\n", sep = "")
             print(list.files(root, recursive = TRUE, full.names = TRUE))
             stop("portable Rscript not found under ", root)
           }
-          cat(dirname(rscript), "\n", file = Sys.getenv("GITHUB_PATH"), append = TRUE)
+          cat(dirname(rscript), "\n", sep = "", file = Sys.getenv("GITHUB_PATH"), append = TRUE)
           setup_dir <- file.path(root, "harness-root")
           dir.create(setup_dir, recursive = TRUE, showWarnings = FALSE)
-          cat(rscript, "\n", file = file.path(setup_dir, "rscript.txt"))
+          cat(rscript, "\n", sep = "", file = file.path(setup_dir, "rscript.txt"))
           harness <- file.path(setup_dir, "harness")
           dir.create(harness, recursive = TRUE, showWarnings = FALSE)
-          cat(harness, "\n", file = file.path(setup_dir, "lib.txt"))
+          cat(harness, "\n", sep = "", file = file.path(setup_dir, "lib.txt"))
           cat(sprintf("R_LIBS_USER=%s\n", harness), file = Sys.getenv("GITHUB_ENV"), append = TRUE)
           EOF
           RSCRIPT_BIN="$(command -v Rscript || command -v Rscript.exe || true)"
