@@ -55,12 +55,56 @@ jobs:
           r-version: ${{ env.R_VERSION }}
           use-public-rspm: false
 
-      - name: Install build helpers
-        shell: Rscript {0}
+      - name: Set up portable R (matches the ShinyApps shell)
+        shell: bash
+        env:
+          CRAN_SNAPSHOT: ${{ env.CRAN_SNAPSHOT }}
         run: |
-          snap <- Sys.getenv("CRAN_SNAPSHOT")
-          cran <- if (nzchar(snap)) sprintf("https://packagemanager.posit.co/cran/%s", snap) else "https://cloud.r-project.org"
-          install.packages(c("jsonlite","zip","digest","BiocManager","callr","curl"), repos = cran)
+          set -euo pipefail
+          if [ -n "${CRAN_SNAPSHOT:-}" ]; then
+            CRAN="https://packagemanager.posit.co/cran/${CRAN_SNAPSHOT}"
+          else
+            CRAN="https://cloud.r-project.org"
+          fi
+          Rscript -e "install.packages('pak', repos='$CRAN')"
+          Rscript -e "pak::pak('fentouxungui/shinyelectron@multi-app-store')"
+          SETUP_DIR="${RUNNER_TEMP:-/tmp}/shinyapps-portable-r"
+          mkdir -p "$SETUP_DIR"
+          cat > "$SETUP_DIR/setup-portable-r.R" <<'EOF'
+          plat <- if (.Platform$OS.type == "windows") "win" else "mac"
+          arch <- if (toupper(Sys.getenv("RUNNER_ARCH")) == "ARM64") "arm64" else "x64"
+          ver <- Sys.getenv("R_VERSION")
+          shinyelectron::install_r_portable(version = ver, platform = plat, arch = arch)
+          rscript <- shinyelectron:::r_executable(version = ver, platform = plat, arch = arch)
+          if (is.null(rscript) || !file.exists(rscript)) stop("portable Rscript not found")
+          cat(dirname(rscript), "\n", file = Sys.getenv("GITHUB_PATH"), append = TRUE)
+          setup_dir <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/", mustWork = FALSE)
+          setup_dir <- file.path(setup_dir, "shinyapps-portable-r")
+          dir.create(setup_dir, recursive = TRUE, showWarnings = FALSE)
+          cat(rscript, "\n", file = file.path(setup_dir, "rscript.txt"))
+          harness <- file.path(setup_dir, "harness")
+          dir.create(harness, recursive = TRUE, showWarnings = FALSE)
+          cat(harness, "\n", file = file.path(setup_dir, "lib.txt"))
+          cat(sprintf("R_LIBS_USER=%s\n", harness), file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+          EOF
+          Rscript "$SETUP_DIR/setup-portable-r.R"
+          # Build helpers go into a sibling harness library, not the portable R's
+          # own library (the shell's embed path avoids that on macOS hardened
+          # runtime grounds). App packages are installed separately into rlib.
+          HARNESS_LIB="$(cat "$SETUP_DIR/lib.txt")"
+          export R_HOME= R_LIBS_USER="$HARNESS_LIB" R_LIBS_SITE= R_LIBS=
+          # The portable R's own Rprofile.site rewrites dylib references on macOS;
+          # clear the runner's site/environ overrides so it is actually used.
+          export R_ENVIRON= R_ENVIRON_USER= R_PROFILE= R_PROFILE_USER=
+          RSCRIPT="$(cat "$SETUP_DIR/rscript.txt")"
+          "$RSCRIPT" -e "install.packages(c('jsonlite','zip','digest','BiocManager','callr','curl','httpuv'), lib='$HARNESS_LIB', repos='$CRAN')"
+          echo "R_HOME=" >> "$GITHUB_ENV"
+          echo "R_LIBS_SITE=" >> "$GITHUB_ENV"
+          echo "R_LIBS=" >> "$GITHUB_ENV"
+          echo "R_ENVIRON=" >> "$GITHUB_ENV"
+          echo "R_ENVIRON_USER=" >> "$GITHUB_ENV"
+          echo "R_PROFILE=" >> "$GITHUB_ENV"
+          echo "R_PROFILE_USER=" >> "$GITHUB_ENV"
 
       - name: Resolve and validate version
         shell: bash
@@ -100,6 +144,7 @@ jobs:
           bundle <- file.path(getwd(), "bundle")
           unlink(bundle, recursive = TRUE); dir.create(bundle, recursive = TRUE)
           lib <- file.path(bundle, "rlib"); dir.create(lib, recursive = TRUE)
+          .libPaths(c(lib, .libPaths()))
           snap <- Sys.getenv("CRAN_SNAPSHOT")
           cran <- if (nzchar(snap)) sprintf("https://packagemanager.posit.co/cran/%s", snap) else "https://cloud.r-project.org"
           bioc <- BiocManager::repositories()
@@ -183,10 +228,15 @@ jobs:
 
           if (identical(unname(Sys.info()[["sysname"]]), "Darwin")) {
             bins <- list.files(lib, pattern = "[.](so|dylib)$", recursive = TRUE, full.names = TRUE)
+            rhome <- normalizePath(R.home(), winslash = "/", mustWork = FALSE)
             bad <- character()
             for (b in bins) {
               o <- suppressWarnings(system2("otool", c("-L", shQuote(b)), stdout = TRUE, stderr = FALSE))
-              if (any(grepl("(/opt/X11|/opt/homebrew|/usr/local/opt|/Library/Frameworks/R.framework)", o))) bad <- c(bad, b)
+              if (any(grepl("(/opt/X11|/opt/homebrew|/usr/local/opt|/Library/Frameworks/R.framework)", o))) {
+                bad <- c(bad, b)
+              } else if (nzchar(rhome) && any(grepl(rhome, o, fixed = TRUE))) {
+                bad <- c(bad, b)
+              }
             }
             if (length(bad)) {
               stop("non-portable dylib references in ", length(bad), " file(s): ",
