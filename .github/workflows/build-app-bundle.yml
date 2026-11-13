@@ -137,15 +137,48 @@ jobs:
           # runtime grounds). App packages are installed separately into rlib.
           HARNESS_LIB="$(cat "$SETUP_DIR/harness-root/lib.txt")"
           export R_HOME= R_LIBS_USER="$HARNESS_LIB" R_LIBS_SITE="$HARNESS_LIB" R_LIBS=
-          # The portable R's own Rprofile.site rewrites dylib references on macOS;
-          # clear the runner's site/environ overrides so it is actually used.
-          export R_ENVIRON= R_ENVIRON_USER= R_PROFILE= R_PROFILE_USER=
+          export R_ENVIRON= R_ENVIRON_USER= R_PROFILE_USER=
+          unset R_PROFILE
           RSCRIPT="$(cat "$SETUP_DIR/harness-root/rscript.txt")"
+          # macOS: portable R's own etc/Rprofile.site installs the .portable
+          # environment that rewrites CRAN binary .so files from absolute
+          # R.framework paths to @rpath. An EMPTY R_PROFILE disables the
+          # default site profile, so set it explicitly. The site profile
+          # resets .libPaths(); a user profile adds the harness library back.
+          if [ "$(uname -s)" = "Darwin" ]; then
+            PORTABLE_R_HOME="$("$RSCRIPT" -e 'cat(R.home(), "\n")')"
+            PORTABLE_SITE_PROFILE="$PORTABLE_R_HOME/etc/Rprofile.site"
+            if [ ! -f "$PORTABLE_SITE_PROFILE" ]; then
+              echo "::error::portable Rprofile.site not found at $PORTABLE_SITE_PROFILE"
+              exit 1
+            fi
+            PORTABLE_USER_PROFILE="$SETUP_DIR/portable-user-profile.R"
+            cat > "$PORTABLE_USER_PROFILE" <<'EOF'
+          local({
+            harness <- strsplit(Sys.getenv("R_LIBS_SITE"), .Platform$path.sep, fixed = TRUE)[[1]]
+            harness <- harness[nzchar(harness)]
+            if (length(harness)) .libPaths(c(harness, .libPaths()))
+          })
+          EOF
+            export R_PROFILE="$PORTABLE_SITE_PROFILE" R_PROFILE_USER="$PORTABLE_USER_PROFILE"
+          else
+            export R_PROFILE= R_PROFILE_USER=
+          fi
           "$RSCRIPT" -e "install.packages(c('jsonlite','zip','digest','BiocManager','callr','curl','httpuv'), lib='$HARNESS_LIB', repos='$CRAN')"
           # Rscript takes the script path positionally (no -f). Verify that
           # exact invocation here, so a wrapper regression fails early.
           cat > "$SETUP_DIR/check-script.R" <<'EOF'
-          cat("portable Rscript OK:", as.character(getRversion()), "\n")
+          cat("portable Rscript OK:", as.character(getRversion()), "| R_HOME:", R.home(), "| .portable:", ".portable" %in% search(), "\n")
+          harness <- strsplit(Sys.getenv("R_LIBS_SITE"), .Platform$path.sep, fixed = TRUE)[[1]]
+          harness <- harness[nzchar(harness)]
+          norm_path <- function(x) normalizePath(x, winslash = "/", mustWork = FALSE)
+          if (length(setdiff(norm_path(harness), norm_path(.libPaths())))) {
+            stop("portable R harness library is not on .libPaths(): ",
+                 paste(setdiff(norm_path(harness), norm_path(.libPaths())), collapse = ", "))
+          }
+          if (identical(.Platform$OS.type, "unix") && !".portable" %in% search()) {
+            stop("portable R .portable environment did not attach; macOS binary patching is disabled")
+          }
           EOF
           "$RSCRIPT" "$SETUP_DIR/check-script.R"
           echo "R_HOME=" >> "$GITHUB_ENV"
@@ -153,8 +186,8 @@ jobs:
           echo "R_LIBS=" >> "$GITHUB_ENV"
           echo "R_ENVIRON=" >> "$GITHUB_ENV"
           echo "R_ENVIRON_USER=" >> "$GITHUB_ENV"
-          echo "R_PROFILE=" >> "$GITHUB_ENV"
-          echo "R_PROFILE_USER=" >> "$GITHUB_ENV"
+          echo "R_PROFILE=$R_PROFILE" >> "$GITHUB_ENV"
+          echo "R_PROFILE_USER=$R_PROFILE_USER" >> "$GITHUB_ENV"
 
       - name: Resolve and validate version
         shell: bash
@@ -285,16 +318,18 @@ jobs:
           if (identical(unname(Sys.info()[["sysname"]]), "Darwin")) {
             bins <- list.files(lib, pattern = "[.](so|dylib)$", recursive = TRUE, full.names = TRUE)
             rhome <- normalizePath(R.home(), winslash = "/", mustWork = FALSE)
-            bad <- character()
+            bad <- character(); bad_refs <- character()
             for (b in bins) {
               o <- suppressWarnings(system2("otool", c("-L", shQuote(b)), stdout = TRUE, stderr = FALSE))
-              if (any(grepl("(/opt/X11|/opt/homebrew|/usr/local/opt|/Library/Frameworks/R.framework)", o))) {
+              hit <- o[grepl("(/opt/X11|/opt/homebrew|/usr/local/opt|/Library/Frameworks/R.framework)", o)]
+              if (!length(hit) && nzchar(rhome)) hit <- o[grepl(rhome, o, fixed = TRUE)]
+              if (length(hit)) {
                 bad <- c(bad, b)
-              } else if (nzchar(rhome) && any(grepl(rhome, o, fixed = TRUE))) {
-                bad <- c(bad, b)
+                bad_refs <- c(bad_refs, paste0(b, " -> ", paste(trimws(hit), collapse = " | ")))
               }
             }
             if (length(bad)) {
+              cat("non-portable dylib references:\n", paste(bad_refs, collapse = "\n"), "\n")
               stop("non-portable dylib references in ", length(bad), " file(s): ",
                    paste(unique(basename(bad)), collapse = ", "),
                    ". Rebuild with SOURCE_REBUILD=<pkg>, or drop the package/feature; see references/macos-portability.md")
