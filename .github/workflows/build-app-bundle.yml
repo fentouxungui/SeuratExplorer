@@ -74,6 +74,7 @@ jobs:
           arch <- if (toupper(Sys.getenv("RUNNER_ARCH")) == "ARM64") "arm64" else "x64"
           root <- file.path(Sys.getenv("RUNNER_TEMP"), "shinyapps-portable-r")
           dir.create(root, recursive = TRUE, showWarnings = FALSE)
+          root <- normalizePath(root, winslash = "/", mustWork = TRUE)
           if (plat == "win") {
             win_arch <- if (arch == "arm64") "aarch64" else "x64"
             url <- sprintf("https://github.com/portable-r/portable-r-windows/releases/download/v%s/portable-r-%s-win-%s.zip", ver, ver, win_arch)
@@ -105,7 +106,9 @@ jobs:
           any_rs <- list.files(root, pattern = "(^|[/\\\\])Rscript(\\.exe)?$", recursive = TRUE, full.names = TRUE)
           bin_rs <- any_rs[grepl("[/\\\\]bin[/\\\\]", any_rs)]
           rscript <- if (length(bin_rs)) bin_rs[[1]] else if (length(any_rs)) any_rs[[1]] else NA_character_
+          if (!is.na(rscript)) rscript <- gsub("\\\\", "/", rscript)
           if (!is.na(rscript)) cat("portable Rscript: ", rscript, "\n", sep = "")
+          if (!is.na(rscript)) cat(sprintf("PORTABLE_RSCRIPT=%s\n", rscript), file = Sys.getenv("GITHUB_ENV"), append = TRUE)
           if (is.na(rscript)) {
             cat("Extracted files under ", root, ":\n", sep = "")
             print(list.files(root, recursive = TRUE, full.names = TRUE))
@@ -117,6 +120,7 @@ jobs:
           cat(rscript, "\n", sep = "", file = file.path(setup_dir, "rscript.txt"))
           harness <- file.path(setup_dir, "harness")
           dir.create(harness, recursive = TRUE, showWarnings = FALSE)
+          harness <- normalizePath(harness, winslash = "/", mustWork = TRUE)
           cat(harness, "\n", sep = "", file = file.path(setup_dir, "lib.txt"))
           cat(sprintf("R_LIBS_USER=%s\n", harness), file = Sys.getenv("GITHUB_ENV"), append = TRUE)
           EOF
@@ -179,8 +183,10 @@ jobs:
         run: R CMD build --no-build-vignettes --no-manual .
 
       - name: Install app + dependency closure into bundle/rlib
-        shell: Rscript {0}
+        shell: bash
         run: |
+          cat > install-bundle.R <<'EOF'
+          cat("R_HOME:", R.home(), "\n")
           bundle <- file.path(getwd(), "bundle")
           unlink(bundle, recursive = TRUE); dir.create(bundle, recursive = TRUE)
           lib <- file.path(bundle, "rlib"); dir.create(lib, recursive = TRUE)
@@ -284,10 +290,13 @@ jobs:
                    ". Rebuild with SOURCE_REBUILD=<pkg>, or drop the package/feature; see references/macos-portability.md")
             }
           }
+          EOF
+          "$PORTABLE_RSCRIPT" -f install-bundle.R
 
       - name: Assemble app + manifest.json
-        shell: Rscript {0}
+        shell: bash
         run: |
+          cat > assemble-bundle.R <<'EOF'
           bundle <- file.path(getwd(), "bundle")
           lib <- file.path(bundle, "rlib")
           dir.create(file.path(bundle, "app"), recursive = TRUE, showWarnings = FALSE)
@@ -319,10 +328,13 @@ jobs:
               path = file.path("rlib", pkgs$Package[i]), source = "cran"))
           )
           jsonlite::write_json(man, file.path(bundle, "manifest.json"), pretty = TRUE, auto_unbox = TRUE)
+          EOF
+          "$PORTABLE_RSCRIPT" -f assemble-bundle.R
 
       - name: Zip + sha256
-        shell: Rscript {0}
+        shell: bash
         run: |
+          cat > zip-bundle.R <<'EOF'
           out <- sprintf("%s-%s-%s.zip", Sys.getenv("APP_ID"), Sys.getenv("VERSION"), "${{ matrix.platform }}")
           bundle <- file.path(getwd(), "bundle")
           old <- setwd(bundle); on.exit(setwd(old))
@@ -342,12 +354,15 @@ jobs:
             cran_snapshot = Sys.getenv("CRAN_SNAPSHOT")
           ), sprintf("meta-%s.json", "${{ matrix.platform }}"), pretty = TRUE, auto_unbox = TRUE)
           cat("bundle zip size:", file.size(out), "\n")
+          EOF
+          "$PORTABLE_RSCRIPT" -f zip-bundle.R
 
       - name: Smoke test (start the bundle like the ShinyApps shell)
         if: ${{ env.SMOKE != 'off' }}
         timeout-minutes: 12
-        shell: Rscript {0}
+        shell: bash
         run: |
+          cat > smoke-bundle.R <<'EOF'
           app_id <- Sys.getenv("APP_ID"); ver <- Sys.getenv("VERSION"); plat <- "${{ matrix.platform }}"
           zip <- sprintf("%s-%s-%s.zip", app_id, ver, plat)
           if (!file.exists(zip)) stop("smoke: bundle not found: ", zip)
@@ -389,6 +404,8 @@ jobs:
             Sys.sleep(1)
           }
           cat("SMOKE OK:", url, "served an HTML page\n")
+          EOF
+          "$PORTABLE_RSCRIPT" -f smoke-bundle.R
 
       - uses: actions/upload-artifact@v4
         with:
