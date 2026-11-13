@@ -136,14 +136,20 @@ jobs:
           # own library (the shell's embed path avoids that on macOS hardened
           # runtime grounds). App packages are installed separately into rlib.
           HARNESS_LIB="$(cat "$SETUP_DIR/harness-root/lib.txt")"
-          export R_HOME= R_LIBS_USER="$HARNESS_LIB" R_LIBS_SITE= R_LIBS=
+          export R_HOME= R_LIBS_USER="$HARNESS_LIB" R_LIBS_SITE="$HARNESS_LIB" R_LIBS=
           # The portable R's own Rprofile.site rewrites dylib references on macOS;
           # clear the runner's site/environ overrides so it is actually used.
           export R_ENVIRON= R_ENVIRON_USER= R_PROFILE= R_PROFILE_USER=
           RSCRIPT="$(cat "$SETUP_DIR/harness-root/rscript.txt")"
           "$RSCRIPT" -e "install.packages(c('jsonlite','zip','digest','BiocManager','callr','curl','httpuv'), lib='$HARNESS_LIB', repos='$CRAN')"
+          # Rscript takes the script path positionally (no -f). Verify that
+          # exact invocation here, so a wrapper regression fails early.
+          cat > "$SETUP_DIR/check-script.R" <<'EOF'
+          cat("portable Rscript OK:", as.character(getRversion()), "\n")
+          EOF
+          "$RSCRIPT" "$SETUP_DIR/check-script.R"
           echo "R_HOME=" >> "$GITHUB_ENV"
-          echo "R_LIBS_SITE=" >> "$GITHUB_ENV"
+          echo "R_LIBS_SITE=$HARNESS_LIB" >> "$GITHUB_ENV"
           echo "R_LIBS=" >> "$GITHUB_ENV"
           echo "R_ENVIRON=" >> "$GITHUB_ENV"
           echo "R_ENVIRON_USER=" >> "$GITHUB_ENV"
@@ -180,17 +186,21 @@ jobs:
 
       - name: Build source tarball
         shell: bash
-        run: R CMD build --no-build-vignettes --no-manual .
+        run: |
+          R_BIN="$(dirname "$PORTABLE_RSCRIPT")/R"
+          if [ ! -x "$R_BIN" ] && [ -x "$R_BIN.exe" ]; then R_BIN="$R_BIN.exe"; fi
+          "$R_BIN" CMD build --no-build-vignettes --no-manual .
 
       - name: Install app + dependency closure into bundle/rlib
         shell: bash
         run: |
           cat > install-bundle.R <<'EOF'
-          cat("R_HOME:", R.home(), "\n")
+          cat("R_HOME:", R.home(), " site:", file.exists(file.path(R.home("etc"), "Rprofile.site")), "\n")
           bundle <- file.path(getwd(), "bundle")
           unlink(bundle, recursive = TRUE); dir.create(bundle, recursive = TRUE)
           lib <- file.path(bundle, "rlib"); dir.create(lib, recursive = TRUE)
           .libPaths(c(lib, .libPaths()))
+          Sys.setenv(R_LIBS_SITE = paste(unique(c(Sys.getenv("R_LIBS_SITE"), lib)), collapse = .Platform$path.sep))
           snap <- Sys.getenv("CRAN_SNAPSHOT")
           cran <- if (nzchar(snap)) sprintf("https://packagemanager.posit.co/cran/%s", snap) else "https://cloud.r-project.org"
           bioc <- BiocManager::repositories()
@@ -291,7 +301,8 @@ jobs:
             }
           }
           EOF
-          "$PORTABLE_RSCRIPT" -f install-bundle.R
+          # Rscript takes the script path positionally; it does not support -f.
+          "$PORTABLE_RSCRIPT" install-bundle.R
 
       - name: Assemble app + manifest.json
         shell: bash
@@ -329,7 +340,7 @@ jobs:
           )
           jsonlite::write_json(man, file.path(bundle, "manifest.json"), pretty = TRUE, auto_unbox = TRUE)
           EOF
-          "$PORTABLE_RSCRIPT" -f assemble-bundle.R
+          "$PORTABLE_RSCRIPT" assemble-bundle.R
 
       - name: Zip + sha256
         shell: bash
@@ -355,7 +366,7 @@ jobs:
           ), sprintf("meta-%s.json", "${{ matrix.platform }}"), pretty = TRUE, auto_unbox = TRUE)
           cat("bundle zip size:", file.size(out), "\n")
           EOF
-          "$PORTABLE_RSCRIPT" -f zip-bundle.R
+          "$PORTABLE_RSCRIPT" zip-bundle.R
 
       - name: Smoke test (start the bundle like the ShinyApps shell)
         if: ${{ env.SMOKE != 'off' }}
@@ -405,7 +416,7 @@ jobs:
           }
           cat("SMOKE OK:", url, "served an HTML page\n")
           EOF
-          "$PORTABLE_RSCRIPT" -f smoke-bundle.R
+          "$PORTABLE_RSCRIPT" smoke-bundle.R
 
       - uses: actions/upload-artifact@v4
         with:
