@@ -66,20 +66,53 @@ jobs:
           else
             CRAN="https://cloud.r-project.org"
           fi
-          Rscript -e "install.packages('pak', repos='$CRAN')"
-          Rscript -e "pak::pak('fentouxungui/shinyelectron@multi-app-store')"
           SETUP_DIR="${RUNNER_TEMP:-/tmp}/shinyapps-portable-r"
           mkdir -p "$SETUP_DIR"
           cat > "$SETUP_DIR/setup-portable-r.R" <<'EOF'
+          ver <- Sys.getenv("R_VERSION")
           plat <- if (.Platform$OS.type == "windows") "win" else "mac"
           arch <- if (toupper(Sys.getenv("RUNNER_ARCH")) == "ARM64") "arm64" else "x64"
-          ver <- Sys.getenv("R_VERSION")
-          shinyelectron::install_r_portable(version = ver, platform = plat, arch = arch)
-          rscript <- shinyelectron:::r_executable(version = ver, platform = plat, arch = arch)
-          if (is.null(rscript) || !file.exists(rscript)) stop("portable Rscript not found")
+          root <- file.path(Sys.getenv("RUNNER_TEMP"), "shinyapps-portable-r")
+          dir.create(root, recursive = TRUE, showWarnings = FALSE)
+          if (plat == "win") {
+            win_arch <- if (arch == "arm64") "aarch64" else "x64"
+            url <- sprintf("https://github.com/portable-r/portable-r-windows/releases/download/v%s/portable-r-%s-win-%s.zip", ver, ver, win_arch)
+            archive <- file.path(root, basename(url))
+            download.file(url, archive, mode = "wb", quiet = FALSE)
+            utils::unzip(archive, exdir = root)
+          } else {
+            mac_arch <- if (arch == "arm64") "arm64" else "x86_64"
+            url <- sprintf("https://github.com/portable-r/portable-r-macos/releases/download/v%s/portable-r-%s-macos-%s.tar.gz", ver, ver, mac_arch)
+            archive <- file.path(root, basename(url))
+            download.file(url, archive, mode = "wb", quiet = FALSE)
+            utils::untar(archive, exdir = root)
+          }
+          # Resolve symlinks that point outside the extracted tree. Portable R
+          # may link Rscript/fonts to paths that do not exist on the runner.
+          all_files <- list.files(root, recursive = TRUE, full.names = TRUE, all.files = TRUE)
+          for (f in all_files) {
+            link <- Sys.readlink(f)
+            if (nzchar(link)) {
+              target <- normalizePath(f, mustWork = FALSE)
+              if (file.exists(target)) {
+                file.remove(f)
+                file.copy(target, f, copy.date = TRUE)
+              } else {
+                file.remove(f)
+              }
+            }
+          }
+          any_rs <- list.files(root, pattern = "(^|[/\\\\])Rscript(\\.exe)?$", recursive = TRUE, full.names = TRUE)
+          bin_rs <- any_rs[grepl("[/\\\\]bin[/\\\\]", any_rs)]
+          rscript <- if (length(bin_rs)) bin_rs[[1]] else if (length(any_rs)) any_rs[[1]] else NA_character_
+          if (!is.na(rscript)) cat("portable Rscript:", rscript, "\n")
+          if (is.na(rscript)) {
+            cat("Extracted files under ", root, ":\n", sep = "")
+            print(list.files(root, recursive = TRUE, full.names = TRUE))
+            stop("portable Rscript not found under ", root)
+          }
           cat(dirname(rscript), "\n", file = Sys.getenv("GITHUB_PATH"), append = TRUE)
-          setup_dir <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/", mustWork = FALSE)
-          setup_dir <- file.path(setup_dir, "shinyapps-portable-r")
+          setup_dir <- file.path(root, "harness-root")
           dir.create(setup_dir, recursive = TRUE, showWarnings = FALSE)
           cat(rscript, "\n", file = file.path(setup_dir, "rscript.txt"))
           harness <- file.path(setup_dir, "harness")
@@ -87,16 +120,23 @@ jobs:
           cat(harness, "\n", file = file.path(setup_dir, "lib.txt"))
           cat(sprintf("R_LIBS_USER=%s\n", harness), file = Sys.getenv("GITHUB_ENV"), append = TRUE)
           EOF
-          Rscript "$SETUP_DIR/setup-portable-r.R"
+          RSCRIPT_BIN="$(command -v Rscript || command -v Rscript.exe || true)"
+          if [ -z "$RSCRIPT_BIN" ] && [ -n "${R_HOME:-}" ]; then
+            for cand in "$R_HOME/bin/Rscript.exe" "$R_HOME/bin/Rscript"; do
+              if [ -x "$cand" ]; then RSCRIPT_BIN="$cand"; break; fi
+            done
+          fi
+          if [ -z "$RSCRIPT_BIN" ]; then echo "::error::Rscript not found"; exit 1; fi
+          "$RSCRIPT_BIN" "$SETUP_DIR/setup-portable-r.R"
           # Build helpers go into a sibling harness library, not the portable R's
           # own library (the shell's embed path avoids that on macOS hardened
           # runtime grounds). App packages are installed separately into rlib.
-          HARNESS_LIB="$(cat "$SETUP_DIR/lib.txt")"
+          HARNESS_LIB="$(cat "$SETUP_DIR/harness-root/lib.txt")"
           export R_HOME= R_LIBS_USER="$HARNESS_LIB" R_LIBS_SITE= R_LIBS=
           # The portable R's own Rprofile.site rewrites dylib references on macOS;
           # clear the runner's site/environ overrides so it is actually used.
           export R_ENVIRON= R_ENVIRON_USER= R_PROFILE= R_PROFILE_USER=
-          RSCRIPT="$(cat "$SETUP_DIR/rscript.txt")"
+          RSCRIPT="$(cat "$SETUP_DIR/harness-root/rscript.txt")"
           "$RSCRIPT" -e "install.packages(c('jsonlite','zip','digest','BiocManager','callr','curl','httpuv'), lib='$HARNESS_LIB', repos='$CRAN')"
           echo "R_HOME=" >> "$GITHUB_ENV"
           echo "R_LIBS_SITE=" >> "$GITHUB_ENV"
