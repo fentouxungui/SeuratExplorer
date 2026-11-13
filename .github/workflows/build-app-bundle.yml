@@ -143,11 +143,11 @@ jobs:
             unlist(tools::package_dependencies(seed, db = db, recursive = TRUE)),
             declared, extra_pkgs
           ))
-          # Exclude ONLY base-priority packages from the required closure: a
-          # plain installed.packages() also drops toolchain packages installed by
-          # the earlier step (jsonlite/zip/digest/BiocManager) that the app may
-          # need at runtime -> "there is no package called 'X'" after install.
-          base_pkgs <- rownames(installed.packages(priority = "base"))
+          # base + recommended come from the shell's bundled R. Never ship them
+          # in rlib: on macOS they may link to the builder's R.framework and
+          # fail on users' Macs. Do not use a plain installed.packages() here:
+          # it would also drop toolchain packages the app may need at runtime.
+          base_pkgs <- rownames(installed.packages(priority = c("base", "recommended")))
           closure <- setdiff(closure, c(loc_names, base_pkgs, basename(list.dirs(lib, recursive = FALSE))))
           if (length(closure)) {
             install.packages(closure, lib = lib, repos = repos, type = "both",
@@ -170,6 +170,30 @@ jobs:
                 paste(missing_extra, collapse = ", "), "\n")
           }
           cat("rlib packages:", length(have()), "\n")
+
+          # The shell's bundled R provides base/recommended packages. Shipping
+          # them in rlib shadows the runtime copy; on macOS the copied binary
+          # may reference the builder's R.framework and fail on the user's Mac.
+          runtime_pkgs <- rownames(installed.packages(priority = c("base", "recommended")))
+          bad_runtime <- intersect(have(), runtime_pkgs)
+          if (length(bad_runtime)) {
+            stop("rlib contains base/recommended packages: ", paste(bad_runtime, collapse = ", "),
+                 ". Remove them; the bundled R provides them.")
+          }
+
+          if (identical(unname(Sys.info()[["sysname"]]), "Darwin")) {
+            bins <- list.files(lib, pattern = "[.](so|dylib)$", recursive = TRUE, full.names = TRUE)
+            bad <- character()
+            for (b in bins) {
+              o <- suppressWarnings(system2("otool", c("-L", shQuote(b)), stdout = TRUE, stderr = FALSE))
+              if (any(grepl("(/opt/X11|/opt/homebrew|/usr/local/opt|/Library/Frameworks/R.framework)", o))) bad <- c(bad, b)
+            }
+            if (length(bad)) {
+              stop("non-portable dylib references in ", length(bad), " file(s): ",
+                   paste(unique(basename(bad)), collapse = ", "),
+                   ". Rebuild with SOURCE_REBUILD=<pkg>, or drop the package/feature; see references/macos-portability.md")
+            }
+          }
 
       - name: Assemble app + manifest.json
         shell: Rscript {0}
