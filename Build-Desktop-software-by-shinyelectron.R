@@ -10,7 +10,6 @@
 #
 # Repository layout expected:
 #   DESCRIPTION, R/, ...                        (the R package)
-#   dependency/presto-1.1.0.tar.gz              (committed)
 #   dependency/SeuratExplorer_<version>.tar.gz  (built by the build-pkg job)
 #   icons/ico/emerald.ico                       (optional)
 
@@ -58,7 +57,8 @@ writeLines(app_code, file.path(app_dir, "app.R"))
 # ---- 2. _shinyelectron.yml --------------------------------------------
 # The local SeuratExplorer archive is located by globbing dependency/ rather than
 # rebuilding its name from the version, so a mismatch between the tag and the
-# package version cannot break the path. presto is committed with a fixed name.
+# package version cannot break the path. presto comes from CRAN via
+# dependencies.extra_packages, not from dependency/ (no local tarball is needed).
 built_se <- list.files(dep_dir, pattern = "^SeuratExplorer_.*[.]tar[.]gz$", full.names = TRUE)
 local_se <- if (length(built_se) > 0) {
   normalizePath(built_se[[1]], winslash = "/", mustWork = FALSE)
@@ -66,10 +66,6 @@ local_se <- if (length(built_se) > 0) {
   normalizePath(file.path(dep_dir, sprintf("SeuratExplorer_%s.tar.gz", se_version)),
                 winslash = "/", mustWork = FALSE)
 }
-local_presto <- normalizePath(
-  file.path(dep_dir, "presto-1.1.0.tar.gz"),
-  winslash = "/", mustWork = FALSE
-)
 
 config_code <- paste0('
 app:
@@ -107,10 +103,10 @@ dependencies:
     - Seurat
     - ggplot2
     - DT
+    - presto
   r:
     local_packages:
       - "', local_se, '"
-      - "', local_presto, '"
 
 updates:
   enabled: true

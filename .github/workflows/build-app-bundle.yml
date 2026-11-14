@@ -253,8 +253,9 @@ jobs:
           if (length(tb) == 0) {
             stop(sprintf("SeuratExplorer_%s.tar.gz not found -- bump DESCRIPTION Version to match the tag (version mismatch)", Sys.getenv("VERSION")))
           }
-          local_extra <- list.files("dependency", pattern = "^presto-.*[.]tar[.]gz$", full.names = TRUE)
-          local_paths <- normalizePath(c(tb, local_extra), winslash = "/", mustWork = TRUE)
+          # presto now comes from CRAN (see required_extra below); dependency/
+          # only holds the locally built SeuratExplorer tarball.
+          local_paths <- normalizePath(tb, winslash = "/", mustWork = TRUE)
 
           read_desc <- function(p) {
             td <- tempfile(); dir.create(td)
@@ -274,11 +275,15 @@ jobs:
 
           db <- available.packages(repos = repos)
           # Optional modules in the latest SeuratExplorer use these
-          # Suggests/Remotes packages. Install them so the desktop bundle
-          # exposes heatmaps, DE tests, gene-set scoring and ATAC support.
-          # presto is installed from dependency/ below.
-          extra_pkgs <- c("ComplexHeatmap", "patchwork", "MAST", "limma",
-                          "DESeq2", "AUCell", "Signac")
+          # Suggests/Remotes packages. Suggests are NOT part of the default
+          # dependency closure (Seurat itself only Suggests presto), so every
+          # package a shipped feature needs must be listed explicitly.
+          # presto is on CRAN (1.1.0, 2026-09-30) and powers the fast
+          # marker-test path, so a missing copy fails the build.
+          required_extra <- c("presto")
+          optional_extra <- c("ComplexHeatmap", "patchwork", "MAST", "limma",
+                              "DESeq2", "AUCell", "Signac")
+          extra_pkgs <- c(required_extra, optional_extra)
           seed <- unique(c(loc_names, declared, extra_pkgs))
           closure <- unique(c(
             unlist(tools::package_dependencies(seed, db = db, recursive = TRUE)),
@@ -305,10 +310,15 @@ jobs:
 
           missing <- setdiff(loc_names, have())
           if (length(missing)) stop("local packages not installed: ", paste(missing, collapse = ", "))
-          missing_extra <- setdiff(extra_pkgs, have())
-          if (length(missing_extra)) {
+          missing_required <- setdiff(required_extra, have())
+          if (length(missing_required)) {
+            stop("required packages not installed: ",
+                 paste(missing_required, collapse = ", "))
+          }
+          missing_optional <- setdiff(optional_extra, have())
+          if (length(missing_optional)) {
             cat("WARN optional packages not installed: ",
-                paste(missing_extra, collapse = ", "), "\n")
+                paste(missing_optional, collapse = ", "), "\n")
           }
           cat("rlib packages:", length(have()), "\n")
 
@@ -373,8 +383,8 @@ jobs:
             notes = paste(
               "The demo dataset is downloaded only after the user clicks",
               "'Download and Run a demo data'; the app starts without network.",
-              "Optional modules use ComplexHeatmap, patchwork, MAST, limma,",
-              "DESeq2, AUCell and Signac when installed."
+              "Optional modules use presto, ComplexHeatmap, patchwork, MAST,",
+              "limma, DESeq2, AUCell and Signac when installed."
             ),
             packages = lapply(seq_len(nrow(pkgs)), function(i) list(
               name = pkgs$Package[i], version = pkgs$Version[i],
@@ -383,6 +393,34 @@ jobs:
           jsonlite::write_json(man, file.path(bundle, "manifest.json"), pretty = TRUE, auto_unbox = TRUE)
           EOF
           "$PORTABLE_RSCRIPT" assemble-bundle.R
+
+      - name: Re-sign macOS binaries after portable-R patching
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # portable R's .portable wrapper rewrites CRAN .so load commands after
+          # install.packages(), but does not re-sign them. macOS kills R with
+          # "Code Signature Invalid" when such a .so is loaded from the bundle.
+          # Re-sign every Mach-O file before zipping, then verify the result.
+          while IFS= read -r -d '' f; do
+            if file -b "$f" | grep -q 'Mach-O'; then
+              xattr -cr "$f" 2>/dev/null || true
+              chmod u+w "$f" 2>/dev/null || true
+              codesign --force --sign - "$f"
+            fi
+          done < <(find bundle -type f -print0)
+
+          bad=0
+          while IFS= read -r -d '' f; do
+            if file -b "$f" | grep -q 'Mach-O'; then
+              if ! codesign --verify --verbose=1 "$f" >/dev/null 2>&1; then
+                echo "::error::invalid code signature: $f"
+                bad=1
+              fi
+            fi
+          done < <(find bundle -type f -print0)
+          exit "$bad"
 
       - name: Zip + sha256
         shell: bash

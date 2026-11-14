@@ -9,16 +9,15 @@ devtools::install_github("fentouxungui/SeuratExplorer", dependencies = TRUE)
 
 ## From CRAN
 
-SeuratExplorer is on CRAN. A few suggested dependencies live outside CRAN, so install them first:
+SeuratExplorer is on CRAN. Install the optional Bioconductor and CRAN dependencies first:
 
 ```r
 # Bioconductor packages used by optional features
 if (!require("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-BiocManager::install(c("ComplexHeatmap", "MAST", "limma", "DESeq2"))
+BiocManager::install(c("ComplexHeatmap", "MAST", "limma", "DESeq2", "AUCell", "Signac"))
 
-# presto (used for fast marker detection) is GitHub-only
-if (!require("devtools")) install.packages("devtools")
-devtools::install_github("immunogenomics/presto")
+# presto (used for fast marker detection) is on CRAN
+install.packages("presto")
 
 install.packages("SeuratExplorer")
 ```

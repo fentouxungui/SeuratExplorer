@@ -201,7 +201,7 @@ Config/roxygen2/version: 8.1.0
 | `Build-Desktop-software-by-shinyelectron.R` | Electron 桌面构建脚本 |
 | `icons/` | 桌面应用图标资源 |
 | `wiki/` | GitHub Wiki 源文件 |
-| `dependency/` | 本地 `presto` tarball、桌面构建依赖 |
+| `dependency/` | 本地 SeuratExplorer tarball、桌面构建依赖（`presto` 已从 CRAN 安装） |
 | `.github/` | GitHub Actions / CI 配置 |
 | `.Rproj.user/` | RStudio 本地状态；RStudio 打开项目时会自动重建，删除前先关闭 RStudio |
 | `SeuratExplorer.Rproj` | RStudio 项目文件；可保留，但必须通过 `.Rbuildignore` 排除 |
