@@ -372,6 +372,12 @@ jobs:
           ), file.path(bundle, "app", "app.R"))
 
           pkgs <- as.data.frame(installed.packages(lib.loc = lib))
+          r_version <- paste(R.version$major, R.version$minor, sep = ".")
+          r_abi <- paste(R.version$major, sub("\\..*$", "", R.version$minor), sep = ".")
+          env_r_version <- Sys.getenv("R_VERSION")
+          if (nzchar(env_r_version) && !identical(r_version, env_r_version)) {
+            stop("R_VERSION says ", env_r_version, " but this R is ", r_version)
+          }
           man <- list(
             schema = 1L,
             id = Sys.getenv("APP_ID"), name = Sys.getenv("APP_NAME"), version = Sys.getenv("VERSION"),
@@ -379,7 +385,7 @@ jobs:
             homepage = Sys.getenv("APP_HOMEPAGE"), license = Sys.getenv("APP_LICENSE"),
             runtime = "r-shiny", entry = "app/app.R",
             platform = "${{ matrix.platform }}",
-            r_version = Sys.getenv("R_VERSION"), min_shell_version = "0.1.0",
+            r_version = r_version, r_abi = r_abi, min_shell_version = "0.1.0",
             notes = paste(
               "The demo dataset is downloaded only after the user clicks",
               "'Download and Run a demo data'; the app starts without network.",
@@ -426,7 +432,10 @@ jobs:
         shell: bash
         run: |
           cat > zip-bundle.R <<'EOF'
-          out <- sprintf("%s-%s-%s.zip", Sys.getenv("APP_ID"), Sys.getenv("VERSION"), "${{ matrix.platform }}")
+          r_abi <- paste(head(strsplit(Sys.getenv("R_VERSION"), ".", fixed = TRUE)[[1]], 2),
+                         collapse = ".")
+          out <- sprintf("%s-%s-%s-r%s.zip", Sys.getenv("APP_ID"), Sys.getenv("VERSION"),
+                         "${{ matrix.platform }}", r_abi)
           bundle <- file.path(getwd(), "bundle")
           old <- setwd(bundle); on.exit(setwd(old))
           zip::zipr(out, files = list.files(".", all.files = TRUE, no.. = TRUE))
@@ -442,6 +451,7 @@ jobs:
             source_repository = Sys.getenv("GITHUB_REPOSITORY"),
             source_commit = Sys.getenv("SOURCE_COMMIT"),
             source_tag = Sys.getenv("TAG"),
+            r_version = Sys.getenv("R_VERSION"), r_abi = r_abi,
             cran_snapshot = Sys.getenv("CRAN_SNAPSHOT")
           ), sprintf("meta-%s.json", "${{ matrix.platform }}"), pretty = TRUE, auto_unbox = TRUE)
           cat("bundle zip size:", file.size(out), "\n")
@@ -455,7 +465,9 @@ jobs:
         run: |
           cat > smoke-bundle.R <<'EOF'
           app_id <- Sys.getenv("APP_ID"); ver <- Sys.getenv("VERSION"); plat <- "${{ matrix.platform }}"
-          zip <- sprintf("%s-%s-%s.zip", app_id, ver, plat)
+          r_abi <- paste(head(strsplit(Sys.getenv("R_VERSION"), ".", fixed = TRUE)[[1]], 2),
+                         collapse = ".")
+          zip <- sprintf("%s-%s-%s-r%s.zip", app_id, ver, plat, r_abi)
           if (!file.exists(zip)) stop("smoke: bundle not found: ", zip)
           tmp <- tempfile("smoke"); dir.create(tmp)
           utils::unzip(zip, exdir = tmp)
