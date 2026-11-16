@@ -2082,11 +2082,17 @@ ui <-  function(){
         }
 
         .btn-primary,
-        .btn-primary:visited,
-        .btn-primary .action-label,
-        .btn-primary a {
+        .btn-primary:visited {
           background-color: #256b8e !important;
           border-color: #256b8e !important;
+          color: #fff !important;
+        }
+
+        /* actionButton wraps its label in .action-label. Do not paint that
+           inner span: it must stay transparent over the button surface. */
+        .btn-primary .action-label,
+        .btn-primary a {
+          background-color: transparent !important;
           color: #fff !important;
         }
 
@@ -2096,11 +2102,21 @@ ui <-  function(){
           color: #fff !important;
         }
 
+        .btn-info .action-label {
+          background-color: transparent !important;
+          color: #fff !important;
+        }
+
         .btn-warning,
-        .btn-warning:visited,
-        .btn-warning .action-label {
+        .btn-warning:visited {
           background-color: #B45309 !important;
           border-color: #B45309 !important;
+          color: #fff !important;
+        }
+
+        .btn-warning .action-label,
+        .btn-warning a {
+          background-color: transparent !important;
           color: #fff !important;
         }
 
