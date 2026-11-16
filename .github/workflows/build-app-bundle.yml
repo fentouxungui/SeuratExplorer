@@ -11,17 +11,25 @@
 name: Build app bundle
 
 on:
-  release:
-    types: [published]
+  # Tag pushes are the primary release trigger. Do not also trigger on
+  # release.published: when this workflow creates a Release, that event would
+  # start a second identical build/upload run.
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to attach bundles to (e.g. v0.1.10)"
-        required: false
+        description: "Existing tag whose Release should receive the bundles (e.g. v0.1.10)"
+        required: true
         type: string
 
 permissions:
   contents: read
+
+concurrency:
+  group: build-app-bundle-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 env:
   APP_ID: seurat-explorer
@@ -36,7 +44,53 @@ env:
   SMOKE_TIMEOUT_SEC: "300"
 
 jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
+      tag_exists: ${{ steps.resolve.outputs.tag_exists }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Resolve and validate target tag
+        id: resolve
+        shell: bash
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          EVENT_TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
+        run: |
+          set -euo pipefail
+          raw="${INPUT_TAG:-$EVENT_TAG}"
+          raw="${raw#refs/tags/}"
+          raw="${raw#v}"
+          raw="$(printf '%s' "$raw" | sed 's/[[:space:]]*$//')"
+          if [ -z "$raw" ]; then
+            raw="$(grep '^Version:' DESCRIPTION | awk '{print $2}' | head -n1)"
+          fi
+          if [ -z "$raw" ]; then
+            echo "::error::cannot resolve version"
+            exit 1
+          fi
+          tag="v$raw"
+          tag_exists=false
+          if git rev-parse --verify "refs/tags/$tag" >/dev/null 2>&1; then
+            tag_exists=true
+          elif [ -n "${INPUT_TAG}${EVENT_TAG}" ]; then
+            echo "::error::tag $tag does not exist in this checkout"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$raw" >> "$GITHUB_OUTPUT"
+          echo "tag_exists=$tag_exists" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag=$tag version=$raw exists=$tag_exists"
+
   bundle:
+    needs: resolve
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -47,8 +101,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          ref: ${{ needs.resolve.outputs.tag_exists == 'true' && needs.resolve.outputs.tag || github.ref }}
           fetch-depth: 0
+          fetch-tags: true
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -196,22 +251,21 @@ jobs:
           echo "R_PROFILE=$R_PROFILE" >> "$GITHUB_ENV"
           echo "R_PROFILE_USER=$R_PROFILE_USER" >> "$GITHUB_ENV"
 
-      - name: Resolve and validate version
+      - name: Validate checkout against resolved tag
         shell: bash
         env:
-          INPUT_TAG: ${{ github.event.inputs.tag }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RESOLVED_TAG: ${{ needs.resolve.outputs.tag }}
+          RESOLVED_VERSION: ${{ needs.resolve.outputs.version }}
+          TAG_EXISTS: ${{ needs.resolve.outputs.tag_exists }}
         run: |
-          V="${INPUT_TAG:-${RELEASE_TAG:-}}"
-          V="${V#v}"
-          if [ -z "$V" ]; then V="$(grep '^Version:' DESCRIPTION | awk '{print $2}' | head -n1)"; fi
-          if [ -z "$V" ]; then echo "::error::cannot resolve version"; exit 1; fi
-          TAG="v$V"
-          if [ -n "${INPUT_TAG}${RELEASE_TAG}" ]; then
-            if ! git rev-parse --verify "refs/tags/$TAG" >/dev/null 2>&1; then
-              echo "::error::tag $TAG does not exist in this checkout"
-              exit 1
-            fi
+          set -euo pipefail
+          V="$RESOLVED_VERSION"
+          TAG="$RESOLVED_TAG"
+          if [ -z "$V" ] || [ -z "$TAG" ]; then
+            echo "::error::resolved tag/version is empty"
+            exit 1
+          fi
+          if [ "$TAG_EXISTS" = "true" ]; then
             TAG_COMMIT="$(git rev-parse "$TAG^{commit}")"
             HEAD_COMMIT="$(git rev-parse HEAD)"
             if [ "$TAG_COMMIT" != "$HEAD_COMMIT" ]; then
@@ -517,12 +571,18 @@ jobs:
             *.zip
             meta-*.json
 
+  # Use gh rather than softprops/action-gh-release: action-gh-release v2 has
+  # no release_id or allowUpdates input and creates a Release when none exists.
+  # Manual runs must attach to an existing Release only.
   release:
-    needs: bundle
-    if: github.event_name == 'release' || github.event.inputs.tag != ''
+    needs: [resolve, bundle]
+    if: needs.resolve.outputs.tag_exists == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      TAG: ${{ needs.resolve.outputs.tag }}
+      VERSION: ${{ needs.resolve.outputs.version }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -553,43 +613,54 @@ jobs:
           PY
           cd artifacts && sha256sum *.zip > SHA256SUMS
           rm -f meta-*.json
-      - name: Refuse to overwrite published assets
+      - name: Attach bundles to the existing Release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
         shell: bash
         run: |
           set -euo pipefail
-          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          : "${TAG:?TAG is empty}"
+
           ERR="$(mktemp)"
           set +e
-          release_json="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets,name 2>"$ERR")"
+          release_json="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --json assets,databaseId,name 2>"$ERR")"
           rc=$?
           set -e
+
           if [ "$rc" -eq 0 ]; then
+            release_id="$(printf '%s' "$release_json" | jq -r '.databaseId')"
+            echo "Attaching to existing Release $release_id for $TAG"
             existing="$(printf '%s' "$release_json" | jq -r '.assets[]?.name')"
             for f in artifacts/*; do
               n="$(basename "$f")"
               if printf '%s\n' "$existing" | grep -qxF "$n"; then
-                echo "::error::release asset already exists: $n"
+                echo "::error::release asset already exists for $TAG: $n"
                 exit 1
               fi
             done
           elif grep -qiE 'release not found|HTTP 404' "$ERR"; then
-            echo "release $TAG does not exist yet; the upload step will create it"
+            if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+              echo "::error::No existing Release is associated with tag $TAG."
+              echo "::error::Manual runs attach to an existing Release; they do not create one. Create the Release first, then rerun."
+              exit 1
+            fi
+            echo "No Release exists for $TAG; creating one for the tag."
+            gh release create "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$TAG" \
+              --notes "Automated app bundle build for $TAG" \
+              --verify-tag
           else
-            echo "::error::could not read release $TAG; refusing to guess"
+            echo "::error::could not read Release $TAG; refusing to guess"
             cat "$ERR"
             exit 1
           fi
-      - uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          name: ${{ github.event.release.name || github.event.inputs.tag || github.ref_name }}
-          files: |
-            artifacts/*.zip
-            artifacts/SHA256SUMS
+
+          gh release upload "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            artifacts/*.zip \
+            artifacts/SHA256SUMS \
             artifacts/build-info.json
-          overwrite_files: false
-          fail_on_unmatched_files: true
-          generate_release_notes: false
