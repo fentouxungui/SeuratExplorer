@@ -146,6 +146,7 @@ explorer_body_ui <- function(tab_list){
                                           icon_name = "cogs", color = "#6b7280",
                                           withSpinner(uiOutput("DimSplit.UI"), proxy.height = "10px"),
                                           withSpinner(uiOutput("DimHighlightedClusters.UI"), proxy.height = "10px"),
+                                          uiOutput("DimManyClustersHint.UI"),
                                           checkboxInput("DimPlotMode",label = "Automatically adjust plotting area", TRUE),
                                           uiOutput("dimplot_size_ui"),
                                           p("Colors can be set in Cluster Colors (sidebar).",
@@ -171,10 +172,7 @@ explorer_body_ui <- function(tab_list){
                                               id = "featureplot_gene", title = "Gene Selection",
                                               icon_name = "dna", color = "#3b82f6",
                                               textAreaInput("FeatureGeneSymbol", "Gene Symbol:", value = "", height = '80px', resize = "vertical"),
-                                              div(
-                                                style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
-                                                uiOutput("Featurehints.UI")
-                                              )
+                                              uiOutput("Featurehints.UI")
                                             ),
                                             # Data Selection Group
                                             param_group_collapse(
@@ -232,10 +230,7 @@ explorer_body_ui <- function(tab_list){
                                           id = "vlnplot_data", title = "Data Selection",
                                           icon_name = "database", color = "#3b82f6",
                                           textAreaInput("VlnGeneSymbol", "Gene Symbols:", value = "", height = '80px', resize = "vertical"),
-                                          div(
-                                            style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
-                                            uiOutput("Vlnhints.UI")
-                                          ),
+                                          uiOutput("Vlnhints.UI"),
                                           withSpinner(uiOutput("VlnAssays.UI"), proxy.height = "10px"),
                                           withSpinner(uiOutput("VlnAssaySlots.UI"), proxy.height = "10px"),
                                           withSpinner(uiOutput("VlnSplitBy.UI"), proxy.height = "10px")
@@ -259,13 +254,17 @@ explorer_body_ui <- function(tab_list){
                                           ),
                                           conditionalPanel(
                                             condition = "input.VlnSplitPlot == true && (input.VlnStackPlot != true || input.VlnFlipPlot == true)",
-                                            p("Split violins keep the split colors; cluster colors apply to unsplit and side-by-side split plots.",
+                                            p("Split violins use the colors defined for the Split by variable in Cluster Colors. Unsplit violins use the cluster-resolution colors; side-by-side split violins use cluster colors when defined.",
                                               style = "font-size: 11px; color: #856404; margin: -4px 0 10px 0;")
                                           ),
                                           conditionalPanel(
                                             condition = "input.VlnSplitPlot == true && input.VlnStackPlot == true && input.VlnFlipPlot != true",
                                             p("Split violins in the stacked layout require Flip axes. Without it, split groups are shown side by side instead.",
                                               style = "font-size: 11px; color: #856404; margin: -4px 0 10px 0;")
+                                          ),
+                                          conditionalPanel(
+                                            condition = "input.VlnSplitPlot == true",
+                                            uiOutput("VlnSplitColorHint.UI")
                                           ),
                                           conditionalPanel(
                                             condition = "output.Vlnplot_multiple_genes",
@@ -279,11 +278,13 @@ explorer_body_ui <- function(tab_list){
                                             condition = "output.Vlnplot_StackPlot && input.VlnSplitBy == 'None'",
                                             selectInput("VlnFillBy","Color By:", choices = c(Feature = "feature", Cluster = "ident")),
                                           ),
+                                          checkboxInput("VlnShowLegend", "Show legend", TRUE),
                                           conditionalPanel(
-                                            condition = "input.VlnSplitBy == 'None'",
-                                            selectInput("Vlnfillcolorplatte","Color palette:", choices = color_choice_vector, selected = "default"),
-                                            uiOutput("VlnPaletteHint.UI")
+                                            condition = "input.VlnShowLegend == true",
+                                            sliderInput("VlnLegendNcol", "Legend columns:",
+                                                        min = 1, max = 4, value = 1, step = 1)
                                           ),
+                                          uiOutput("VlnLegendHint.UI"),
                                           sliderInput("VlnPointSize", label = "Point Size:", min = 0, max = 4, value = 0),
                                           sliderInput("VlnPointAlpha", label = "Point Alpha:", min = 0, max = 1, value = 1),
                                           sliderInput("VlnXlabelSize", label = "X Axis Label Size:", min = 0, max = 20, value = 14),
@@ -312,10 +313,7 @@ explorer_body_ui <- function(tab_list){
                                           id = "dotplot_data", title = "Data Selection",
                                           icon_name = "database", color = "#3b82f6",
                                           textAreaInput("DotGeneSymbol", "Gene Symbols:", value = "", height = '80px', resize = "vertical"),
-                                          div(
-                                            style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
-                                            uiOutput("Dothints.UI")
-                                          ),
+                                          uiOutput("Dothints.UI"),
                                           withSpinner(uiOutput("DotAssays.UI"), proxy.height = "10px"),
                                           withSpinner(uiOutput("DotSplitBy.UI"), proxy.height = "10px")
                                         ),
@@ -375,10 +373,7 @@ explorer_body_ui <- function(tab_list){
                                           id = "heatmap_data", title = "Data Selection",
                                           icon_name = "database", color = "#3b82f6",
                                           textAreaInput("HeatmapGeneSymbol", "Gene Symbols:", value = "", height = '80px', resize = "vertical"),
-                                          div(
-                                            style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
-                                            uiOutput("Heatmaphints.UI")
-                                          ),
+                                          uiOutput("Heatmaphints.UI"),
                                           withSpinner(uiOutput("HeatmapAssays.UI"), proxy.height = "10px"),
                                           withSpinner(uiOutput("HeatmapAssaySlots.UI"), proxy.height = "10px")
                                         ),
@@ -426,10 +421,7 @@ explorer_body_ui <- function(tab_list){
                                           id = "avgheatmap_data", title = "Data Selection",
                                           icon_name = "database", color = "#3b82f6",
                                           textAreaInput("AveragedHeatmapGeneSymbol", "Gene Symbols:", value = "", height = '80px', resize = "vertical"),
-                                          div(
-                                            style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
-                                            uiOutput("AveragedHeatmaphints.UI")
-                                          ),
+                                          uiOutput("AveragedHeatmaphints.UI"),
                                           withSpinner(uiOutput("AveragedHeatmapAssays.UI"), proxy.height = "10px")
                                         ),
 
@@ -469,10 +461,7 @@ explorer_body_ui <- function(tab_list){
                                             id = "ridgeplot_data", title = "Data Selection",
                                             icon_name = "database", color = "#3b82f6",
                                             textAreaInput("RidgeplotGeneSymbol", "Gene Symbols:", value = "", height = '80px', resize = "vertical"),
-                                            div(
-                                              style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
-                                              uiOutput("Ridgeplothints.UI")
-                                            ),
+                                            uiOutput("Ridgeplothints.UI"),
                                             withSpinner(uiOutput("RidgeplotAssays.UI"), proxy.height = "10px"),
                                             withSpinner(uiOutput("RidgeplotAssaySlots.UI"), proxy.height = "10px")
                                           ),
@@ -541,8 +530,13 @@ explorer_body_ui <- function(tab_list){
                                           param_group_collapse(
                                             id = "cellratio_plot", title = "Plot Options",
                                             icon_name = "sliders-h", color = "#f59e0b",
-                                            selectInput("Cellratiofillcolorplatte","Color palette:", choices = color_choice_vector, selected = "default"),
-                                            uiOutput("CellratioPaletteHint.UI"),
+                                            checkboxInput("CellratioShowLegend", "Show legend", TRUE),
+                                            conditionalPanel(
+                                              condition = "input.CellratioShowLegend == true",
+                                              sliderInput("CellratioLegendNcol", "Legend columns:",
+                                                          min = 1, max = 4, value = 1, step = 1)
+                                            ),
+                                            uiOutput("CellratioManyClustersHint.UI"),
                                             checkboxInput("CellratioRotateAxis",label = "Rotate x-axis labels", FALSE),
                                             conditionalPanel(
                                               condition = "input.CellratioFacetChoice == 'None'",

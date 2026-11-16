@@ -208,6 +208,16 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                               multiple = TRUE)
   })
 
+  output$DimManyClustersHint.UI <- renderUI({
+    req(input$DimClusterResolution)
+    req(input$DimClusterResolution %in% colnames(data$obj@meta.data))
+    n <- length(levels(data$obj@meta.data[[input$DimClusterResolution]]))
+    if (n <= 20) return(NULL)
+    p(paste0("This resolution has ", n,
+             " clusters. Use 'Highlight Clusters' above or a coarser resolution for readability."),
+      style = "font-size: 11px; color: #856404; margin: 2px 0 6px 0;")
+  })
+
   # Store the current plot dimensions
   dimplot_dims <- reactiveValues(width = 800, height = 720)
 
@@ -356,16 +366,19 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$Featurehints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Featurehints.UI...")}
     if (length(data$extra_qc_options) == 0) {
-      p("You can paste multiple genes from a column in excel.",
-        style = "font-size: 12px; margin: 0; color: #004085;")
+      NULL
     } else if(length(data$extra_qc_options) > 10){
-      p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "),
-               "; you can paste multiple genes from a column in excel."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
+      div(
+        style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+        p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " ")),
+          style = "font-size: 12px; margin: 0; color: #004085;")
+      )
     } else{
-      p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " "),
-               "; you can paste multiple genes from a column in excel."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
+      div(
+        style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+        p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " ")),
+          style = "font-size: 12px; margin: 0; color: #004085;")
+      )
     }
   })
 
@@ -563,16 +576,19 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$Vlnhints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Vlnhints.UI...")}
     if (length(data$extra_qc_options) == 0) {
-      p("You can paste multiple genes from a column in excel.",
-        style = "font-size: 12px; margin: 0; color: #004085;")
+      NULL
     } else if(length(data$extra_qc_options) > 10){
-      p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "),
-               "; you can paste multiple genes from a column in excel."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
+      div(
+        style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+        p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " ")),
+          style = "font-size: 12px; margin: 0; color: #004085;")
+      )
     } else{
-      p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " "),
-               "; you can paste multiple genes from a column in excel."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
+      div(
+        style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+        p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " ")),
+          style = "font-size: 12px; margin: 0; color: #004085;")
+      )
     }
   })
 
@@ -786,40 +802,80 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                            axis.text.y = ggplot2::element_text(size = input$VlnYlabelSize)) & ggplot2::labs(x = NULL)
         }
 
-        if (!is.null(vln_color_map)) {
+        # Fill colours: unsplit violins use the cluster-resolution colours;
+        # split violins use the colours defined for the Split by variable.
+        vln_split_map <- if (!is.null(vln_split)) {
+          get_cluster_color_map(data, vln_split)
+        } else {
+          NULL
+        }
+
+        if (is.null(vln_split)) {
+          if (!is.null(vln_color_map) && identical(vln_fill_by, "ident")) {
+            vln_idents <- levels(SeuratObject::Idents(cds))
+            vln_full <- complete_cluster_colors(vln_color_map, vln_idents)
+            p <- p & ggplot2::scale_fill_manual(values = vln_full, drop = FALSE)
+          }
+        } else if (vln_split_plot) {
+          # Split violins are filled by the split levels, not by the cluster
+          # resolution. Use the Cluster Colors saved for the split column.
+          if (!is.null(vln_split_map)) {
+            sp_lv <- levels(factor(cds@meta.data[[vln_split]]))
+            split_full <- complete_cluster_colors(vln_split_map, sp_lv)
+            p <- p & ggplot2::scale_fill_manual(values = split_full, drop = FALSE)
+          }
+        } else if (!is.null(vln_color_map)) {
+          # Side-by-side split: fill is the cluster x split interaction. Keep
+          # one cluster colour on both split halves.
           vln_idents <- levels(SeuratObject::Idents(cds))
           vln_full <- complete_cluster_colors(vln_color_map, vln_idents)
-          if (is.null(vln_split)) {
-            if (identical(vln_fill_by, "ident")) {
-              p <- p & ggplot2::scale_fill_manual(values = vln_full, drop = FALSE)
-            }
-          } else if (!vln_split_plot) {
-            sp_lv <- levels(factor(cds@meta.data[[vln_split]]))
-            comb <- levels(interaction(factor(vln_idents, levels = vln_idents),
-                                       factor(sp_lv, levels = sp_lv)))
-            ident_of <- vapply(comb, function(L) {
-              cand <- vln_idents[vapply(vln_idents,
-                                        function(id) startsWith(L, paste0(id, ".")),
-                                        logical(1))]
-              if (length(cand) == 0) NA_character_ else cand[which.max(nchar(cand))]
-            }, character(1))
-            vals <- vln_full[ident_of]
-            if (anyNA(vals)) vals[is.na(vals)] <- scales::hue_pal()(sum(is.na(vals)))
-            names(vals) <- comb
-            brk <- comb[!duplicated(ident_of)]
-            lab <- ident_of[!duplicated(ident_of)]
-            p <- suppressMessages(
-              p & ggplot2::scale_fill_manual(values = vals, breaks = brk, labels = lab)
-            )
+          sp_lv <- levels(factor(cds@meta.data[[vln_split]]))
+          comb <- levels(interaction(factor(vln_idents, levels = vln_idents),
+                                     factor(sp_lv, levels = sp_lv)))
+          ident_of <- vapply(comb, function(L) {
+            cand <- vln_idents[vapply(vln_idents,
+                                      function(id) startsWith(L, paste0(id, ".")),
+                                      logical(1))]
+            if (length(cand) == 0) NA_character_ else cand[which.max(nchar(cand))]
+          }, character(1))
+          vals <- vln_full[ident_of]
+          if (anyNA(vals)) vals[is.na(vals)] <- scales::hue_pal()(sum(is.na(vals)))
+          names(vals) <- comb
+          brk <- comb[!duplicated(ident_of)]
+          lab <- ident_of[!duplicated(ident_of)]
+          p <- suppressMessages(
+            p & ggplot2::scale_fill_manual(values = vals, breaks = brk, labels = lab)
+          )
+        } else if (!is.null(vln_split_map)) {
+          # No cluster colours, but split colours are defined: use them for
+          # the side-by-side split levels.
+          sp_lv <- levels(factor(cds@meta.data[[vln_split]]))
+          split_full <- complete_cluster_colors(vln_split_map, sp_lv)
+          p <- p & ggplot2::scale_fill_manual(values = split_full, drop = FALSE)
+        }
+
+        # Seurat's ExIPlot applies `plots <- plots & NoLegend()` whenever
+        # several features are combined (non-stacked VlnPlot). Restore one
+        # collected fill legend so multi-gene violins show the cluster colors.
+        if (vln_multi && !vln_stack) {
+          p <- p + patchwork::plot_layout(guides = "collect")
+        }
+
+        show_legend <- if (is.null(input$VlnShowLegend)) TRUE else isTRUE(input$VlnShowLegend)
+        if (show_legend) {
+          legend_ncol <- suppressWarnings(as.integer(input$VlnLegendNcol))
+          if (length(legend_ncol) != 1L || is.na(legend_ncol) || legend_ncol < 1L) {
+            legend_ncol <- 1L
           }
-        } else if (input$Vlnfillcolorplatte != 'default' & input$VlnSplitBy == 'None' &
-                   identical(vln_fill_by, "ident")){
-          # color
-          fill.colors <- getColors(color.platte = color_list,
-                                   choice = input$Vlnfillcolorplatte,
-                                   n = length(levels(Idents(cds))))
-          names(fill.colors) <- levels(Idents(cds))
-          p <- p & scale_fill_manual(values = fill.colors)
+          p <- p & ggplot2::theme(legend.position = "right")
+          p <- p & ggplot2::guides(
+            fill = ggplot2::guide_legend(
+              ncol = legend_ncol,
+              override.aes = list(alpha = 1, size = 3)
+            )
+          )
+        } else {
+          p <- p & ggplot2::theme(legend.position = "none")
         }
       }
     }
@@ -846,20 +902,23 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       save_cached_plot(plot_cache, "vlnplot", file)
     })
 
-  # The built-in palette selector is ignored once the current resolution has
-  # custom colours; disable it and say why instead of silently ignoring it.
-  observe({
-    has_custom <- !is.null(get_cluster_color_map(data, input$VlnClusterResolution))
-    if (isTRUE(has_custom)) {
-      shinyjs::disable("Vlnfillcolorplatte")
-    } else {
-      shinyjs::enable("Vlnfillcolorplatte")
-    }
+  output$VlnLegendHint.UI <- renderUI({
+    req(input$VlnClusterResolution)
+    req(input$VlnClusterResolution %in% colnames(data$obj@meta.data))
+    n <- length(levels(data$obj@meta.data[[input$VlnClusterResolution]]))
+    if (n <= 20) return(NULL)
+    p(paste0("This resolution has ", n,
+             " clusters. If the legend is too long, hide it or use 'Highlight Clusters' in the Dim Reduction Plot."),
+      style = "font-size: 11px; color: #856404; margin: 2px 0 0 0;")
   })
-  output$VlnPaletteHint.UI <- renderUI({
-    if (is.null(get_cluster_color_map(data, input$VlnClusterResolution))) return(NULL)
-    p("Custom cluster colors are in use. Edit them in Cluster Colors.",
-      style = "font-size: 11px; color: #6c757d; margin: 2px 0 0 0;")
+
+  output$VlnSplitColorHint.UI <- renderUI({
+    req(input$VlnSplitBy)
+    if (identical(input$VlnSplitBy, "None")) return(NULL)
+    if (!is.null(get_cluster_color_map(data, input$VlnSplitBy))) return(NULL)
+    p(paste0("No colors saved for '", input$VlnSplitBy,
+             "' in Cluster Colors; split violins use the default split colors. Set and Submit them in Cluster Colors."),
+      style = "font-size: 11px; color: #856404; margin: 2px 0 0 0;")
   })
 
   ################################ Dot Plot
@@ -880,8 +939,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # inform extra qc options for Gene symbol input
   output$Dothints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Dothints.UI...")}
-    p("You can paste multiple genes from a column in excel.",
-      style = "font-size: 12px; margin: 0; color: #004085;")
+    NULL
   })
 
   # define the idents used
@@ -1069,8 +1127,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # inform extra qc options for Gene symbol input
   output$Heatmaphints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Heatmaphints.UI...")}
-    p("You can paste multiple genes from a column in excel.",
-      style = "font-size: 12px; margin: 0; color: #004085;")
+    NULL
   })
 
   # define slot Choice UI
@@ -1223,8 +1280,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$AveragedHeatmaphints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing AveragedHeatmaphints.UI...")}
-    p("You can paste multiple genes from a column in excel.",
-      style = "font-size: 12px; margin: 0; color: #004085;")
+    NULL
   })
 
   # refresh the parsed feature cache when the gene input or the loaded data changes
@@ -1373,16 +1429,19 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   output$Ridgeplothints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing Ridgeplothints.UI...")}
     if (length(data$extra_qc_options) == 0) {
-      p("You can paste multiple genes from a column in excel.",
-        style = "font-size: 12px; margin: 0; color: #004085;")
+      NULL
     } else if(length(data$extra_qc_options) > 10){
-      p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "),
-               "; you can paste multiple genes from a column in excel."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
+      div(
+        style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+        p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " ")),
+          style = "font-size: 12px; margin: 0; color: #004085;")
+      )
     } else{
-      p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " "),
-               "; you can paste multiple genes from a column in excel."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
+      div(
+        style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+        p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " ")),
+          style = "font-size: 12px; margin: 0; color: #004085;")
+      )
     }
   })
 
@@ -1699,7 +1758,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                          col.width = input$CellratioColumnWidth,
                          flow.alpha = input$CellratioFlowAlpha,
                          flow.curve = input$CellratioFlowCurve,
-                         color.choice = input$Cellratiofillcolorplatte,
                          fill.values = cr_fill,
                          show_percent = show_pct,
                          percent_cutoff = pct_cutoff,
@@ -1720,7 +1778,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                          col.width = input$CellratioColumnWidth,
                          flow.alpha = input$CellratioFlowAlpha,
                          flow.curve = input$CellratioFlowCurve,
-                         color.choice = input$Cellratiofillcolorplatte,
                          fill.values = cr_fill,
                          show_percent = show_pct,
                          percent_cutoff = pct_cutoff,
@@ -1735,6 +1792,24 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                                                                   vjust = 1,
                                                                   hjust=1))
     }
+
+    show_legend <- if (is.null(input$CellratioShowLegend)) TRUE else isTRUE(input$CellratioShowLegend)
+    if (show_legend) {
+      legend_ncol <- suppressWarnings(as.integer(input$CellratioLegendNcol))
+      if (length(legend_ncol) != 1L || is.na(legend_ncol) || legend_ncol < 1L) {
+        legend_ncol <- 1L
+      }
+      p <- p & ggplot2::theme(legend.position = "right")
+      p <- p & ggplot2::guides(
+        fill = ggplot2::guide_legend(
+          ncol = legend_ncol,
+          override.aes = list(alpha = 1)
+        )
+      )
+    } else {
+      p <- p & ggplot2::theme(legend.position = "none")
+    }
+
     if (input$CellratioMode) {
       plot_w <- num_or(session$clientData$output_cellratioplot_width, 800)
       plot_h <- plot_w * num_or(input$CellratioPlotHWRatio, 0.9)
@@ -1759,20 +1834,14 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       save_cached_plot(plot_cache, "cellratioplot", file)
     })
 
-  # Same rule as the violin plot: custom colours take precedence over the
-  # built-in palette selector, so disable it and explain.
-  observe({
-    has_custom <- !is.null(get_cluster_color_map(data, input$CellratioFillChoice))
-    if (isTRUE(has_custom)) {
-      shinyjs::disable("Cellratiofillcolorplatte")
-    } else {
-      shinyjs::enable("Cellratiofillcolorplatte")
-    }
-  })
-  output$CellratioPaletteHint.UI <- renderUI({
-    if (is.null(get_cluster_color_map(data, input$CellratioFillChoice))) return(NULL)
-    p("Custom cluster colors are in use. Edit them in Cluster Colors.",
-      style = "font-size: 11px; color: #6c757d; margin: 2px 0 0 0;")
+  output$CellratioManyClustersHint.UI <- renderUI({
+    req(input$CellratioFillChoice)
+    req(input$CellratioFillChoice %in% colnames(data$obj@meta.data))
+    n <- length(levels(data$obj@meta.data[[input$CellratioFillChoice]]))
+    if (n <= 20) return(NULL)
+    p(paste0("This resolution has ", n,
+             " clusters. If the legend is too long, hide it or use 'Highlight Clusters' in the Dim Reduction Plot."),
+      style = "font-size: 11px; color: #856404; margin: 2px 0 0 0;")
   })
 
   output$cellratiodata <-  DT::renderDT(server=FALSE,{
@@ -4280,25 +4349,17 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     n <- length(lv)
     if (n == 0) return()
     choice <- input$ClusterColorPalette
-    base <- if (identical(choice, "default")) {
-      scales::hue_pal()(n)
-    } else {
-      color_list[[choice]]
-    }
-    if (is.null(base) || length(base) == 0) base <- scales::hue_pal()(n)
 
-    # Apply the palette positionally to as many groups as it has colours; the
-    # remaining groups keep the colours they already had (no recycling).
-    cols <- isolate(cluster_color_draft$colors)
-    if (length(cols) != n) cols <- complete_cluster_colors(NULL, lv)
-    k <- min(n, length(base))
-    cols[seq_len(k)] <- base[seq_len(k)]
+    # getColors() returns exactly n colours: it uses the named palette when it
+    # is long enough and generates additional distinct colours otherwise.
+    cols <- getColors(color.platte = color_list, choice = choice, n = n)
+    if (length(cols) != n) cols <- scales::hue_pal()(n)
+
     cluster_color_draft$colors <- unname(cols)
     cluster_color_picker_version(isolate(cluster_color_picker_version()) + 1L)
     showNotification(ui = tagList(
       icon("palette", style = "margin-right: 5px;"),
-      paste0("Applied ", k, " color(s) to the first ", k, " group(s)."),
-      if (n > k) paste0(" ", n - k, " group(s) kept their previous colors.")
+      paste0("Applied ", n, " color(s).")
     ), type = "message", duration = 5)
   }, ignoreInit = TRUE)
 

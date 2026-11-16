@@ -218,15 +218,33 @@ ReviseGene <- function(Agene, GeneLibrary){
 }
 
 
-color_list <- list(stallion = c("#D51F26","#272E6A","#208A42","#89288F","#F47D2B",
-                                "#FEE500","#8A9FD1","#C06CAB","#E6C2DC","#90D5E4",
-                                "#89C75F","#F37B7D","#9983BD","#D24B27","#3BBCA8",
-                                "#6E4B9E","#0C727C", "#7E1416","#D8A767","#3D3D3D"),
+# Categorical palettes offered for cluster colouring. The first entries are
+# the colourblind-friendly, smaller palettes; larger sets follow.
+color_list_categorical <- list(
+  # 8-colour colourblind-safe palette (Okabe & Ito)
+  okabeIto = c("#000000", "#E69F00", "#56B4E9", "#009E73",
+               "#F0E442", "#0072B2", "#D55E00", "#CC79A7"),
 
-                   stallion2 = c("#D51F26","#272E6A","#208A42","#89288F","#F47D2B",
-                                 "#FEE500","#8A9FD1","#C06CAB","#E6C2DC","#90D5E4",
-                                 "#89C75F","#F37B7D","#9983BD","#D24B27","#3BBCA8",
-                                 "#6E4B9E","#0C727C", "#7E1416","#D8A767"),
+  # Paul Tol's bright and muted colourblind-friendly palettes
+  tolBright = c("#4477AA", "#EE6677", "#228833", "#CCBB44",
+                "#66CCEE", "#AA3377", "#BBBBBB"),
+  tolMuted = c("#332288", "#88CCEE", "#44AA99", "#117733",
+               "#999933", "#DDCC77", "#CC6677", "#882255", "#AA4499"),
+
+  tableau10 = c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F",
+                "#EDC948", "#B07AA1", "#FF9DA7", "#9C755F", "#BAB0AC"),
+
+  # Revised stallion: high-contrast colours first; the pale yellow/pink/cyan
+  # entries were replaced with darker, more legible alternatives.
+  stallion = c("#D51F26","#272E6A","#208A42","#89288F","#F47D2B",
+               "#0C727C","#7E1416","#3D3D3D","#3BBCA8","#D24B27",
+               "#C06CAB","#6E4B9E","#9983BD","#F37B7D","#8A9FD1",
+               "#B8843A","#6FAF3F","#56B4E9","#CC79A7","#D4A017"),
+
+  stallion2 = c("#D51F26","#272E6A","#208A42","#89288F","#F47D2B",
+                "#0C727C","#7E1416","#3D3D3D","#3BBCA8","#D24B27",
+                "#C06CAB","#6E4B9E","#9983BD","#F37B7D","#8A9FD1",
+                "#B8843A","#6FAF3F","#56B4E9","#CC79A7"),
 
                    calm = c("#7DD06F", "#844081","#688EC1", "#C17E73", "#484125",
                             "#6CD3A7", "#597873","#7B6FD0", "#CF4A31", "#D0CD47",
@@ -268,11 +286,13 @@ color_list <- list(stallion = c("#D51F26","#272E6A","#208A42","#89288F","#F47D2B
                    zissou = c("#3B9AB2", "#78B7C5", "#EBCC2A", "#E1AF00", "#F21A00"),
                    darjeeling = c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"),
                    rushmore = c("#E1BD6D", "#EABE94", "#0B775E", "#35274A" , "#F2300F"),
-                   captain = c("grey","#A1CDE1","#12477C","#EC9274","#67001E"),
+                   captain = c("grey","#A1CDE1","#12477C","#EC9274","#67001E")
+)
 
-                   #---------------------------------------------------------------
-                   # Primarily Continuous Palettes
-                   #---------------------------------------------------------------
+# Continuous palettes are kept for expression/heatmap use. They are not
+# offered in the cluster-colour selector because adjacent levels are hard to
+# distinguish for categorical clusters.
+color_list_continuous <- list(
                    #10-colors
                    horizon = c('#000075','#2E00FF', '#9408F7', '#C729D6', '#FA4AB5',
                                '#FF6A95', '#FF8B74', '#FFAC53', '#FFCD32', '#FFFF60'),
@@ -312,14 +332,45 @@ color_list <- list(stallion = c("#D51F26","#272E6A","#208A42","#89288F","#F47D2B
                    fireworks = c("white","#2488F0","#7F3F98","#E22929","#FCB31A"),
                    greyMagma = c("grey", "#FB8861FF", "#B63679FF", "#51127CFF", "#000004FF"),
                    fireworks2 = c("black", "#2488F0","#7F3F98","#E22929","#FCB31A"),
-                   purpleOrange = c("#581845", "#900C3F", "#C70039", "#FF5744", "#FFC30F"))
+                   purpleOrange = c("#581845", "#900C3F", "#C70039", "#FF5744", "#FFC30F")
+)
 
+# Full lookup, retained for callers that explicitly request a continuous
+# palette by name. The UI selector only uses color_list_categorical.
+color_list <- c(color_list_categorical, color_list_continuous)
 
+color_choice_vector <- setNames(
+  names(color_list_categorical),
+  paste0(names(color_list_categorical), "-",
+         vapply(color_list_categorical, length, integer(1)))
+)
+color_choice_vector <- c(c("Default" = "default",
+                           "Auto (N-aware)" = "auto"),
+                         color_choice_vector)
 
-color_choice_vector <- names(color_list)
-names(color_choice_vector) <- paste(names(color_list), unlist(lapply(color_list,length)),sep = "-")
-color_choice_vector <- color_choice_vector[names(color_choice_vector)[order(unlist(lapply(color_list,length)),decreasing = TRUE)]]
-color_choice_vector <- c(c("Default" = 'default'), color_choice_vector)
+# Generate n distinguishable colours. Polychrome/pals are optional; base R
+# hcl.colors() is the dependency-free fallback.
+make_distinct_colors <- function(n, seedcolors = NULL) {
+  n <- suppressWarnings(as.integer(n))
+  if (length(n) != 1L || is.na(n) || n <= 0) return(character(0))
+
+  if (requireNamespace("Polychrome", quietly = TRUE)) {
+    seeds <- seedcolors
+    if (is.null(seeds) || length(seeds) == 0) {
+      seeds <- c("#D51F26", "#272E6A", "#208A42", "#F47D2B", "#0C727C")
+    }
+    pal <- tryCatch(unname(Polychrome::createPalette(n, seedcolors = seeds)),
+                    error = function(e) NULL)
+    if (!is.null(pal) && length(pal) >= n) return(pal[seq_len(n)])
+  }
+
+  if (requireNamespace("pals", quietly = TRUE)) {
+    pal <- tryCatch(unname(pals::glasbey(n)), error = function(e) NULL)
+    if (!is.null(pal) && length(pal) >= n) return(pal[seq_len(n)])
+  }
+
+  unname(grDevices::hcl.colors(n, palette = "Dark 3"))
+}
 
 #' @title getColors
 #'
@@ -332,14 +383,30 @@ color_choice_vector <- c(c("Default" = 'default'), color_choice_vector)
 #'
 #' @examples
 #' # null
-getColors <- function(color.platte = NULL,
+getColors <- function(color.platte = color_list,
                       choice = 'default',
                       n = NULL){
-  if (choice == 'default') { # use default colors
+  n <- suppressWarnings(as.integer(n))
+  if (length(n) != 1L || is.na(n) || n <= 0) return(character(0))
+
+  if (is.null(choice) || length(choice) != 1L ||
+      identical(choice, 'default')) {
     return(scales::hue_pal()(n))
-  }else{
-    return(color.platte[[choice]][1:n])
   }
+  if (identical(choice, 'auto')) {
+    return(make_distinct_colors(n))
+  }
+
+  pal <- color.platte[[choice]]
+  if (is.null(pal) || length(pal) == 0) {
+    return(scales::hue_pal()(n))
+  }
+  if (n <= length(pal)) {
+    return(unname(pal[seq_len(n)]))
+  }
+
+  # Never return NA when the requested number exceeds the palette length.
+  make_distinct_colors(n, seedcolors = pal)
 }
 
 # Relative luminance (WCAG) of hex colours. Used to pick black or white text

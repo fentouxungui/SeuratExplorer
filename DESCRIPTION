@@ -19,6 +19,7 @@ Imports:
     Seurat (>= 5.4.0),
     SeuratObject (>= 5.3.0),
     ggplot2 (>= 4.0.1),
+    patchwork,
     shinydashboard,
     DT,
     shinycssloaders,
@@ -47,7 +48,9 @@ Suggests:
     DESeq2,
     AUCell,
     presto,
-    Signac
+    Signac,
+    Polychrome,
+    pals
 Remotes:
     bioc::release/ComplexHeatmap,
     bioc::release/MAST,
