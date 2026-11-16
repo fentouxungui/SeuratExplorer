@@ -4355,11 +4355,24 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     cols <- getColors(color.platte = color_list, choice = choice, n = n)
     if (length(cols) != n) cols <- scales::hue_pal()(n)
 
+    palette_n <- if (identical(choice, "default") || identical(choice, "auto")) {
+      n
+    } else {
+      length(color_list[[choice]])
+    }
+    if (!is.finite(palette_n)) palette_n <- n
+
     cluster_color_draft$colors <- unname(cols)
     cluster_color_picker_version(isolate(cluster_color_picker_version()) + 1L)
+    msg <- if (palette_n < n) {
+      paste0("Applied ", n, " colors (", palette_n, " from the palette, ",
+             n - palette_n, " generated to fill the remaining groups).")
+    } else {
+      paste0("Applied ", n, " color(s).")
+    }
     showNotification(ui = tagList(
       icon("palette", style = "margin-right: 5px;"),
-      paste0("Applied ", n, " color(s).")
+      msg
     ), type = "message", duration = 5)
   }, ignoreInit = TRUE)
 

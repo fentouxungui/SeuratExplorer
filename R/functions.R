@@ -397,7 +397,7 @@ getColors <- function(color.platte = color_list,
     return(make_distinct_colors(n))
   }
 
-  pal <- color.platte[[choice]]
+  pal <- unname(color.platte[[choice]])
   if (is.null(pal) || length(pal) == 0) {
     return(scales::hue_pal()(n))
   }
@@ -405,8 +405,35 @@ getColors <- function(color.platte = color_list,
     return(unname(pal[seq_len(n)]))
   }
 
-  # Never return NA when the requested number exceeds the palette length.
-  make_distinct_colors(n, seedcolors = pal)
+  # Palette exhausts before the number of groups. Keep the selected palette
+  # colours for the first groups, then append distinct colours for the rest.
+  # (Generating n colours from the palette instead would make the applied
+  # palette invisible when n > length(pal).)
+  extra_n <- n - length(pal)
+  extra <- make_distinct_colors(extra_n, seedcolors = pal)
+  cols <- c(pal, extra)
+
+  # Never return duplicates or NA.
+  cols_lower <- tolower(cols)
+  if (anyDuplicated(cols_lower)) {
+    seen <- tolower(pal)
+    extra <- character(0)
+    fallback <- make_distinct_colors(n + extra_n, seedcolors = pal)
+    for (col in fallback) {
+      key <- tolower(col)
+      if (!(key %in% seen)) {
+        extra <- c(extra, col)
+        seen <- c(seen, key)
+      }
+      if (length(extra) == extra_n) break
+    }
+    if (length(extra) < extra_n) {
+      extra <- c(extra, grDevices::hcl.colors(extra_n - length(extra),
+                                              palette = "Dark 3"))
+    }
+    cols <- c(pal, extra)
+  }
+  unname(cols[seq_len(n)])
 }
 
 # Relative luminance (WCAG) of hex colours. Used to pick black or white text
