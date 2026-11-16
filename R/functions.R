@@ -1335,7 +1335,7 @@ download_demo_data_from_url <- function(url, dest, session = shiny::getDefaultRe
   invisible(dest)
 }
 
-resolve_plot_inputs <- function(data, cluster = NULL, assay = NULL, idents = NULL, order = NULL){
+resolve_plot_inputs <- function(data, cluster = NULL, assay = NULL, idents = NULL){
   cluster_column <- cluster
   if (is.null(cluster_column) || !(cluster_column %in% colnames(data$obj@meta.data))) {
     cluster_column <- data$cluster_default
@@ -1347,13 +1347,12 @@ resolve_plot_inputs <- function(data, cluster = NULL, assay = NULL, idents = NUL
   if (is.null(level_values)) {
     level_values <- unique(as.character(data$obj@meta.data[, cluster_column]))
   }
-  idents_used <- if (is.null(idents)) level_values else intersect(as.character(idents), level_values)
+  # Keep the factor level order (set by Reorder Cluster Levels); only filter
+  # by the selected clusters.
+  idents_used <- if (is.null(idents)) level_values else
+    level_values[level_values %in% as.character(idents)]
   if (length(idents_used) == 0) {
     idents_used <- level_values
-  }
-  order_used <- if (is.null(order)) idents_used else intersect(as.character(order), idents_used)
-  if (length(order_used) == 0) {
-    order_used <- idents_used
   }
   assay_name <- assay
   if (is.null(assay_name) || !(assay_name %in% Seurat::Assays(data$obj))) {
@@ -1363,7 +1362,7 @@ resolve_plot_inputs <- function(data, cluster = NULL, assay = NULL, idents = NUL
     assay_name <- data$assays_options[1]
   }
   list(cluster = cluster_column, levels = level_values, idents = idents_used,
-       order = order_used, assay = assay_name)
+       order = idents_used, assay = assay_name)
 }
 
 check_data <- function(data, key_paramaters = c('reduction_options', 'cluster_options', 'assays_options', 'assays_slots_options', 'split_options')){

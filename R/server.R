@@ -45,7 +45,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   # batch define some output elements
   ## dimension reduction options for dimplot and featureplot
-  dimension_reduction_UI_names <- c('DimDimensionReduction', 'FeatureDimensionReduction', 'renameclustersDimensionReduction')
+  dimension_reduction_UI_names <- c('DimDimensionReduction', 'FeatureDimensionReduction',
+                                    'renameclustersDimensionReduction', 'reorderclustersDimensionReduction')
   dimension_reduction_df <- data.frame(Element =  paste0(dimension_reduction_UI_names, '.UI'), UIID = dimension_reduction_UI_names)
   output_dimension_reduction <- lapply(1:nrow(dimension_reduction_df), function(i){
     output[[dimension_reduction_df$Element[i]]] <- renderUI({
@@ -87,7 +88,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                            'TopGenesClusterResolution',
                            'FeatureSummaryClusterResolution',
                            'FeatureCorrelationClusterResolution',
-                           'renameclustersClusterResolution')
+                           'renameclustersClusterResolution',
+                           'reorderclustersClusterResolution')
   resolution_df <- data.frame(Element = paste0(resolution_UI_names, '.UI'),
                               UIID = resolution_UI_names)
   output_resolution <- lapply(1:nrow(resolution_df), function(i){
@@ -110,21 +112,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                   selected = selected)
     })
   })
-
-  # ## Cluster order # Not Work when need values from input, such as: input[[cluster_order_UI_df$UIRelyOn[i]]]
-  # cluster_order_UI_names <- c('DimClusterOrder')
-  # cluster_order_UI_relyon <- c('DimClusterResolution')
-  # cluster_order_UI_df <- data.frame(Eelement = paste0(cluster_order_UI_names, '.UI'),
-  #                                   UIID = cluster_order_UI_names,
-  #                                   UIRelyOn = cluster_order_UI_relyon)
-  # output_cluster_order <- lapply(1:nrow(cluster_order_UI_df), function(i){
-  #   output[[cluster_order_UI_df$Element[i]]] <- renderUI({
-  #     # req(input[[cluster_order_UI_df$UIRelyOn[i]]])
-  #     if(verbose){message(paste0("SeuratExplorer: preparing ", cluster_order_UI_df$Element[i], "..."))}
-  #     items_full <- input[[cluster_order_UI_df$UIRelyOn[i]]]
-  #     shinyjqui::orderInput(inputId = cluster_order_UI_df$UIID[i], label = 'Drag to order', items = levels(data$obj@meta.data[,items_full]),width = '100%')
-  #   })
-  # })
 
   # allowed data slots for each assay in each plot/summary functions
   assay_allowed_slots <- list('FeatureAssay' = isolate(data$assay_slots),
@@ -188,25 +175,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   ############################# Dimension Reduction Plot
 
-  # define Cluster order
-  output$DimClusterOrder.UI <- renderUI({
-    req(input$DimClusterResolution %in% colnames(data$obj@meta.data))
-    if(verbose){message("SeuratExplorer: preparing DimClusterOrder.UI...")}
-    shinyjqui::orderInput(inputId = 'DimClusterOrder',
-                          label = 'Drag to order:',
-                          items = levels(data$obj@meta.data[,input$DimClusterResolution]),
-                          width = '100%')
-  })
-
-  # when change cluster resolution, open the shinyBS::bsCollapsePanel,
-  # otherwise will cause cluster order not update
-  # a bad effect is: each time changing the resolution option,
-  # will collapse cluster order ui
-  observeEvent(input$DimClusterResolution, {
-    if(verbose){message("SeuratExplorer: updateCollapse for collapseDimplot...")}
-    shinyBS::updateCollapse(session, "collapseDimplot", open = "Change Cluster Order")
-  }, ignoreInit = TRUE)
-
   # define Split Choice UI
   output$DimSplit.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing DimSplit.UI...")}
@@ -223,24 +191,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else{
       return(input$DimSplit)
     }
-  })
-
-  # Safe cluster order reactive - use the user order only when it is valid for the
-  # current data and resolution, otherwise fall back to the current default levels
-  DimClusterOrder.Safe <- reactive({
-    req(input$DimClusterResolution)
-    req(input$DimClusterResolution %in% colnames(data$obj@meta.data))
-    expected_levels <- levels(data$obj@meta.data[,input$DimClusterResolution])
-
-    if (!is.null(input$DimClusterOrder) && length(input$DimClusterOrder) > 0 &&
-        identical(sort(as.character(input$DimClusterOrder)), sort(as.character(expected_levels)))) {
-      if(verbose){message("SeuratExplorer: DimClusterOrder.Safe using user order...")}
-      return(input$DimClusterOrder)
-    }
-
-    # Fallback to default levels
-    if(verbose){message("SeuratExplorer: DimClusterOrder.Safe using default levels...")}
-    expected_levels
   })
 
   # define Cluster choice for highlight
@@ -260,6 +210,15 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   # Store the current plot dimensions
   dimplot_dims <- reactiveValues(width = 800, height = 720)
+
+  # Width measured by a ResizeObserver on the plot container. Changes smaller
+  # than ~30px (notably a scrollbar appearing) are ignored in JS, so an
+  # auto-height change cannot keep feeding back into this reactive through the
+  # output width.
+  dimplot_width <- shiny::reactive({
+    w <- input$dimplot_measured_width
+    if (is.null(w) || length(w) != 1L || !is.finite(w) || w <= 0) 800 else w
+  })
 
   # Custom message handlers to update plot dimensions from JavaScript
   observeEvent(input$dimplot_width, {
@@ -313,8 +272,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else{
       dim_cells_highlighted <- colnames(cds)[cds@meta.data[,isolate(input$DimClusterResolution)] %in% input$DimHighlightedClusters]
     }
-    cds@meta.data[,isolate(input$DimClusterResolution)] <- factor(cds@meta.data[,isolate(input$DimClusterResolution)],
-                                                         levels = DimClusterOrder.Safe())
     # Custom cluster colours, ordered by the levels currently used for plotting
     # so that reordering clusters never changes a group's colour. Skipped while
     # highlighting cells, which uses its own two-colour scheme inside Seurat.
@@ -348,7 +305,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       p <- p & NoLegend()
     }
     if (input$DimPlotMode) {
-      plot_w <- num_or(session$clientData$output_dimplot_width, 800)
+      plot_w <- num_or(dimplot_width(), 800)
       plot_h <- plot_w * num_or(input$DimPlotHWRatio, 0.9)
     }else{
       plot_w <- dimplot_dims$width
@@ -357,8 +314,12 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     store_plot(plot_cache, "dimplot", p, plot_w, plot_h)
     return(p)
   }, height = function(){
-    if (input$DimPlotMode) {
-      session$clientData$output_dimplot_width * input$DimPlotHWRatio
+    if (isTRUE(input$DimPlotMode)) {
+      # Keep the auto height stable: the output width can briefly be NULL / 0
+      # while the dashboard lays out, and a zero height makes the browser
+      # resize the output again, which would retrigger this render.
+      num_or(dimplot_width(), 800) *
+        num_or(input$DimPlotHWRatio, 0.9)
     }else{
       if (is.null(dimplot_dims$height)) 720 else dimplot_dims$height
     }
@@ -629,36 +590,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                               multiple = TRUE)
   })
 
-  # define Cluster order
-  output$VlnClusterOrder.UI <- renderUI({
-    if(verbose){message("SeuratExplorer: preparing VlnClusterOrder.UI...")}
-    shinyjqui::orderInput(inputId = 'VlnClusterOrder',
-                          label = 'Drag to order:',
-                          items = input$VlnIdentsSelected,
-                          width = '100%')
-  })
-
-  # when change cluster resolution, open the shinyBS::bsCollapsePanel, otherwise will cause cluster order not update
-  observeEvent(input$VlnClusterResolution, {
-    if(verbose){message("SeuratExplorer: updateCollapse for collapseVlnplot...")}
-    shinyBS::updateCollapse(session, "collapseVlnplot", open = "0")
-  })
-
-  # Safe cluster order reactive - use the user order only when it matches the
-  # currently selected clusters, otherwise fall back to the selected clusters
-  VlnClusterOrder.Safe <- reactive({
-    req(input$VlnIdentsSelected)
-    if (!is.null(input$VlnClusterOrder) && length(input$VlnClusterOrder) > 0 &&
-        identical(sort(as.character(input$VlnClusterOrder)), sort(as.character(input$VlnIdentsSelected)))) {
-      if(verbose){message("SeuratExplorer: VlnClusterOrder.Safe using user order...")}
-      return(input$VlnClusterOrder)
-    }
-
-    # Fallback to default levels
-    if(verbose){message("SeuratExplorer: VlnClusterOrder.Safe using default levels...")}
-    input$VlnIdentsSelected
-  })
-
   # define Split Choice UI
   output$VlnSplitBy.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing VlnSplitBy.UI...")}
@@ -787,8 +718,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     vln_groups <- resolve_plot_inputs(data,
                                       cluster = input$VlnClusterResolution,
                                       assay = input$VlnAssay,
-                                      idents = input$VlnIdentsSelected,
-                                      order = VlnClusterOrder.Safe())
+                                      idents = input$VlnIdentsSelected)
 
     if(verbose){message("SeuratExplorer: preparing vlnplot...")}
     if (any(is.na(features_vlnplot$features_current))) { # when NA value
@@ -969,21 +899,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                               multiple = TRUE)
   })
 
-  # define Cluster order
-  output$DotClusterOrder.UI <- renderUI({
-    if(verbose){message("SeuratExplorer: preparing DotClusterOrder.UI...")}
-    shinyjqui::orderInput(inputId = 'DotClusterOrder',
-                          label = 'Drag to order:',
-                          items = input$DotIdentsSelected,
-                          width = '100%')
-  })
-
-  # when change cluster resolution, open the shinyBS::bsCollapsePanel, otherwise will cause cluster order not update
-  observeEvent(input$DotClusterResolution, ({
-    if(verbose){message("SeuratExplorer: updateCollapse for collapseDotplot...")}
-    shinyBS::updateCollapse(session, "collapseDotplot", open = "0")
-  }))
-
   # define Split Choice UI
   output$DotSplitBy.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing DotSplitBy.UI...")}
@@ -1036,21 +951,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }
   })
 
-  # Safe cluster order reactive - use the user order only when it matches the
-  # currently selected clusters, otherwise fall back to the selected clusters
-  DotClusterOrder.Safe <- reactive({
-    req(input$DotIdentsSelected)
-    if (!is.null(input$DotClusterOrder) && length(input$DotClusterOrder) > 0 &&
-        identical(sort(as.character(input$DotClusterOrder)), sort(as.character(input$DotIdentsSelected)))) {
-      if(verbose){message("SeuratExplorer: DotClusterOrder.Safe using user order...")}
-      return(input$DotClusterOrder)
-    }
-
-    # Fallback to default levels
-    if(verbose){message("SeuratExplorer: DotClusterOrder.Safe using default levels...")}
-    input$DotIdentsSelected
-  })
-
   outputOptions(output, 'DotPlot_Split_isNone', suspendWhenHidden = FALSE)
 
   # Store the current plot dimensions
@@ -1091,8 +991,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     dot_groups <- resolve_plot_inputs(data,
                                       cluster = input$DotClusterResolution,
                                       assay = input$DotAssay,
-                                      idents = input$DotIdentsSelected,
-                                      order = DotClusterOrder.Safe())
+                                      idents = input$DotIdentsSelected)
 
     if(verbose){message("SeuratExplorer: preparing dotplot...")}
     if (any(is.na(features_dotplot$features_current)) | is.null(dot_groups$order)) { # NA
@@ -1164,8 +1063,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     content = function(file) {
       save_cached_plot(plot_cache, "dotplot", file)
     })
-  # known bugs:
-  # when split by is selected, change cluster order not work!
 
   ################################ Heatmap Cell Level
 
@@ -1217,35 +1114,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                               multiple = TRUE)
   })
 
-  # define Cluster order
-  output$HeatmapClusterOrder.UI <- renderUI({
-    if(verbose){message("SeuratExplorer: preparing HeatmapClusterOrder.UI...")}
-    shinyjqui::orderInput(inputId = 'HeatmapClusterOrder',
-                          label = 'Drag to order:',
-                          items = input$HeatmapIdentsSelected,
-                          width = '100%')
-  })
-
-  observeEvent(input$HeatmapClusterResolution, ({
-    if(verbose){message("SeuratExplorer: updateCollapse for collapseHeatmap...")}
-    shinyBS::updateCollapse(session, "collapseHeatmap", open = "0")
-  }))
-
-  # Safe cluster order reactive - use the user order only when it matches the
-  # currently selected clusters, otherwise fall back to the selected clusters
-  HeatmapClusterOrder.Safe <- reactive({
-    req(input$HeatmapIdentsSelected)
-    if (!is.null(input$HeatmapClusterOrder) && length(input$HeatmapClusterOrder) > 0 &&
-        identical(sort(as.character(input$HeatmapClusterOrder)), sort(as.character(input$HeatmapIdentsSelected)))) {
-      if(verbose){message("SeuratExplorer: HeatmapClusterOrder.Safe using user order...")}
-      return(input$HeatmapClusterOrder)
-    }
-
-    # Fallback to default levels
-    if(verbose){message("SeuratExplorer: HeatmapClusterOrder.Safe using default levels...")}
-    input$HeatmapIdentsSelected
-  })
-
   # Store the current plot dimensions
   heatmap_dims <- reactiveValues(width = 800, height = 720)
 
@@ -1284,8 +1152,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     heatmap_groups <- resolve_plot_inputs(data,
                                           cluster = input$HeatmapClusterResolution,
                                           assay = input$HeatmapAssay,
-                                          idents = input$HeatmapIdentsSelected,
-                                          order = HeatmapClusterOrder.Safe())
+                                          idents = input$HeatmapIdentsSelected)
 
     if(verbose){message("SeuratExplorer: preparing heatmap...")}
     if (any(is.na(features_heatmap$features_current)) | is.null(heatmap_groups$order)) { # NA
@@ -1388,20 +1255,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                               multiple = TRUE)
   })
 
-  # define Cluster order
-  output$AveragedHeatmapClusterOrder.UI <- renderUI({
-    if(verbose){message("SeuratExplorer: preparing AveragedHeatmapClusterOrder.UI...")}
-    shinyjqui::orderInput(inputId = 'AveragedHeatmapClusterOrder',
-                          label = 'Drag to order:',
-                          items = input$AveragedHeatmapIdentsSelected,
-                          width = '100%')
-  })
-
-  observeEvent(input$AveragedHeatmapClusterResolution, ({
-    if(verbose){message("SeuratExplorer: updateCollapse for collapseAveragedHeatmap...")}
-    shinyBS::updateCollapse(session, "collapseAveragedHeatmap", open = "0")
-  }))
-
   # Store the current plot dimensions
   averagedheatmap_dims <- reactiveValues(width = 800, height = 720)
 
@@ -1416,21 +1269,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     averagedheatmap_dims$height <- input$averagedheatmap_height
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
-
-  # Safe cluster order reactive - use the user order only when it matches the
-  # currently selected clusters, otherwise fall back to the selected clusters
-  AveragedHeatmapClusterOrder.Safe <- reactive({
-    req(input$AveragedHeatmapIdentsSelected)
-    if (!is.null(input$AveragedHeatmapClusterOrder) && length(input$AveragedHeatmapClusterOrder) > 0 &&
-        identical(sort(as.character(input$AveragedHeatmapClusterOrder)), sort(as.character(input$AveragedHeatmapIdentsSelected)))) {
-      if(verbose){message("SeuratExplorer: AveragedHeatmapClusterOrder.Safe using user order...")}
-      return(input$AveragedHeatmapClusterOrder)
-    }
-
-    # Fallback to default levels
-    if(verbose){message("SeuratExplorer: AveragedHeatmapClusterOrder.Safe using default levels...")}
-    input$AveragedHeatmapIdentsSelected
-  })
 
   output$averagedheatmap_resizable_ui <- renderUI({
     if (input$AveragedHeatmapPlotMode) {
@@ -1456,8 +1294,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     averaged_groups <- resolve_plot_inputs(data,
                                            cluster = input$AveragedHeatmapClusterResolution,
                                            assay = input$AveragedHeatmapAssay,
-                                           idents = input$AveragedHeatmapIdentsSelected,
-                                           order = AveragedHeatmapClusterOrder.Safe())
+                                           idents = input$AveragedHeatmapIdentsSelected)
 
     if(verbose){message("SeuratExplorer: preparing averagedheatmap...")}
     if (any(is.na(features_heatmap_averaged$features_current)) | is.null(averaged_groups$order)) { # NA
@@ -1590,22 +1427,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                               multiple = TRUE)
   })
 
-  # define Cluster order
-  output$RidgeplotClusterOrder.UI <- renderUI({
-    if(verbose){message("SeuratExplorer: preparing RidgeplotClusterOrder.UI...")}
-    shinyjqui::orderInput(inputId = 'RidgeplotClusterOrder',
-                          label = 'Drag to order:',
-                          items = input$RidgeplotIdentsSelected,
-                          width = '100%')
-  })
-
-  observeEvent(input$RidgeplotClusterResolution, ({
-    if(verbose){message("SeuratExplorer: updateCollapse for collapseRidgeplot...")}
-    shinyBS::updateCollapse(session, "collapseRidgeplot", open = "0")
-  }))
-
-
-
   # Conditional panel: show this panel when input multiple genes and stack is set to TRUE
   output$Ridgeplot_stack_show = reactive({
     req(input$RidgeplotGeneSymbol)
@@ -1649,21 +1470,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
 
-  # Safe cluster order reactive - use the user order only when it matches the
-  # currently selected clusters, otherwise fall back to the selected clusters
-  RidgeplotClusterOrder.Safe <- reactive({
-    req(input$RidgeplotIdentsSelected)
-    if (!is.null(input$RidgeplotClusterOrder) && length(input$RidgeplotClusterOrder) > 0 &&
-        identical(sort(as.character(input$RidgeplotClusterOrder)), sort(as.character(input$RidgeplotIdentsSelected)))) {
-      if(verbose){message("SeuratExplorer: RidgeplotClusterOrder.Safe using user order...")}
-      return(input$RidgeplotClusterOrder)
-    }
-
-    # Fallback to default levels
-    if(verbose){message("SeuratExplorer: RidgeplotClusterOrder.Safe using default levels...")}
-    input$RidgeplotIdentsSelected
-  })
-
   output$ridgeplot_resizable_ui <- renderUI({
     if (input$RidgeplotPlotMode) {
       withSpinner(plotOutput("ridgeplot",height = "auto"))
@@ -1688,8 +1494,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     ridge_groups <- resolve_plot_inputs(data,
                                         cluster = input$RidgeplotClusterResolution,
                                         assay = input$RidgeplotAssay,
-                                        idents = input$RidgeplotIdentsSelected,
-                                        order = RidgeplotClusterOrder.Safe())
+                                        idents = input$RidgeplotIdentsSelected)
 
     if(verbose){message("SeuratExplorer: preparing ridgeplot...")}
     if (any(is.na(features_ridgeplot$features_current))) { # NA
@@ -1785,30 +1590,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                               multiple = TRUE)
   })
 
-  # define Fill order
-  output$CellratioplotFillOrder.UI <- renderUI({
-    if(verbose){message("SeuratExplorer: preparing CellratioplotFillOrder.UI...")}
-    shinyjqui::orderInput(inputId = 'CellratioFillOrder',
-                          label = 'Drag to order:',
-                          items = input$CellratioIdentsSelected,
-                          width = '100%')
-  })
-
-  # Safe cluster order reactive - use the user order only when it matches the
-  # currently selected clusters, otherwise fall back to the selected clusters
-  CellratioFillOrder.Safe <- reactive({
-    req(input$CellratioIdentsSelected)
-    if (!is.null(input$CellratioFillOrder) && length(input$CellratioFillOrder) > 0 &&
-        identical(sort(as.character(input$CellratioFillOrder)), sort(as.character(input$CellratioIdentsSelected)))) {
-      if(verbose){message("SeuratExplorer: CellratioFillOrder.Safe using user order...")}
-      return(input$CellratioFillOrder)
-    }
-
-    # Fallback to default levels
-    if(verbose){message("SeuratExplorer: CellratioFillOrder.Safe using default levels...")}
-    input$CellratioIdentsSelected
-  })
-
   # define X choices
   output$CellratioXChoice.UI <- renderUI({
     req(input$CellratioFillChoice)
@@ -1816,17 +1597,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     selectInput("CellratioXChoice",
                 "X axis (sample):",
                 choices = data$cluster_options[!data$cluster_options %in% input$CellratioFillChoice])
-  })
-
-  # define x choice order
-  output$CellratioplotXOrder.UI <- renderUI({
-    req(input$CellratioXChoice %in% colnames(data$obj@meta.data))
-
-    if(verbose){message("SeuratExplorer: preparing CellratioplotXOrder.UI...")}
-    shinyjqui::orderInput(inputId = 'CellratioXOrder',
-                          label = 'Drag to order:',
-                          items = levels(data$obj@meta.data[,input$CellratioXChoice]),
-                          width = '100%')
   })
 
   # define Facet choices
@@ -1849,21 +1619,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       return(NULL)
     }else{
       return(input$CellratioFacetChoice)
-    }
-  })
-
-  # define Facet order
-  output$CellratioplotFacetOrder.UI <- renderUI({
-    req(input$CellratioFacetChoice %in% colnames(data$obj@meta.data))
-
-    if(verbose){message("SeuratExplorer: preparing CellratioplotFacetOrder.UI...")}
-    if (!is.null(FacetChoice.Revised())) {
-      shinyjqui::orderInput(inputId = 'CellratioFacetOrder',
-                            label = 'Drag to order:',
-                            items = levels(data$obj@meta.data[,input$CellratioFacetChoice]),
-                            width = '100%')
-    }else{
-
     }
   })
 
@@ -1902,20 +1657,24 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   # plot
   output$cellratioplot <- renderPlot({
-    req(input$CellratioXOrder, input$CellratioFillChoice, input$CellratioXChoice)
+    req(input$CellratioFillChoice, input$CellratioXChoice)
     req(input$CellratioFillChoice %in% colnames(data$obj@meta.data))
     req(input$CellratioXChoice %in% colnames(data$obj@meta.data))
-    req(all(CellratioFillOrder.Safe() %in% levels(data$obj@meta.data[,input$CellratioFillChoice])))
-    req(all(input$CellratioXOrder %in% levels(data$obj@meta.data[,input$CellratioXChoice])))
     req(input$CellratioFillChoice != input$CellratioXChoice)
-    # req(input$CellratioFillChoice != input$CellratioXOrder) # to be deleted
+
+    fill_levels <- levels(data$obj@meta.data[[input$CellratioFillChoice]])
+    cr_fill_order <- fill_levels[fill_levels %in% input$CellratioIdentsSelected]
+    if (length(cr_fill_order) == 0) cr_fill_order <- fill_levels
+    cr_sample_levels <- levels(data$obj@meta.data[[input$CellratioXChoice]])
+    cr_facet_levels <- if (is.null(FacetChoice.Revised())) NULL else
+      levels(data$obj@meta.data[[FacetChoice.Revised()]])
 
     if(verbose){message("SeuratExplorer: preparing cellratioplot...")}
       cds <- data$obj
     # Custom cluster colours take precedence over the palette selector.
     cr_map <- get_cluster_color_map(data, isolate(input$CellratioFillChoice))
     cr_fill <- if (is.null(cr_map)) NULL else
-      complete_cluster_colors(cr_map, CellratioFillOrder.Safe())
+      complete_cluster_colors(cr_map, cr_fill_order)
     # Optional percentage labels (see cellRatioPlot())
     show_pct <- isTRUE(input$CellratioShowPercent)
     pct_cutoff <- if (is.null(input$CellratioPercentCutoff)) 2.5 else input$CellratioPercentCutoff
@@ -1930,11 +1689,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     show_sample_n <- isTRUE(input$CellratioShowSampleSize)
     if (is.null(FacetChoice.Revised())) { # not facet
       p <- cellRatioPlot(object = cds,
-                         idents = CellratioFillOrder.Safe(),
+                         idents = cr_fill_order,
                          sample.name = isolate(input$CellratioXChoice),
-                         sample.order = input$CellratioXOrder,
+                         sample.order = cr_sample_levels,
                          celltype.name = isolate(input$CellratioFillChoice),
-                         celltype.order = CellratioFillOrder.Safe(),
+                         celltype.order = cr_fill_order,
                          facet.name = NULL,
                          facet.order = NULL,
                          col.width = input$CellratioColumnWidth,
@@ -1951,13 +1710,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                          show_sample_size = show_sample_n)
     }else{
       p <- cellRatioPlot(object = cds,
-                         idents = CellratioFillOrder.Safe(),
+                         idents = cr_fill_order,
                          sample.name = isolate(input$CellratioXChoice),
-                         sample.order = input$CellratioXOrder,
+                         sample.order = cr_sample_levels,
                          celltype.name = isolate(input$CellratioFillChoice),
-                         celltype.order = CellratioFillOrder.Safe(),
+                         celltype.order = cr_fill_order,
                          facet.name = FacetChoice.Revised(),
-                         facet.order = input$CellratioFacetOrder,
+                         facet.order = cr_facet_levels,
                          col.width = input$CellratioColumnWidth,
                          flow.alpha = input$CellratioFlowAlpha,
                          flow.curve = input$CellratioFlowCurve,
@@ -4219,6 +3978,124 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       write.csv(df, file, row.names = FALSE)
     }
   )
+
+  ############################## Reorder Clusters
+
+  # Levels of the selected resolution, in their current factor order.
+  reorderclustersLevels <- reactive({
+    req(input$reorderclustersClusterResolution)
+    req(input$reorderclustersClusterResolution %in% colnames(data$obj@meta.data))
+    lv <- levels(data$obj@meta.data[[input$reorderclustersClusterResolution]])
+    validate(need(length(lv) > 1,
+                  "This column has fewer than two levels and cannot be reordered."))
+    lv
+  })
+
+  output$reorderclustersOrder.UI <- renderUI({
+    if(verbose){message("SeuratExplorer: preparing reorderclustersOrder.UI...")}
+    shinyjqui::orderInput(inputId = "reorderclustersOrder",
+                          label = "Drag to set the level order:",
+                          items = reorderclustersLevels(),
+                          width = "100%")
+  })
+
+  # Use the dragged order only when it is a complete permutation of the levels.
+  reorderclustersOrder.Safe <- reactive({
+    lv <- reorderclustersLevels()
+    ord <- as.character(input$reorderclustersOrder)
+    if (length(ord) == length(lv) && setequal(ord, lv)) ord else lv
+  })
+
+  output$reorderclustersdimplot <- renderPlot({
+    req(data$obj, input$reorderclustersDimensionReduction)
+    if (length(data$reduction_options) == 0) {
+      return(empty_plot_no_reduction)
+    }
+
+    col <- input$reorderclustersClusterResolution
+    lv <- reorderclustersOrder.Safe()
+
+    cds <- data$obj
+    cds@meta.data[[col]] <- factor(as.character(cds@meta.data[[col]]), levels = lv)
+
+    # Custom colours stay attached to cluster labels, not positions.
+    cols <- NULL
+    color_map <- get_cluster_color_map(data, col)
+    if (!is.null(color_map)) {
+      cols <- unname(complete_cluster_colors(color_map, lv))
+    }
+
+    Seurat::DimPlot(cds,
+                    reduction = input$reorderclustersDimensionReduction,
+                    group.by = col,
+                    label = TRUE,
+                    label.size = num_or(input$reorderclustersLabelSize, 7),
+                    cols = cols)
+  })
+
+  observeEvent(input$reorderclustersReset, {
+    shinyjqui::updateOrderInput(session, "reorderclustersOrder",
+                                items = reorderclustersLevels())
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$reorderclustersApply, {
+    col <- input$reorderclustersClusterResolution
+    lv <- reorderclustersOrder.Safe()
+
+    req(data$obj, col %in% colnames(data$obj@meta.data))
+    cur <- levels(data$obj@meta.data[[col]])
+
+    if (length(cur) != length(lv) || !setequal(cur, lv)) {
+      showModal(modalDialog(
+        title = tagList(icon("exclamation-triangle"), "Error"),
+        "The new order must contain every current level exactly once.",
+        easyClose = TRUE, footer = modalButton("OK"), size = "m"
+      ))
+      return()
+    }
+
+    if (identical(cur, lv)) {
+      showNotification("Cluster order unchanged.", type = "message", duration = 3)
+      return()
+    }
+
+    cds <- data$obj
+    cds@meta.data[[col]] <- factor(as.character(cds@meta.data[[col]]), levels = lv)
+
+    # Re-level active Idents only when they represent this same grouping.
+    if (identical(as.character(SeuratObject::Idents(cds)),
+                  as.character(cds@meta.data[[col]])) &&
+        setequal(levels(SeuratObject::Idents(cds)), lv)) {
+      SeuratObject::Idents(cds) <- factor(as.character(SeuratObject::Idents(cds)),
+                                          levels = lv)
+    }
+
+    data$obj <- cds
+    data$cluster_options <- prepare_cluster_options(
+      df = data$obj@meta.data,
+      verbose = getOption('SeuratExplorerVerbose'))
+    data$split_options <- prepare_split_options(
+      df = data$obj@meta.data,
+      max.level = data$split_maxlevel,
+      verbose = getOption('SeuratExplorerVerbose'))
+    data$version <- data$version + 1
+
+    # Invalidate staged Rename Clusters state for the same column.
+    if (identical(input$renameclustersClusterResolution, col)) {
+      new_anno_mapping$NewClusterName <- ''
+      new_anno_mapping$OldClusterName <- ''
+      new_anno_mapping$mapping <- data.frame()
+      output$renameclusterscheck_OK <- reactive(FALSE)
+    }
+
+    showNotification(
+      ui = tagList(
+        icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+        "Cluster levels reordered successfully!"
+      ),
+      type = "message", duration = 5
+    )
+  }, ignoreInit = TRUE)
 
   ############################## Search features
   # output the features dataset

@@ -44,6 +44,7 @@ explorer_sidebar_ui <- function(){
     featuresummary = "Summarize gene expression (mean / median / percentage) per cluster.",
     featurecorrelation = "Calculate gene-gene expression correlations.",
     renameclusters = "Interactively rename cluster labels.",
+    reorderclusters = "Reorder the identity levels of a cluster resolution without changing cell assignments.",
     clustercolors = "Assign custom colors to the groups of a cluster resolution and share them across plots.",
     geneclusters = "Group cells by a gene's expression level with custom cutoffs.",
     combinedclusters = "Combine two cluster annotations into a new grouping.",
@@ -73,6 +74,7 @@ explorer_sidebar_ui <- function(){
                          menuSubItem(text = span(title = tooltips[["addmodulescore"]], "Module Score", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "addmodulescore", icon = shiny::icon("angle-right")),
                          menu_divider(),
                          menuSubItem(text = span(title = tooltips[["renameclusters"]], "Rename Clusters"), tabName = "renameclusters", icon = shiny::icon("angle-right")),
+                         menuSubItem(text = span(title = tooltips[["reorderclusters"]], "Reorder Cluster Levels"), tabName = "reorderclusters", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["clustercolors"]], "Cluster Colors"), tabName = "clustercolors", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["geneclusters"]], "Gene Based Cluster", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "geneclusters", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["combinedclusters"]], "Combination Based Cluster", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "combinedclusters", icon = shiny::icon("angle-right")),
@@ -106,7 +108,8 @@ explorer_body_ui <- function(tab_list){
   tab_list[["dimplot"]] = tabItem(tabName = "dimplot",
                                   fluidRow(
                                     box(title = "Dimensional Reduction Plot",
-                                        uiOutput("dimplot_resizable_ui"),
+                                        div(id = "dimplot_plot_container",
+                                            uiOutput("dimplot_resizable_ui")),
                                         # show the button on right end, refer to: https://stackoverflow.com/questions/28749693/shiny-r-aligning-buttons
                                         div(style = "display:inline-block; float:right",downloadBttn(outputId = "downloaddimplot",style = "bordered",color = "primary")),
                                         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
@@ -143,10 +146,6 @@ explorer_body_ui <- function(tab_list){
                                           icon_name = "cogs", color = "#6b7280",
                                           withSpinner(uiOutput("DimSplit.UI"), proxy.height = "10px"),
                                           withSpinner(uiOutput("DimHighlightedClusters.UI"), proxy.height = "10px"),
-                                          bsCollapse(id = "collapseDimplot", open = "Change Cluster Order",
-                                                     bsCollapsePanel(title = "Change Cluster Order",
-                                                                              withSpinner(uiOutput("DimClusterOrder.UI"), proxy.height = "10px"),
-                                                                              style = "info")),
                                           checkboxInput("DimPlotMode",label = "Automatically adjust plotting area", TRUE),
                                           uiOutput("dimplot_size_ui"),
                                           p("Colors can be set in Cluster Colors (sidebar).",
@@ -247,11 +246,7 @@ explorer_body_ui <- function(tab_list){
                                           id = "vlnplot_cluster", title = "Cluster Settings",
                                           icon_name = "layer-group", color = "#10b981",
                                           withSpinner(uiOutput("VlnClusterResolution.UI"), proxy.height = "10px"),
-                                          withSpinner(uiOutput("VlnIdentsSelected.UI"), proxy.height = "10px"),
-                                          bsCollapse(id = "collapseVlnplot", open = "0",
-                                                            bsCollapsePanel(title = "Change Cluster Order",
-                                                                                     withSpinner(uiOutput("VlnClusterOrder.UI"), proxy.height = "10px"),
-                                                                                     style = "info", value = "0"))
+                                          withSpinner(uiOutput("VlnIdentsSelected.UI"), proxy.height = "10px")
                                         ),
 
                                         # Plot Options
@@ -331,10 +326,6 @@ explorer_body_ui <- function(tab_list){
                                           icon_name = "layer-group", color = "#10b981",
                                           withSpinner(uiOutput("DotClusterResolution.UI"), proxy.height = "10px"),
                                           withSpinner(uiOutput("DotIdentsSelected.UI"), proxy.height = "10px"),
-                                          bsCollapse(id = "collapseDotplot", open = "0",
-                                                            bsCollapsePanel(title = "Change Cluster Order",
-                                                                                     withSpinner(uiOutput("DotClusterOrder.UI"), proxy.height = "10px"),
-                                                                                     style = "info", value = "0")),
                                           checkboxInput("DotClusterIdents",label = "Cluster x-axis groups", FALSE)
                                         ),
 
@@ -397,11 +388,7 @@ explorer_body_ui <- function(tab_list){
                                           id = "heatmap_cluster", title = "Cluster Settings",
                                           icon_name = "layer-group", color = "#10b981",
                                           withSpinner(uiOutput("HeatmapClusterResolution.UI"), proxy.height = "10px"),
-                                          withSpinner(uiOutput("HeatmapIdentsSelected.UI"), proxy.height = "10px"),
-                                          bsCollapse(id = "collapseHeatmap", open = "0",
-                                                            bsCollapsePanel(title = "Change Cluster Order",
-                                                                                     withSpinner(uiOutput("HeatmapClusterOrder.UI"), proxy.height = "10px"),
-                                                                                     style = "info", value = "0"))
+                                          withSpinner(uiOutput("HeatmapIdentsSelected.UI"), proxy.height = "10px")
                                         ),
 
                                         # Plot Options
@@ -452,10 +439,6 @@ explorer_body_ui <- function(tab_list){
                                           icon_name = "layer-group", color = "#10b981",
                                           withSpinner(uiOutput("AveragedHeatmapClusterResolution.UI"), proxy.height = "10px"),
                                           withSpinner(uiOutput("AveragedHeatmapIdentsSelected.UI"), proxy.height = "10px"),
-                                          bsCollapse(id = "collapseAveragedHeatmap", open = "0",
-                                                            bsCollapsePanel(title = "Change Cluster Order",
-                                                                                     withSpinner(uiOutput("AveragedHeatmapClusterOrder.UI"), proxy.height = "10px"),
-                                                                                     style = "info", value = "0")),
                                           checkboxInput("AveragedHeatmapClusterClusters",label = "Cluster Clusters", FALSE),
                                           checkboxInput("AveragedHeatmapClusterFeatures",label = "Cluster Features", FALSE)
                                         ),
@@ -499,11 +482,7 @@ explorer_body_ui <- function(tab_list){
                                             id = "ridgeplot_cluster", title = "Cluster Settings",
                                             icon_name = "layer-group", color = "#10b981",
                                             withSpinner(uiOutput("RidgeplotClusterResolution.UI"), proxy.height = "10px"),
-                                            withSpinner(uiOutput("RidgeplotIdentsSelected.UI"), proxy.height = "10px"),
-                                            bsCollapse(id = "collapseRidgeplot", open = "0",
-                                                              bsCollapsePanel(title = "Change Cluster Order",
-                                                                                       withSpinner(uiOutput("RidgeplotClusterOrder.UI"), proxy.height = "10px"),
-                                                                                       style = "info", value = "0"))
+                                            withSpinner(uiOutput("RidgeplotIdentsSelected.UI"), proxy.height = "10px")
                                           ),
 
                                           # Plot Options
@@ -555,19 +534,7 @@ explorer_body_ui <- function(tab_list){
                                           param_group_collapse(
                                             id = "cellratio_cluster", title = "Cluster Settings",
                                             icon_name = "layer-group", color = "#10b981",
-                                            withSpinner(uiOutput("CellratioIdentsSelected.UI"), proxy.height = "10px"),
-                                            bsCollapse(id = "collapseCellratioFillplot", open = "0",
-                                                              bsCollapsePanel(title = "Change Order (Fill)",
-                                                                                       withSpinner(uiOutput("CellratioplotFillOrder.UI"), proxy.height = "10px"),
-                                                                                       style = "info", value = "0")),
-                                            bsCollapse(id = "collapseCellratioXplot", open = "0",
-                                                              bsCollapsePanel(title = "Change Order (X)",
-                                                                                       withSpinner(uiOutput("CellratioplotXOrder.UI"), proxy.height = "10px"),
-                                                                                       style = "info", value = "0")),
-                                            bsCollapse(id = "collapseCellratioFacetplot", open = "0",
-                                                              bsCollapsePanel(title = "Change Order (Facet)",
-                                                                                       withSpinner(uiOutput("CellratioplotFacetOrder.UI"), proxy.height = "10px"),
-                                                                                       style = "info", value = "0"))
+                                            withSpinner(uiOutput("CellratioIdentsSelected.UI"), proxy.height = "10px")
                                           ),
 
                                           # Plot Options
@@ -1388,6 +1355,71 @@ explorer_body_ui <- function(tab_list){
                                  )
                                )
   )
+  tab_list[["reorderclusters"]] = tabItem(tabName = "reorderclusters",
+    fluidRow(id = "reorderclusters-main-row",
+      # Order preview (Left column, 9/12)
+      div(
+        class = "col-md-9",
+        div(
+          class = "box",
+          style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); height: 100%;",
+          div(
+            class = "box-header",
+            style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+            div(
+              style = "display: flex; align-items: center; gap: 10px;",
+              icon("sort", style = "color: #3b82f6; font-size: 18px;"),
+              h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Order Preview")
+            )
+          ),
+          div(
+            class = "box-body",
+            style = "padding: 20px;",
+            withSpinner(plotOutput("reorderclustersdimplot", height = "560px")),
+            p("Reordering only changes factor levels (legend, axis, split and stack order). No cell is reassigned to another cluster.",
+              style = "font-size: 12px; color: #6c757d; margin-top: 10px;")
+          )
+        )
+      ),
+
+      # Settings (Right column, 3/12)
+      div(
+        class = "col-md-3",
+        div(
+          style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+          h4(icon("sliders-h"), "Settings",
+             style = "color: #10b981; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+
+          withSpinner(uiOutput("reorderclustersClusterResolution.UI"), proxy.height = "10px"),
+          withSpinner(uiOutput("reorderclustersDimensionReduction.UI"), proxy.height = "10px"),
+          sliderInput("reorderclustersLabelSize", "Preview label size:",
+                      min = 1, max = 20, value = 7, step = 0.5),
+
+          withSpinner(uiOutput("reorderclustersOrder.UI"), proxy.height = "10px"),
+
+          div(
+            style = "margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;",
+            actionButton("reorderclustersApply",
+                         icon = shiny::icon("check"),
+                         label = "Apply New Order",
+                         class = "btn-primary btn-lg",
+                         style = "padding: 10px 20px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none;"),
+            actionButton("reorderclustersReset",
+                         icon = shiny::icon("arrows-rotate"),
+                         label = "Reset",
+                         class = "btn-warning",
+                         style = "padding: 10px 20px; border-radius: 8px; font-weight: 600;")
+          ),
+
+          div(
+            style = "background: #fef3c7; border-left: 3px solid #f59e0b; padding: 10px; border-radius: 4px; margin-top: 15px;",
+            p("Tips: drag the levels into the desired order, then click Apply. This updates the selected metadata column in place and changes only the factor level order, not the cluster assignment of any cell.",
+              style = "font-size: 12px; margin: 0; color: #92400e;")
+          )
+        )
+      )
+    )
+  )
   tab_list[["clustercolors"]] = tabItem(tabName = "clustercolors",
     tags$style(type="text/css", "#close_clustercolors_info:hover { color: #059669 !important; }"),
     tags$style(type="text/css", "#clustercolors_info {white-space: pre-wrap; color: #495057; line-height: 1.8;}"),
@@ -1918,6 +1950,13 @@ ui <-  function(){
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
 
+        /* Reserve the vertical scrollbar so auto-sized plots cannot feed a
+           scrollbar-appears/disappears loop back into their measured width. */
+        html {
+          overflow-y: scroll;
+          scrollbar-gutter: stable;
+        }
+
         /* Sidebar menu: compact spacing */
         .sidebar-menu .treeview-menu li a {
           white-space: nowrap;
@@ -2027,7 +2066,53 @@ ui <-  function(){
     div(class= "tab-content", tab_list),
     tags$script(HTML(
       "document.querySelector('body > div.wrapper > header > nav > div > ul > li > a > span').style.visibility = 'hidden';"
-    )) # to hide how many notifications in shinydashboard::dropdownMenu(), refer to:https://stackoverflow.com/questions/65915414/alter-dropdown-menu-in-shiny
+    )), # to hide how many notifications in shinydashboard::dropdownMenu(), refer to:https://stackoverflow.com/questions/65915414/alter-dropdown-menu-in-shiny
+    tags$script(HTML("
+      (function() {
+        var lastWidth = null;
+        var timer = null;
+
+        function sendWidth(width) {
+          clearTimeout(timer);
+          timer = setTimeout(function() {
+            if (window.Shiny) {
+              Shiny.setInputValue('dimplot_measured_width', Math.round(width),
+                                  {priority: 'event'});
+            }
+          }, 200);
+        }
+
+        function measure() {
+          var el = document.getElementById('dimplot_plot_container');
+          if (!el) return;
+          var width = el.getBoundingClientRect().width;
+          if (!width) return;
+          // Ignore scrollbar-width changes (~15-17px) otherwise the plot height
+          // can toggle the scrollbar and feed an endless resize loop.
+          if (lastWidth === null || Math.abs(width - lastWidth) >= 30) {
+            lastWidth = width;
+            sendWidth(width);
+          }
+        }
+
+        if (window.ResizeObserver) {
+          var observer = new ResizeObserver(measure);
+          var tries = 0;
+          (function attach() {
+            var el = document.getElementById('dimplot_plot_container');
+            if (el) {
+              observer.observe(el);
+              measure();
+            } else if (tries++ < 40) {
+              setTimeout(attach, 250);
+            }
+          })();
+        } else {
+          $(window).on('resize', measure);
+          measure();
+        }
+      })();
+    "))
   )
 
   # combine
