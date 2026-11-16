@@ -1538,7 +1538,7 @@ explorer_body_ui <- function(tab_list){
             class = "box-body",
             style = "padding: 20px;",
             withSpinner(plotOutput("clustercolors_preview", height = "520px")),
-            p("Colors are applied to Dim Reduction Plot, Violin Plot (un-split and side-by-side split), Cell Percentage Plot, Ridge Plot (colored by cluster), the Heatmap Cell Level group bar and the Average Heatmap annotation bar. Split violins keep the split colors.",
+            p("Colors are applied to Dim Reduction Plot, Violin Plot (un-split and side-by-side split), Cell Percentage Plot, Ridge Plot (colored by cluster), the Heatmap Cell Level group bar and the Average Heatmap annotation bar. Split violins use the colors saved for the Split by variable.",
               style = "font-size: 12px; color: #6c757d; margin-top: 10px;")
           )
         )

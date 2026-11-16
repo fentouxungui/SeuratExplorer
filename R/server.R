@@ -753,7 +753,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         # set, and the fill also drives the violin dodge, so side-by-side split
         # plots are coloured through Seurat's "interaction" option (which keeps
         # the dodge) and the fill scale is then replaced with one colour per
-        # cluster. Split violins keep the split colours by design.
+        # cluster. Split violins use the split variable's colours.
         vln_color_map <- get_cluster_color_map(data, vln_groups$cluster)
         vln_split <- VlnSplit.Revised()
         vln_multi <- length(features_vlnplot$features_current) > 1
@@ -4244,7 +4244,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     - Step 3: Submit saves the palette for this session and into
       obj@misc$SeuratExplorer$cluster_colors, so an object exported from here keeps its colors.
     Export or import a CSV (columns: cluster, color) to reuse a palette in another session or dataset.
-    Note: split violins (Split Plot) keep the split colors, because their two halves are colored by group.')
+    Note: split violins (Split Plot) use the colors saved for the Split by variable; unsplit violins use the cluster-resolution colors.')
   })
 
   observeEvent(input$close_clustercolors_info, {
