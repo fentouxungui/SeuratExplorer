@@ -1965,7 +1965,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Please select a cluster resolution with more than one group!"),
-          tags$small(style = "color: #6c757d;", "The selected resolution must have at least 2 clusters.")
+          tags$small(style = "color: #5C636A;", "The selected resolution must have at least 2 clusters.")
         ),
         easyClose = TRUE,
         footer = modalButton("OK"),
@@ -2014,7 +2014,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
             title = tagList(icon("exclamation-triangle"), "Warning"),
             tags$div(
               tags$p("No marker genes found."),
-              tags$small(style = "color: #6c757d;",
+              tags$small(style = "color: #5C636A;",
                          "Try relaxing the logFC / min.pct thresholds, or check the selected assay.")
             ),
             easyClose = TRUE, footer = modalButton("OK"), size = "m"
@@ -2032,7 +2032,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           paste("min.pct:", deg_minpct),
           paste("assay:", deg_assay))
         showNotification(  ui = tagList(
-          icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+          icon("check-circle", style = "color: #047857; margin-right: 5px;"),
           "Cluster markers calculation completed!"
         ),  type = "message", duration = 5)
         invisible(NULL)
@@ -2113,8 +2113,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (degFilterState$count < max_filters) {
       div(style = "margin-top: 8px;",
         actionLink("IntraClusterDEGsAddFilter", label = NULL, icon = icon("plus-circle"),
-          style = "color: #3b82f6; font-size: 16px;"),
-        tags$span("Add filter condition", style = "color: #6c757d; font-size: 13px; margin-left: 4px;")
+          style = "color: #1D4ED8; font-size: 16px;"),
+        tags$span("Add filter condition", style = "color: #5C636A; font-size: 13px; margin-left: 4px;")
       )
     }
   })
@@ -2233,7 +2233,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Please specify the case & control samples and clusters used."),
-          tags$small(style = "color: #6c757d;", "All fields are required for DEGs analysis.")
+          tags$small(style = "color: #5C636A;", "All fields are required for DEGs analysis.")
         ),
         easyClose = TRUE,
         footer = modalButton("OK"),
@@ -2307,7 +2307,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           paste("test:", input$testuse),
           paste("assay:", input$DEGsAssay))
         showNotification(  ui = tagList(
-          icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+          icon("check-circle", style = "color: #047857; margin-right: 5px;"),
           "Intra-cluster DEGs calculation completed!"
         ), type = "message", duration = 5)
       }
@@ -2328,7 +2328,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # Provenance line above the result table: analysis + main parameters + time
   output$degs_run_info <- renderUI({
     if (is.null(DEGs$run_info)) return(NULL)
-    tags$div(style = "color: #6c757d; font-size: 12px; margin-bottom: 6px;",
+    tags$div(style = "color: #5C636A; font-size: 12px; margin-bottom: 6px;",
              icon("clock-rotate-left"), " ", DEGs$run_info)
   })
 
@@ -2341,7 +2341,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("None of DEGs found."),
-          tags$small(style = "color: #6c757d;", "Try changing the default Assay in 'Custom Parameters' page or contact technician for details.")
+          tags$small(style = "color: #5C636A;", "Try changing the default Assay in 'Custom Parameters' page or contact technician for details.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -2587,7 +2587,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           paste("assay:", tg_assay))
         TopGenes$topgenes_ready <- TRUE
         showNotification(  ui = tagList(
-          icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+          icon("check-circle", style = "color: #047857; margin-right: 5px;"),
           "Top genes analysis completed!"
         ), type = "message", duration = 5)
       } else {
@@ -2595,7 +2595,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           title = tagList(icon("exclamation-triangle"), "Error"),
           tags$div(
             tags$p("No genes found."),
-            tags$small(style = "color: #6c757d;", "Please check the parameters.")
+            tags$small(style = "color: #5C636A;", "Please check the parameters.")
           ),
           footer = modalButton("OK"),
           easyClose = TRUE,
@@ -2689,7 +2689,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           paste("assay:", tg_assay))
         TopGenes$topgenes_ready <- TRUE
         showNotification(  ui = tagList(
-          icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+          icon("check-circle", style = "color: #047857; margin-right: 5px;"),
           "Accumulated top genes analysis completed!"
         ), type = "message", duration = 5)
       } else {
@@ -2697,7 +2697,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           title = tagList(icon("exclamation-triangle"), "Error"),
           tags$div(
             tags$p("No genes found."),
-            tags$small(style = "color: #6c757d;", "Please check the parameters.")
+            tags$small(style = "color: #5C636A;", "Please check the parameters.")
           ),
           footer = modalButton("OK"),
           easyClose = TRUE,
@@ -2740,7 +2740,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$topgenes_run_info <- renderUI({
     if (is.null(TopGenes$run_info)) return(NULL)
-    tags$div(style = "color: #6c757d; font-size: 12px; margin-bottom: 6px;",
+    tags$div(style = "color: #5C636A; font-size: 12px; margin-bottom: 6px;",
              icon("clock-rotate-left"), " ", TopGenes$run_info)
   })
 
@@ -2799,7 +2799,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p(check_genes_error),
-          tags$small(style = "color: #6c757d;", "Please check the gene symbols and try again.")
+          tags$small(style = "color: #5C636A;", "Please check the gene symbols and try again.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -2835,7 +2835,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         paste("assay:", input$FeatureSummaryAssay))
       FeatureSummary$summary_ready <- TRUE
       showNotification(  ui = tagList(
-        icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+        icon("check-circle", style = "color: #047857; margin-right: 5px;"),
         "Feature summary completed!",
       ), type = "message", duration = 5)
     }
@@ -2843,7 +2843,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$featuresummary_run_info <- renderUI({
     if (is.null(FeatureSummary$run_info)) return(NULL)
-    tags$div(style = "color: #6c757d; font-size: 12px; margin-bottom: 6px;",
+    tags$div(style = "color: #5C636A; font-size: 12px; margin-bottom: 6px;",
              icon("clock-rotate-left"), " ", FeatureSummary$run_info)
   })
 
@@ -2925,7 +2925,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Not enough expressed genes for a correlation analysis."),
-          tags$small(style = "color: #6c757d;", "Genes with mean expression <= 0.1 are removed before the analysis.")
+          tags$small(style = "color: #5C636A;", "Genes with mean expression <= 0.1 are removed before the analysis.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -2960,7 +2960,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
             paste("assay:", cor_assay))
           FeatureCorrelation$summary_ready <- TRUE
           showNotification(  ui = tagList(
-            icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+            icon("check-circle", style = "color: #047857; margin-right: 5px;"),
             "Top correlations calculated successfully!"
           ), type = "message", duration = 5)
         } else {
@@ -2968,7 +2968,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
             title = tagList(icon("exclamation-triangle"), "Error"),
             tags$div(
               tags$p("No gene pairs found."),
-              tags$small(style = "color: #6c757d;", "Some genes may have very low expression values. Try different genes.")
+              tags$small(style = "color: #5C636A;", "Some genes may have very low expression values. Try different genes.")
             ),
             footer = modalButton("OK"),
             easyClose = TRUE,
@@ -3035,7 +3035,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("The input gene cannot be found."),
-          tags$small(style = "color: #6c757d;", "Please check the gene symbol and try again.")
+          tags$small(style = "color: #5C636A;", "Please check the gene symbol and try again.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -3062,7 +3062,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           paste("assay:", input$FeatureCorrelationAssay))
         FeatureCorrelation$summary_ready <- TRUE
         showNotification(  ui = tagList(
-          icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+          icon("check-circle", style = "color: #047857; margin-right: 5px;"),
           "Most correlated genes calculated successfully!"
         ), type = "message", duration = 5)
       }else{
@@ -3087,7 +3087,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p(check_genes_error),
-          tags$small(style = "color: #6c757d;", "Please check the gene symbols.")
+          tags$small(style = "color: #5C636A;", "Please check the gene symbols.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -3098,7 +3098,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Please input at least two genes!"),
-          tags$small(style = "color: #6c757d;", "Correlation analysis requires multiple genes.")
+          tags$small(style = "color: #5C636A;", "Correlation analysis requires multiple genes.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -3125,7 +3125,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           paste("assay:", input$FeatureCorrelationAssay))
         FeatureCorrelation$summary_ready <- TRUE
         showNotification(  ui = tagList(
-          icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+          icon("check-circle", style = "color: #047857; margin-right: 5px;"),
           "Gene correlation calculated successfully!"
         ), type = "message", duration = 5)
       }else{
@@ -3133,7 +3133,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           title = tagList(icon("exclamation-triangle"), "Error"),
           tags$div(
             tags$p("No gene pairs found."),
-            tags$small(style = "color: #6c757d;", "Some genes may have very low expression values.")
+            tags$small(style = "color: #5C636A;", "Some genes may have very low expression values.")
           ),
           footer = modalButton("OK"),
           easyClose = TRUE,
@@ -3145,7 +3145,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$correlation_run_info <- renderUI({
     if (is.null(FeatureCorrelation$run_info)) return(NULL)
-    tags$div(style = "color: #6c757d; font-size: 12px; margin-bottom: 6px;",
+    tags$div(style = "color: #5C636A; font-size: 12px; margin-bottom: 6px;",
              icon("clock-rotate-left"), " ", FeatureCorrelation$run_info)
   })
 
@@ -3491,17 +3491,17 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
           numericInput("ModuleScoreAucMaxRank", "AUC max rank (% of genes):",
             value = 5, min = 1, max = 100, step = 1, width = '100%'),
           p("Share of the top-ranked genes used to compute the AUC (AUCell default: 5%).",
-            style = "font-size: 11px; margin: 0; color: #6c757d;")),
+            style = "font-size: 11px; margin: 0; color: #5C636A;")),
         div(style = "background: #e9ecef; padding: 5px 8px; border-radius: 4px; margin-top: 6px;",
           p("AUCell is ranking-based and deterministic. It always uses the normalized 'data' layer (raw counts are used only when that layer is missing).",
-            style = "font-size: 11px; margin: 0; color: #6c757d;"))
+            style = "font-size: 11px; margin: 0; color: #5C636A;"))
       ),
       div(style = "margin-top: 15px;",
         textInput("ModuleScoreName", "Score Name:", value = "",
           placeholder = "e.g. T_cell_signature",
           width = '100%'),
         div(style = "background: #e9ecef; padding: 5px; border-radius: 4px; margin-top: 4px;",
-          p("Only letters, numbers, and underscore allowed.", style = "font-size: 11px; margin: 0; color: #6c757d;"))
+          p("Only letters, numbers, and underscore allowed.", style = "font-size: 11px; margin: 0; color: #5C636A;"))
       )
     )
   })
@@ -3659,7 +3659,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       )
       detail_lines <- Filter(Negate(is.null), detail_lines)
       showModal(modalDialog(
-        title = tagList(icon("check-circle", style = "color: #28a745;"), "Success"),
+        title = tagList(icon("check-circle", style = "color: #047857;"), "Success"),
         do.call(tagList, detail_lines),
         easyClose = TRUE, footer = modalButton("OK"), size = "m"
       ))
@@ -3710,7 +3710,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       textInput("combinedclustersNewName", "New Cluster Name:",
         value = default_name, width = '100%'),
       div(style = "background: #e9ecef; padding: 5px; border-radius: 4px; margin-top: 4px;",
-        p("Only letters, numbers, and underscore allowed.", style = "font-size: 11px; margin: 0; color: #6c757d;"))
+        p("Only letters, numbers, and underscore allowed.", style = "font-size: 11px; margin: 0; color: #5C636A;"))
     )
   })
 
@@ -3831,7 +3831,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     data$version <- data$version + 1
 
     showModal(modalDialog(
-      title = tagList(icon("check-circle", style = "color: #28a745;"), "Success"),
+      title = tagList(icon("check-circle", style = "color: #047857;"), "Success"),
       paste0("Annotation '", new_col_name, "' added to metadata!"),
       easyClose = TRUE, footer = modalButton("OK")))
     showNotification(ui = tagList(icon("check-circle"), "Combination clusters added!"),
@@ -3893,7 +3893,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("'-' found in cluster names."),
-          tags$small(style = "color: #6c757d;", "Please edit all levels and remove '-' characters.")
+          tags$small(style = "color: #5C636A;", "Please edit all levels and remove '-' characters.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -3905,7 +3905,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("New cluster names cannot be empty!"),
-          tags$small(style = "color: #6c757d;", "Please provide names for all clusters.")
+          tags$small(style = "color: #5C636A;", "Please provide names for all clusters.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -3924,7 +3924,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Unsupported character found in cluster name."),
-          tags$small(style = "color: #6c757d;", paste0("Only letters, numbers, and underscore are supported. Found in: ", input$renameclustersNewClusterName))
+          tags$small(style = "color: #5C636A;", paste0("Only letters, numbers, and underscore are supported. Found in: ", input$renameclustersNewClusterName))
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -3938,7 +3938,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
             title = tagList(icon("exclamation-triangle"), "Error"),
             tags$div(
               tags$p("Duplicated cluster name found."),
-              tags$small(style = "color: #6c757d;", "Please change the cluster name to a unique one.")
+              tags$small(style = "color: #5C636A;", "Please change the cluster name to a unique one.")
             ),
             footer = modalButton("OK"),
             easyClose = TRUE,
@@ -3985,7 +3985,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Please run Check before submitting!"),
-          tags$small(style = "color: #6c757d;", "Validate your changes first.")
+          tags$small(style = "color: #5C636A;", "Validate your changes first.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -3996,7 +3996,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Duplicated labels found."),
-          tags$small(style = "color: #6c757d;", "Do not resubmit existing cluster names.")
+          tags$small(style = "color: #5C636A;", "Do not resubmit existing cluster names.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -4018,19 +4018,19 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       data$version <- data$version + 1
       showModal(modalDialog(
         title = tagList(
-          icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+          icon("check-circle", style = "color: #047857; margin-right: 5px;"),
           "Success"
         ),
         tags$div(
           tags$p("New annotation added!"),
-          tags$small(style = "color: #6c757d;", "Your changes have been saved.")
+          tags$small(style = "color: #5C636A;", "Your changes have been saved.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
         size = "m"
       ))
       showNotification(  ui = tagList(
-        icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+        icon("check-circle", style = "color: #047857; margin-right: 5px;"),
         "Cluster renamed successfully!"
       ), type = "message", duration = 5)
     }
@@ -4159,7 +4159,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
     showNotification(
       ui = tagList(
-        icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+        icon("check-circle", style = "color: #047857; margin-right: 5px;"),
         "Cluster levels reordered successfully!"
       ),
       type = "message", duration = 5
@@ -4300,7 +4300,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     lv <- cluster_color_draft$levels
     cols <- isolate(cluster_color_draft$colors)
     if (length(lv) == 0) {
-      return(p("No cluster groups available.", style = "color: #6c757d; font-size: 12px;"))
+      return(p("No cluster groups available.", style = "color: #5C636A; font-size: 12px;"))
     }
     if (length(cols) != length(lv)) cols <- complete_cluster_colors(NULL, lv)
     lapply(seq_along(lv), function(i) {
@@ -4443,7 +4443,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
     dup <- sum(duplicated(unname(cols)))
     showNotification(ui = tagList(
-      icon("check-circle", style = "color: #28a745; margin-right: 5px;"),
+      icon("check-circle", style = "color: #047857; margin-right: 5px;"),
       paste0("Colors saved for ", length(lv), " groups."),
       if (dup > 0) paste0(" Warning: ", dup, " duplicate color(s) are in use.")
     ), type = if (dup > 0) "warning" else "message", duration = 6)
@@ -4617,7 +4617,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       req(data$obj)
       if (length(data$cluster_options) == 0) {
         return(p("No cluster/metadata column is available for filtering; the whole object will be exported.",
-                 style = "color: #6c757d; font-size: 12px;"))
+                 style = "color: #5C636A; font-size: 12px;"))
       }
       n <- exportFilterState$count
       if (!is.numeric(n) || length(n) != 1 || n < 1) n <- 1L
@@ -4661,9 +4661,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       if (exportFilterState$count < export_max_filters()) {
         div(style = "margin-top: 8px;",
           actionLink("ExportAddFilter", label = NULL, icon = icon("plus-circle"),
-                     style = "color: #10b981; font-size: 16px;"),
+                     style = "color: #047857; font-size: 16px;"),
           tags$span("Add filter condition",
-                    style = "color: #6c757d; font-size: 13px; margin-left: 4px;")
+                    style = "color: #5C636A; font-size: 13px; margin-left: 4px;")
         )
       }
     })
@@ -4729,9 +4729,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       tagList(
         h4(paste0(format(st$n_keep, big.mark = ","), " / ",
                   format(st$n_total, big.mark = ","), " cells  (", pct, "%)"),
-           style = "color: #3b82f6; margin-top: 0;"),
+           style = "color: #1D4ED8; margin-top: 0;"),
         p(paste0("Estimated object size: ~", est, " (before compression)"),
-          style = "color: #6c757d; font-size: 12px; margin-bottom: 4px;"),
+          style = "color: #5C636A; font-size: 12px; margin-bottom: 4px;"),
         if (isTRUE(st$keep_na) && st$n_na > 0) {
           p(paste0(format(st$n_na, big.mark = ","),
                    " cell(s) have NA in a filter column and are kept."),
@@ -4796,7 +4796,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       downloadButton("download_export_object",
                      label = paste0("Download (", format(st$n_keep, big.mark = ","), " cells)"),
                      class = "btn-primary btn-lg",
-                     style = "width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none;")
+                     style = "width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #047857 0%, #065F46 100%); border: none;")
     })
 
     ## ---- state snapshot for the download handler -------------------------
@@ -4940,7 +4940,7 @@ server <- function(input, output, session) {
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Invalid file format."),
-          tags$small(style = "color: #6c757d;", "Please upload a file with the extension .rds or .qs2!")
+          tags$small(style = "color: #5C636A;", "Please upload a file with the extension .rds or .qs2!")
         ),
         easyClose = TRUE,
         footer = modalButton("OK"),
@@ -4970,10 +4970,10 @@ server <- function(input, output, session) {
         title = tagList(icon("hourglass-start", class = "fa-spin"), " Loading Demo Data"),
         tags$div(
           style = "text-align: center; padding: 20px;",
-          icon("circle-notch", class = "fa-spin fa-3x", style = "color: #3b82f6; margin-bottom: 15px;"),
+          icon("circle-notch", class = "fa-spin fa-3x", style = "color: #1D4ED8; margin-bottom: 15px;"),
           tags$p("A previously downloaded demo data file was found at:"),
           tags$pre(style = "white-space: pre-wrap; word-break: break-all; margin: 10px 0;", demo_dest),
-          tags$p("Loading the data ...", style = "color: #6c757d;")
+          tags$p("Loading the data ...", style = "color: #5C636A;")
         ),
         footer = NULL,
         easyClose = FALSE,
@@ -4995,7 +4995,7 @@ server <- function(input, output, session) {
         title = tagList(icon("exclamation-triangle"), "Error"),
         tags$div(
           tags$p("Failed to download the demo data."),
-          tags$small(style = "color: #6c757d;", conditionMessage(e))
+          tags$small(style = "color: #5C636A;", conditionMessage(e))
         ),
         easyClose = TRUE,
         footer = modalButton("OK"),
@@ -5071,9 +5071,9 @@ server <- function(input, output, session) {
       '<div style="padding: 20px; background: #f8f9fa; border-radius: 8px; margin: 20px 0;">',
       '<h4 style="color: #495057; margin-bottom: 15px;"><i class="fa fa-chart-bar" style="margin-right: 5px;"></i> Data Overview</h4>',
       '<div style="display: flex; gap: 30px; flex-wrap: wrap;">',
-      '<div><strong style="color: #3b82f6;">Total Cells:</strong> ', format(total_cells, big.mark = ","), '</div>',
-      '<div><strong style="color: #10b981;">Total Genes:</strong> ', format(total_genes, big.mark = ","), '</div>',
-      '<div><strong style="color: #f59e0b;">Clusters:</strong> ', n_clusters, '</div>',
+      '<div><strong style="color: #1D4ED8;">Total Cells:</strong> ', format(total_cells, big.mark = ","), '</div>',
+      '<div><strong style="color: #047857;">Total Genes:</strong> ', format(total_genes, big.mark = ","), '</div>',
+      '<div><strong style="color: #B45309;">Clusters:</strong> ', n_clusters, '</div>',
       '<div><strong style="color: #06b6d4;">Assays:</strong> ', n_assays, '</div>',
       '</div></div>'
     ))

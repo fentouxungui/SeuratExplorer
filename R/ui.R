@@ -111,7 +111,7 @@ explorer_body_ui <- function(tab_list){
                                         div(id = "dimplot_plot_container",
                                             uiOutput("dimplot_resizable_ui")),
                                         # show the button on right end, refer to: https://stackoverflow.com/questions/28749693/shiny-r-aligning-buttons
-                                        div(style = "display:inline-block; float:right",downloadBttn(outputId = "downloaddimplot",style = "bordered",color = "primary")),
+                                        div(style = "display:inline-block; float:right",downloadButton("downloaddimplot", label = "Download PDF", class = "btn-primary")),
                                         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                     box(title = div(
                                           icon("sliders-h"),
@@ -150,7 +150,7 @@ explorer_body_ui <- function(tab_list){
                                           checkboxInput("DimPlotMode",label = "Automatically adjust plotting area", TRUE),
                                           uiOutput("dimplot_size_ui"),
                                           p("Colors can be set in Cluster Colors (sidebar).",
-                                            style = "font-size: 11px; color: #6c757d; margin: 6px 0 0 0;")
+                                            style = "font-size: 11px; color: #5C636A; margin: 6px 0 0 0;")
                                         )
                                     )
                                   )
@@ -159,7 +159,7 @@ explorer_body_ui <- function(tab_list){
                                       fluidRow(
                                         box(title = "Features on Dimensional Reduction Plot",
                                             uiOutput("featureplot_resizable_ui"),
-                                            div(style = "display:inline-block; float:right", downloadBttn(outputId = "downloadfeatureplot",style = "bordered",color = "primary")),
+                                            div(style = "display:inline-block; float:right", downloadButton("downloadfeatureplot", label = "Download PDF", class = "btn-primary")),
                                             width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                         box(title = div(
                                               icon("sliders-h"),
@@ -216,7 +216,7 @@ explorer_body_ui <- function(tab_list){
                                   fluidRow(
                                     box(title = "Features Violin Plot",
                                         uiOutput("vlnplot_resizable_ui"),
-                                        div(style = "display:inline-block; float:right", downloadBttn(outputId = "downloadvlnplot",style = "bordered",color = "primary")),
+                                        div(style = "display:inline-block; float:right", downloadButton("downloadvlnplot", label = "Download PDF", class = "btn-primary")),
                                         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                     box(title = div(
                                           icon("sliders-h"),
@@ -299,7 +299,7 @@ explorer_body_ui <- function(tab_list){
                                   fluidRow(
                                     box(title = "Features Dot Plot",
                                         uiOutput("dotplot_resizable_ui"),
-                                        div(style = "display:inline-block; float:right", downloadBttn(outputId = "downloaddotplot",style = "bordered",color = "primary")),
+                                        div(style = "display:inline-block; float:right", downloadButton("downloaddotplot", label = "Download PDF", class = "btn-primary")),
                                         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                     box(title = div(
                                           icon("sliders-h"),
@@ -359,7 +359,7 @@ explorer_body_ui <- function(tab_list){
                                   fluidRow(
                                     box(title = "Features Heatmap Plot",
                                         uiOutput("heatmap_resizable_ui"),
-                                        div(style = "display:inline-block; float:right", downloadBttn(outputId = "downloadheatmap",style = "bordered",color = "primary")),
+                                        div(style = "display:inline-block; float:right", downloadButton("downloadheatmap", label = "Download PDF", class = "btn-primary")),
                                         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                     box(title = div(
                                           icon("sliders-h"),
@@ -407,7 +407,7 @@ explorer_body_ui <- function(tab_list){
                                   fluidRow(
                                     box(title = "Features Heatmap by Averaged Expression",
                                         uiOutput("averagedheatmap_resizable_ui"),
-                                        div(style = "display:inline-block; float:right", downloadBttn(outputId = "downloadaveragedheatmap",style = "bordered",color = "primary")),
+                                        div(style = "display:inline-block; float:right", downloadButton("downloadaveragedheatmap", label = "Download PDF", class = "btn-primary")),
                                         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                     box(title = div(
                                           icon("sliders-h"),
@@ -452,7 +452,7 @@ explorer_body_ui <- function(tab_list){
                                     fluidRow(
                                       box(title = "Features Ridge Plot",
                                           uiOutput("ridgeplot_resizable_ui"),
-                                          div(style = "display:inline-block; float:right", downloadBttn(outputId = "downloadridgeplot",style = "bordered",color = "primary")),
+                                          div(style = "display:inline-block; float:right", downloadButton("downloadridgeplot", label = "Download PDF", class = "btn-primary")),
                                           width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                       box(title = "Settings", solidHeader = TRUE, status = "primary", width = 3,
 
@@ -502,7 +502,7 @@ explorer_body_ui <- function(tab_list){
                                     fluidRow(
                                       box(title = "Cell Percentage Plot",
                                           uiOutput("cellratioplot_resizable_ui"),
-                                          div(style = "display:inline-block; float:right", downloadBttn(outputId = "downloadcellratioplot",style = "bordered",color = "primary")),
+                                          div(style = "display:inline-block; float:right", downloadButton("downloadcellratioplot", label = "Download PDF", class = "btn-primary")),
                                           div(style = "margin-top: 50px;",
                                               hr(),
                                               DT::dataTableOutput('cellratiodata'),
@@ -567,7 +567,7 @@ explorer_body_ui <- function(tab_list){
   )
   tab_list[["degs"]] = tabItem(tabName = "degs",
                                # CSS styles for close button hover effect
-                               tags$style(type="text/css", "#close_degs_info:hover { color: #059669 !important; }"),
+                               tags$style(type="text/css", "#close_degs_info:hover { color: #047857 !important; }"),
                                # CSS styles for info text
                                tags$style(type="text/css", "#degs_info {white-space: pre-wrap; color: #495057; line-height: 1.8;}"),
 
@@ -597,7 +597,7 @@ explorer_body_ui <- function(tab_list){
                                    #degstabbox-container .nav-tabs-custom .nav-tabs li.active a {
                                      background-color: white;
                                      border-color: #10b981 #10b981 white #10b981;
-                                     color: #10b981;
+                                     color: #047857;
                                      font-weight: 600;
                                    }
                                    #degstabbox-container .nav-tabs-custom .nav-tabs li.active {
@@ -605,14 +605,14 @@ explorer_body_ui <- function(tab_list){
                                      border-top-width: 3px;
                                    }
                                    #degstabbox-container .nav-tabs-custom .nav-tabs li a {
-                                     color: #6c757d;
+                                     color: #5C636A;
                                      border-radius: 6px 6px 0 0;
                                      transition: all 0.2s ease;
                                      margin-right: 5px;
                                    }
                                    #degstabbox-container .nav-tabs-custom .nav-tabs li a:hover {
                                      background-color: #f8f9fa;
-                                     color: #10b981;
+                                     color: #047857;
                                    }
                                    #degstabbox-container .tab-content {
                                      background: white;
@@ -641,8 +641,8 @@ explorer_body_ui <- function(tab_list){
                                        style = "padding: 15px 20px; border-bottom: 2px solid #10b981; position: relative;",
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("info-circle", style = "color: #10b981; font-size: 20px;"),
-                                         h4(style = "margin: 0; color: #10b981; font-weight: 600;", "Information")
+                                         icon("info-circle", style = "color: #047857; font-size: 20px;"),
+                                         h4(style = "margin: 0; color: #047857; font-weight: 600;", "Information")
                                        ),
                                        # Close button in top-right corner
                                        actionButton(
@@ -650,7 +650,7 @@ explorer_body_ui <- function(tab_list){
                                          label = NULL,
                                          title = "Hide or show the hints",
                                          icon = icon("chevron-up"),
-                                         style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #10b981; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
+                                         style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #047857; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
                                          class = "btn btn-link"
                                        )
                                      ),
@@ -671,7 +671,7 @@ explorer_body_ui <- function(tab_list){
                                      tabBox(
                                        title = div(
                                          style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("chart-line", style = "color: #10b981; font-size: 18px;"),
+                                         icon("chart-line", style = "color: #047857; font-size: 18px;"),
                                          strong("Find Markers or DEGs", style = "color: #495057; font-size: 16px;")
                                        ),
                                        id = "tabset_degs", width = 12,
@@ -685,22 +685,22 @@ explorer_body_ui <- function(tab_list){
                                                               icon = shiny::icon("magnifying-glass-chart"),
                                                               label = "Analyze",
                                                           class = "btn-primary btn-lg",
-                                                          style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);")
+                                                          style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #047857 0%, #065F46 100%); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);")
                                             )),
                                    tabPanel("Find DEGs for two groups",
                                             # Step 1 - Filter Cells
                                             div(
                                               style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 25px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.1);",
-                                              h4(icon("filter"), "Step 1: Filter Cells (Optional)", style = "color: #3b82f6; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
-                                              p("Click the + button to add multiple filter conditions. Cells matching ALL conditions (intersection) will be kept.", style = "color: #6c757d; margin-bottom: 8px;"),
-                                              p("If no filters are modified, all cells will be kept by default.", style = "color: #6c757d; margin-bottom: 15px;"),
+                                              h4(icon("filter"), "Step 1: Filter Cells (Optional)", style = "color: #1D4ED8; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+                                              p("Click the + button to add multiple filter conditions. Cells matching ALL conditions (intersection) will be kept.", style = "color: #5C636A; margin-bottom: 8px;"),
+                                              p("If no filters are modified, all cells will be kept by default.", style = "color: #5C636A; margin-bottom: 15px;"),
                                               withSpinner(uiOutput("IntraClusterDEGsFilterRows.UI"), proxy.height = "10px"),
                                               uiOutput("IntraClusterDEGsAddFilter.UI")
                                             ),
                                             # Step 2 - Set Comparison
                                             div(
                                               style = "background: #fdf2f8; border: 1px solid #ec4899; border-left: 4px solid #ec4899; padding: 25px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 6px rgba(236, 72, 153, 0.1);",
-                                              h4(icon("balance-scale"), "Step 2: Set the comparison", style = "color: #ec4899; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+                                              h4(icon("balance-scale"), "Step 2: Set the comparison", style = "color: #BE185D; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                               withSpinner(uiOutput("IntraClusterDEGsCustomizedGroups.UI"), proxy.height = "10px"),
                                               withSpinner(uiOutput("IntraClusterDEGsCustomizedGroupsCase.UI"), proxy.height = "10px"),
                                               withSpinner(uiOutput("IntraClusterDEGsCustomizedGroupsControl.UI"), proxy.height = "10px")
@@ -710,12 +710,12 @@ explorer_body_ui <- function(tab_list){
                                                           icon = shiny::icon("magnifying-glass-chart"),
                                                           label = "Analyze",
                                                           class = "btn-primary btn-lg",
-                                                          style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); border: none; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);")
+                                                          style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #BE185D 0%, #9D174D 100%); border: none; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);")
                                             )),
                                    tabPanel("Custom Parameters",
                                             div(
                                               style = "background: #fef3c7; border: 1px solid #f59e0b; border-left: 4px solid #f59e0b; padding: 25px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.1);",
-                                              h4(icon("sliders-h"), "Analysis Parameters", style = "color: #f59e0b; margin-bottom: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+                                              h4(icon("sliders-h"), "Analysis Parameters", style = "color: #B45309; margin-bottom: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                               withSpinner(uiOutput("DEGsAssays.UI"), proxy.height = "10px"),
                                               div(style = "margin-top: 20px;",
                                                 sliderInput("logfcthreshold", label = "logFC threshold:", min = 0, max = 1, value = 0.1),
@@ -752,8 +752,8 @@ explorer_body_ui <- function(tab_list){
                                              style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
                                              div(
                                                style = "display: flex; align-items: center; gap: 10px;",
-                                               icon("table", style = "color: #3b82f6; font-size: 18px;"),
-                                               h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Analysis Results")
+                                               icon("table", style = "color: #1D4ED8; font-size: 18px;"),
+                                               h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Analysis Results")
                                              )
                                            ),
                                            div(
@@ -777,8 +777,8 @@ explorer_body_ui <- function(tab_list){
                                                style = "padding: 15px 20px; border-bottom: 2px solid #10b981;",
                                                div(
                                                  style = "display: flex; align-items: center; gap: 10px;",
-                                                 icon("external-link-alt", style = "color: #10b981; font-size: 18px;"),
-                                                 h4(style = "margin: 0; color: #10b981; font-weight: 600;", "External Links")
+                                                 icon("external-link-alt", style = "color: #047857; font-size: 18px;"),
+                                                 h4(style = "margin: 0; color: #047857; font-weight: 600;", "External Links")
                                                )
                                              ),
                                              div(
@@ -801,7 +801,7 @@ explorer_body_ui <- function(tab_list){
   )  # end of degs tabItem
   tab_list[["topgenes"]] = tabItem(tabName = "topgenes",
                                # CSS styles for close button hover effect
-                               tags$style(type="text/css", "#close_topgenes_info:hover { color: #059669 !important; }"),
+                               tags$style(type="text/css", "#close_topgenes_info:hover { color: #047857 !important; }"),
                                # CSS styles for info text
                                tags$style(type="text/css", "#topgenes_info {white-space: pre-wrap; color: #495057; line-height: 1.8;}"),
 
@@ -830,7 +830,7 @@ explorer_body_ui <- function(tab_list){
                                    #topgenestabbox-container .nav-tabs-custom .nav-tabs li.active a {
                                      background-color: white;
                                      border-color: #3b82f6 #3b82f6 white #3b82f6;
-                                     color: #3b82f6;
+                                     color: #1D4ED8;
                                      font-weight: 600;
                                    }
                                    #topgenestabbox-container .nav-tabs-custom .nav-tabs li.active {
@@ -838,14 +838,14 @@ explorer_body_ui <- function(tab_list){
                                      border-top-width: 3px;
                                    }
                                    #topgenestabbox-container .nav-tabs-custom .nav-tabs li a {
-                                     color: #6c757d;
+                                     color: #5C636A;
                                      border-radius: 6px 6px 0 0;
                                      transition: all 0.2s ease;
                                      margin-right: 5px;
                                    }
                                    #topgenestabbox-container .nav-tabs-custom .nav-tabs li a:hover {
                                      background-color: #f8f9fa;
-                                     color: #3b82f6;
+                                     color: #1D4ED8;
                                    }
                                    #topgenestabbox-container .tab-content {
                                      background: white;
@@ -874,8 +874,8 @@ explorer_body_ui <- function(tab_list){
                                        style = "padding: 15px 20px; border-bottom: 2px solid #10b981; position: relative;",
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("info-circle", style = "color: #10b981; font-size: 20px;"),
-                                         h4(style = "margin: 0; color: #10b981; font-weight: 600;", "Information")
+                                         icon("info-circle", style = "color: #047857; font-size: 20px;"),
+                                         h4(style = "margin: 0; color: #047857; font-weight: 600;", "Information")
                                        ),
                                        # Close button in top-right corner
                                        actionButton(
@@ -883,7 +883,7 @@ explorer_body_ui <- function(tab_list){
                                          label = NULL,
                                          title = "Hide or show the hints",
                                          icon = icon("chevron-up"),
-                                         style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #10b981; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
+                                         style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #047857; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
                                          class = "btn btn-link"
                                        )
                                      ),
@@ -902,7 +902,7 @@ explorer_body_ui <- function(tab_list){
                                    style = "margin-bottom: 10px;",
                                    div(
                                      style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-                                     h4(icon("sliders-h"), "Step 1: Settings", style = "color: #10b981; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+                                     h4(icon("sliders-h"), "Step 1: Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      withSpinner(uiOutput("TopGenesClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("TopGenesSelectedClusters.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("TopGenesAssays.UI"), proxy.height = "10px"),
@@ -920,7 +920,7 @@ explorer_body_ui <- function(tab_list){
                                      tabBox(
                                        title = div(
                                          style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("chart-line", style = "color: #3b82f6; font-size: 18px;"),
+                                         icon("chart-line", style = "color: #1D4ED8; font-size: 18px;"),
                                          strong("Step 2: Calculate Top Genes", style = "color: #495057; font-size: 16px;")
                                        ),
                                        id = "tabset_topgenes", width = 12,
@@ -934,7 +934,7 @@ explorer_body_ui <- function(tab_list){
                                                               icon = shiny::icon("magnifying-glass-chart"),
                                                               label = "Analyze",
                                                               class = "btn-primary btn-lg",
-                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
+                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
                                                 )),
                                        tabPanel("Find Top Genes by Accumulated UMI Counts",
                                                 div(
@@ -946,7 +946,7 @@ explorer_body_ui <- function(tab_list){
                                                               icon = shiny::icon("magnifying-glass-chart"),
                                                               label = "Analyze",
                                                               class = "btn-primary btn-lg",
-                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
+                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
                                                 ))
                                      )
                                    )
@@ -967,8 +967,8 @@ explorer_body_ui <- function(tab_list){
                                              style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
                                              div(
                                                style = "display: flex; align-items: center; gap: 10px;",
-                                               icon("table", style = "color: #3b82f6; font-size: 18px;"),
-                                               h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Analysis Results")
+                                               icon("table", style = "color: #1D4ED8; font-size: 18px;"),
+                                               h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Analysis Results")
                                              )
                                            ),
                                            div(
@@ -986,7 +986,7 @@ explorer_body_ui <- function(tab_list){
   )
   tab_list[["featuresummary"]] = tabItem(tabName = "featuresummary",
                                # CSS styles for close button hover effect
-                               tags$style(type="text/css", "#close_featuresummary_info:hover { color: #059669 !important; }"),
+                               tags$style(type="text/css", "#close_featuresummary_info:hover { color: #047857 !important; }"),
                                # CSS styles for info text
                                tags$style(type="text/css", "#featuresummary_info {white-space: pre-wrap; color: #495057; line-height: 1.8;}"),
 
@@ -1005,8 +1005,8 @@ explorer_body_ui <- function(tab_list){
                                        style = "padding: 15px 20px; border-bottom: 2px solid #10b981; position: relative;",
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("info-circle", style = "color: #10b981; font-size: 20px;"),
-                                         h4(style = "margin: 0; color: #10b981; font-weight: 600;", "Information")
+                                         icon("info-circle", style = "color: #047857; font-size: 20px;"),
+                                         h4(style = "margin: 0; color: #047857; font-weight: 600;", "Information")
                                        ),
                                        # Close button in top-right corner
                                        actionButton(
@@ -1014,7 +1014,7 @@ explorer_body_ui <- function(tab_list){
                                          label = NULL,
                                          title = "Hide or show the hints",
                                          icon = icon("chevron-up"),
-                                         style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #10b981; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
+                                         style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #047857; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
                                          class = "btn btn-link"
                                        )
                                      ),
@@ -1033,7 +1033,7 @@ explorer_body_ui <- function(tab_list){
                                    style = "margin-bottom: 10px;",
                                    div(
                                      style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-                                     h4(icon("sliders-h"), "Settings", style = "color: #10b981; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+                                     h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      textAreaInput("FeatureSummarySymbol", "Input Gene Symbols:", value = "", height = '100px', resize = "vertical"),
                                      withSpinner(uiOutput("FeatureSummaryClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("FeatureSummarySelectedClusters.UI"), proxy.height = "10px"),
@@ -1046,7 +1046,7 @@ explorer_body_ui <- function(tab_list){
                                                    icon = shiny::icon("magnifying-glass-chart"),
                                                    label = "Analyze",
                                                    class = "btn-primary btn-lg",
-                                                   style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);")
+                                                   style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #047857 0%, #065F46 100%); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);")
                                      )
                                    )
                                  ),
@@ -1065,8 +1065,8 @@ explorer_body_ui <- function(tab_list){
                                          style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
                                          div(
                                            style = "display: flex; align-items: center; gap: 10px;",
-                                           icon("table", style = "color: #3b82f6; font-size: 18px;"),
-                                           h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Gene Short Summary")
+                                           icon("table", style = "color: #1D4ED8; font-size: 18px;"),
+                                           h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Gene Short Summary")
                                          )
                                        ),
                                        div(
@@ -1082,7 +1082,7 @@ explorer_body_ui <- function(tab_list){
   )
   tab_list[["featurecorrelation"]] = tabItem(tabName = "featurecorrelation",
                                # CSS styles for close button hover effect
-                               tags$style(type="text/css", "#close_featurecorrelation_info:hover { color: #059669 !important; }"),
+                               tags$style(type="text/css", "#close_featurecorrelation_info:hover { color: #047857 !important; }"),
                                # CSS styles for info text
                                tags$style(type="text/css", "#featurecorrelation_info {white-space: pre-wrap; color: #495057; line-height: 1.8;}"),
 
@@ -1111,7 +1111,7 @@ explorer_body_ui <- function(tab_list){
                                    #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li.active a {
                                      background-color: white;
                                      border-color: #3b82f6 #3b82f6 white #3b82f6;
-                                     color: #3b82f6;
+                                     color: #1D4ED8;
                                      font-weight: 600;
                                    }
                                    #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li.active {
@@ -1119,14 +1119,14 @@ explorer_body_ui <- function(tab_list){
                                      border-top-width: 3px;
                                    }
                                    #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li a {
-                                     color: #6c757d;
+                                     color: #5C636A;
                                      border-radius: 6px 6px 0 0;
                                      transition: all 0.2s ease;
                                      margin-right: 5px;
                                    }
                                    #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li a:hover {
                                      background-color: #f8f9fa;
-                                     color: #3b82f6;
+                                     color: #1D4ED8;
                                    }
                                    #featurecorrelationtabbox-container .tab-content {
                                      background: white;
@@ -1155,8 +1155,8 @@ explorer_body_ui <- function(tab_list){
                                        style = "padding: 15px 20px; border-bottom: 2px solid #10b981; position: relative;",
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("info-circle", style = "color: #10b981; font-size: 20px;"),
-                                         h4(style = "margin: 0; color: #10b981; font-weight: 600;", "Information")
+                                         icon("info-circle", style = "color: #047857; font-size: 20px;"),
+                                         h4(style = "margin: 0; color: #047857; font-weight: 600;", "Information")
                                        ),
                                        # Close button
                                        actionButton(
@@ -1164,7 +1164,7 @@ explorer_body_ui <- function(tab_list){
                                          label = NULL,
                                          title = "Hide or show the hints",
                                          icon = icon("chevron-up"),
-                                         style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #10b981; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
+                                         style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #047857; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
                                          class = "btn btn-link"
                                        )
                                      ),
@@ -1183,7 +1183,7 @@ explorer_body_ui <- function(tab_list){
                                    style = "margin-bottom: 10px;",
                                    div(
                                      style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-                                     h4(icon("sliders-h"), "Step 1: Settings", style = "color: #10b981; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+                                     h4(icon("sliders-h"), "Step 1: Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      withSpinner(uiOutput("FeatureCorrelationClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("FeatureCorrelationIdentsSelected.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("FeatureCorrelationAssays.UI"), proxy.height = "10px"),
@@ -1199,7 +1199,7 @@ explorer_body_ui <- function(tab_list){
                                      tabBox(
                                        title = div(
                                          style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("chart-line", style = "color: #3b82f6; font-size: 18px;"),
+                                         icon("chart-line", style = "color: #1D4ED8; font-size: 18px;"),
                                          strong("Step 2: Calculate Correlation", style = "color: #495057; font-size: 16px;")
                                        ),
                                        id = "tabset_featurecorrelation", width = 12,
@@ -1213,7 +1213,7 @@ explorer_body_ui <- function(tab_list){
                                                               icon = shiny::icon("magnifying-glass-chart"),
                                                               label = "Analyze",
                                                               class = "btn-primary btn-lg",
-                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
+                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
                                                 )),
                                        tabPanel("Find Top Correlated Genes for A Gene",
                                                 div(
@@ -1225,7 +1225,7 @@ explorer_body_ui <- function(tab_list){
                                                               icon = shiny::icon("magnifying-glass-chart"),
                                                               label = "Analyze",
                                                               class = "btn-primary btn-lg",
-                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
+                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
                                                 )),
                                        tabPanel("Calculate Correlation of All Pairs in A Gene List",
                                                 div(
@@ -1237,7 +1237,7 @@ explorer_body_ui <- function(tab_list){
                                                               icon = shiny::icon("save"),
                                                               label = "Analyze",
                                                               class = "btn-primary btn-lg",
-                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
+                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
                                                 ))
                                      )
                                    )
@@ -1257,8 +1257,8 @@ explorer_body_ui <- function(tab_list){
                                          style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
                                          div(
                                            style = "display: flex; align-items: center; gap: 10px;",
-                                           icon("table", style = "color: #3b82f6; font-size: 18px;"),
-                                           h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Analysis Results")
+                                           icon("table", style = "color: #1D4ED8; font-size: 18px;"),
+                                           h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Analysis Results")
                                          )
                                        ),
                                        div(
@@ -1285,8 +1285,8 @@ explorer_body_ui <- function(tab_list){
                                        style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("table", style = "color: #3b82f6; font-size: 18px;"),
-                                         h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Rename Clusters")
+                                         icon("table", style = "color: #1D4ED8; font-size: 18px;"),
+                                         h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Rename Clusters")
                                        )
                                      ),
                                      div(
@@ -1308,7 +1308,7 @@ explorer_body_ui <- function(tab_list){
                                    class = "col-md-3",
                                    div(
                                      style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-                                     h4(icon("sliders-h"), "Settings", style = "color: #10b981; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+                                     h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      withSpinner(uiOutput("renameclustersClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("renameclustersDimensionReduction.UI"), proxy.height = "10px"),
                                      sliderInput("renameclustersLabelSize", "Preview label size:", min = 1, max = 20, value = 7, step = 0.5),
@@ -1322,7 +1322,7 @@ explorer_body_ui <- function(tab_list){
                                                    icon = shiny::icon("check"),
                                                    label = "Check",
                                                    class = "btn-primary btn-lg",
-                                                   style = "padding: 10px 30px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);")
+                                                   style = "padding: 10px 30px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #047857 0%, #065F46 100%); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);")
                                      ),
                                      conditionalPanel(
                                        condition = "output.renameclusterscheck_OK",
@@ -1332,12 +1332,12 @@ explorer_body_ui <- function(tab_list){
                                                        icon = shiny::icon("arrows-rotate"),
                                                        label = "Update",
                                                        class = "btn-primary",
-                                                       style = "padding: 10px 20px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none;"),
+                                                       style = "padding: 10px 20px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none;"),
                                            downloadButton("renameclustersDownload",
                                                          "Download",
                                                          icon = shiny::icon("file-arrow-down"),
                                                          class = "btn-primary",
-                                                         style = "padding: 10px 20px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;")
+                                                         style = "padding: 10px 20px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #B45309 0%, #92400E 100%); border: none;")
                                          ),
                                          div(
                                            style = "background: #fef3c7; border-left: 3px solid #f59e0b; padding: 10px; border-radius: 4px; margin-top: 15px;",
@@ -1362,8 +1362,8 @@ explorer_body_ui <- function(tab_list){
             style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
             div(
               style = "display: flex; align-items: center; gap: 10px;",
-              icon("sort", style = "color: #3b82f6; font-size: 18px;"),
-              h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Order Preview")
+              icon("sort", style = "color: #1D4ED8; font-size: 18px;"),
+              h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Order Preview")
             )
           ),
           div(
@@ -1371,7 +1371,7 @@ explorer_body_ui <- function(tab_list){
             style = "padding: 20px;",
             withSpinner(plotOutput("reorderclustersdimplot", height = "560px")),
             p("Reordering only changes factor levels (legend, axis, split and stack order). No cell is reassigned to another cluster.",
-              style = "font-size: 12px; color: #6c757d; margin-top: 10px;")
+              style = "font-size: 12px; color: #5C636A; margin-top: 10px;")
           )
         )
       ),
@@ -1382,7 +1382,7 @@ explorer_body_ui <- function(tab_list){
         div(
           style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
           h4(icon("sliders-h"), "Settings",
-             style = "color: #10b981; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+             style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
 
           withSpinner(uiOutput("reorderclustersClusterResolution.UI"), proxy.height = "10px"),
           withSpinner(uiOutput("reorderclustersDimensionReduction.UI"), proxy.height = "10px"),
@@ -1397,7 +1397,7 @@ explorer_body_ui <- function(tab_list){
                          icon = shiny::icon("check"),
                          label = "Apply New Order",
                          class = "btn-primary btn-lg",
-                         style = "padding: 10px 20px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none;"),
+                         style = "padding: 10px 20px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #047857 0%, #065F46 100%); border: none;"),
             actionButton("reorderclustersReset",
                          icon = shiny::icon("arrows-rotate"),
                          label = "Reset",
@@ -1415,7 +1415,7 @@ explorer_body_ui <- function(tab_list){
     )
   )
   tab_list[["clustercolors"]] = tabItem(tabName = "clustercolors",
-    tags$style(type="text/css", "#close_clustercolors_info:hover { color: #059669 !important; }"),
+    tags$style(type="text/css", "#close_clustercolors_info:hover { color: #047857 !important; }"),
     tags$style(type="text/css", "#clustercolors_info {white-space: pre-wrap; color: #495057; line-height: 1.8;}"),
     fluidRow(id = "clustercolors-main-row",
       # Information box
@@ -1431,15 +1431,15 @@ explorer_body_ui <- function(tab_list){
             style = "padding: 15px 20px; border-bottom: 2px solid #10b981; position: relative;",
             div(
               style = "display: flex; align-items: center; gap: 10px;",
-              icon("info-circle", style = "color: #10b981; font-size: 20px;"),
-              h4(style = "margin: 0; color: #10b981; font-weight: 600;", "Information")
+              icon("info-circle", style = "color: #047857; font-size: 20px;"),
+              h4(style = "margin: 0; color: #047857; font-weight: 600;", "Information")
             ),
             actionButton(
               "close_clustercolors_info",
               label = NULL,
               title = "Hide or show the hints",
               icon = icon("chevron-up"),
-              style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #10b981; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
+              style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #047857; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
               class = "btn btn-link"
             )
           ),
@@ -1458,15 +1458,15 @@ explorer_body_ui <- function(tab_list){
         style = "margin-bottom: 10px;",
         div(
           style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-          h4(icon("palette"), "Settings", style = "color: #10b981; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+          h4(icon("palette"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
 
           h5(icon("layer-group"), "Step 1: Cluster resolution",
-             style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+             style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
           withSpinner(uiOutput("ClusterColorsResolution.UI"), proxy.height = "10px"),
 
           hr(),
           h5(icon("palette"), "Step 2: Colors",
-             style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+             style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
           # flex-wrap + min-width:0 let the row shrink with the box: on a
           # narrow page the Apply button drops below the select instead of
           # being pushed outside the Settings box.
@@ -1491,7 +1491,7 @@ explorer_body_ui <- function(tab_list){
 
           hr(),
           h5(icon("floppy-disk"), "Step 3: Save",
-             style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+             style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
           div(style = "display: flex; flex-wrap: wrap; gap: 8px;",
             actionButton("ClusterColorSubmit", "Submit", icon = icon("check"),
                          class = "btn-primary",
@@ -1514,7 +1514,7 @@ explorer_body_ui <- function(tab_list){
                       accept = ".csv", buttonLabel = "Browse...",
                       placeholder = "Two columns: cluster,color")),
           p("CSV format: two columns named cluster and color (hex, e.g. #E41A1C).",
-            style = "font-size: 11px; color: #6c757d; margin: 0;")
+            style = "font-size: 11px; color: #5C636A; margin: 0;")
         )
       ),
 
@@ -1530,8 +1530,8 @@ explorer_body_ui <- function(tab_list){
             style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
             div(
               style = "display: flex; align-items: center; gap: 10px;",
-              icon("image", style = "color: #3b82f6; font-size: 18px;"),
-              h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Preview")
+              icon("image", style = "color: #1D4ED8; font-size: 18px;"),
+              h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Preview")
             )
           ),
           div(
@@ -1539,7 +1539,7 @@ explorer_body_ui <- function(tab_list){
             style = "padding: 20px;",
             withSpinner(plotOutput("clustercolors_preview", height = "520px")),
             p("Colors are applied to Dim Reduction Plot, Violin Plot (un-split and side-by-side split), Cell Percentage Plot, Ridge Plot (colored by cluster), the Heatmap Cell Level group bar and the Average Heatmap annotation bar. Split violins use the colors saved for the Split by variable.",
-              style = "font-size: 12px; color: #6c757d; margin-top: 10px;")
+              style = "font-size: 12px; color: #5C636A; margin-top: 10px;")
           )
         )
       )
@@ -1591,7 +1591,7 @@ explorer_body_ui <- function(tab_list){
         div(class = "col-md-9",
           div(class = "box", style = "background: white; border: 2px solid #3b82f6; border-radius: 8px;",
             div(class = "box-header", style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
-              h4(icon("table"), "Classification Table", style = "color: #3b82f6; font-weight: 600; margin: 0;")
+              h4(icon("table"), "Classification Table", style = "color: #1D4ED8; font-weight: 600; margin: 0;")
             ),
             div(class = "box-body", style = "padding: 20px;",
               withSpinner(DT::dataTableOutput('geneclusters_table'))
@@ -1600,7 +1600,7 @@ explorer_body_ui <- function(tab_list){
         ),
         div(class = "col-md-3",
           div(style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px;",
-            h4(icon("check"), "Actions", style = "color: #10b981; margin-bottom: 15px; font-weight: 600;"),
+            h4(icon("check"), "Actions", style = "color: #047857; margin-bottom: 15px; font-weight: 600;"),
             div(style = "margin-bottom: 15px;",
               actionButton("geneclustersCheck", label = "Check", icon = icon("check"),
                 class = "btn-primary", style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
@@ -1671,8 +1671,8 @@ explorer_body_ui <- function(tab_list){
                                        style = "padding: 15px 20px; border-bottom: 2px solid #10b981;",
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("search", style = "color: #10b981; font-size: 18px;"),
-                                         h4(style = "margin: 0; color: #10b981; font-weight: 600;", "Search Features")
+                                         icon("search", style = "color: #047857; font-size: 18px;"),
+                                         h4(style = "margin: 0; color: #047857; font-weight: 600;", "Search Features")
                                        )
                                      ),
                                      div(
@@ -1697,8 +1697,8 @@ explorer_body_ui <- function(tab_list){
                                        style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("table", style = "color: #3b82f6; font-size: 18px;"),
-                                         h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Cell Metadata")
+                                         icon("table", style = "color: #1D4ED8; font-size: 18px;"),
+                                         h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Cell Metadata")
                                        )
                                      ),
                                      div(
@@ -1708,7 +1708,7 @@ explorer_body_ui <- function(tab_list){
                                          div(style = "margin-bottom: 15px; text-align: right;",
                                            downloadButton("download_meta_data", "Download", icon = shiny::icon("file-arrow-down"),
                                                          class = "btn-primary",
-                                                         style = "padding: 10px 25px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none;")
+                                                         style = "padding: 10px 25px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none;")
                                          ),
                                          DT::dataTableOutput('dataset_meta')
                                        ))
@@ -1729,8 +1729,8 @@ explorer_body_ui <- function(tab_list){
                                        style = "padding: 15px 20px; border-bottom: 2px solid #8b5cf6;",
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("code", style = "color: #8b5cf6; font-size: 18px;"),
-                                         h4(style = "margin: 0; color: #8b5cf6; font-weight: 600;", "Structure of Seurat Object")
+                                         icon("code", style = "color: #6D28D9; font-size: 18px;"),
+                                         h4(style = "margin: 0; color: #6D28D9; font-weight: 600;", "Structure of Seurat Object")
                                        )
                                      ),
                                      div(
@@ -1738,7 +1738,7 @@ explorer_body_ui <- function(tab_list){
                                        style = "padding: 20px;",
                                        div(
                                          style = "background: #f5f3ff; border: 1px solid #8b5cf6; border-left: 4px solid #8b5cf6; padding: 20px; border-radius: 8px; margin-bottom: 20px;",
-                                         h4(icon("sliders-h"), "Display Settings", style = "color: #8b5cf6; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+                                         h4(icon("sliders-h"), "Display Settings", style = "color: #6D28D9; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                          sliderInput("ObjectStrutureLevel", label = "Structure Depth:", min = 1, max = 10, value = 3)
                                        ),
                                        withSpinner(verbatimTextOutput("object_structure"))
@@ -1751,7 +1751,7 @@ explorer_body_ui <- function(tab_list){
   # options(SeuratExplorerEnableObjectExport = FALSE).
   if (isTRUE(getOption("SeuratExplorerEnableObjectExport", TRUE))) {
     tab_list[["exportdata"]] = tabItem(tabName = "exportdata",
-      tags$style(type="text/css", "#close_exportdata_info:hover { color: #059669 !important; }"),
+      tags$style(type="text/css", "#close_exportdata_info:hover { color: #047857 !important; }"),
       tags$style(type="text/css", "#exportdata_info {white-space: pre-wrap; color: #495057; line-height: 1.8;}"),
       fluidRow(id = "exportdata-main-row",
         # Information box
@@ -1767,15 +1767,15 @@ explorer_body_ui <- function(tab_list){
               style = "padding: 15px 20px; border-bottom: 2px solid #10b981; position: relative;",
               div(
                 style = "display: flex; align-items: center; gap: 10px;",
-                icon("info-circle", style = "color: #10b981; font-size: 20px;"),
-                h4(style = "margin: 0; color: #10b981; font-weight: 600;", "Information")
+                icon("info-circle", style = "color: #047857; font-size: 20px;"),
+                h4(style = "margin: 0; color: #047857; font-weight: 600;", "Information")
               ),
               actionButton(
                 "close_exportdata_info",
                 label = NULL,
                 title = "Hide or show the hints",
                 icon = icon("chevron-up"),
-                style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #10b981; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
+                style = "position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #047857; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s ease;",
                 class = "btn btn-link"
               )
             ),
@@ -1794,19 +1794,19 @@ explorer_body_ui <- function(tab_list){
           style = "margin-bottom: 10px;",
           div(
             style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-            h4(icon("sliders-h"), "Settings", style = "color: #10b981; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+            h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
 
             h5(icon("filter"), "Step 1: Filter Cells (optional)",
-               style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+               style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
             p("Cells matching ALL conditions are kept. Two rows on the same column are intersected.",
-              style = "color: #6c757d; font-size: 12px; margin-bottom: 10px;"),
+              style = "color: #5C636A; font-size: 12px; margin-bottom: 10px;"),
             withSpinner(uiOutput("ExportFilterRows.UI"), proxy.height = "10px"),
             uiOutput("ExportAddFilter.UI"),
             checkboxInput("ExportKeepNA", "Keep cells with NA in a filter column", FALSE),
 
             hr(),
             h5(icon("file-arrow-down"), "Step 2: Output format",
-               style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+               style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
             radioButtons("ExportFormat", NULL,
                          choices = c("qs2 (QSZ compression)" = "qs2", "rds (R data)" = "rds"),
                          selected = "qs2", inline = TRUE),
@@ -1828,7 +1828,7 @@ explorer_body_ui <- function(tab_list){
 
             hr(),
             h5(icon("cogs"), "Step 3: Options",
-               style = "color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+               style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
             checkboxInput("ExportDropScaleData", "Drop scale.data (smaller file)", FALSE),
             checkboxInput("ExportDroplevels", "Drop empty factor levels", FALSE),
             checkboxInput("ExportWriteProvenance", "Record export parameters in obj@misc", TRUE),
@@ -1853,8 +1853,8 @@ explorer_body_ui <- function(tab_list){
               style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
               div(
                 style = "display: flex; align-items: center; gap: 10px;",
-                icon("table", style = "color: #3b82f6; font-size: 18px;"),
-                h4(style = "margin: 0; color: #3b82f6; font-weight: 600;", "Export Preview")
+                icon("table", style = "color: #1D4ED8; font-size: 18px;"),
+                h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Export Preview")
               )
             ),
             div(
@@ -1921,13 +1921,13 @@ ui <-  function(){
                                     # upload a file
                                     box(status = "primary", title = "Upload Data", width = 12, collapsible = TRUE, solidHeader = TRUE,
                                         fileInput("dataset_file", "Choose A rds or qs2 file of Seurat Object:", accept = c('.rds', ".qs2")),
-                                        div(style = "display: flex; align-items: center; text-align: center; color: #6c757d; margin: 15px 0;",
+                                        div(style = "display: flex; align-items: center; text-align: center; color: #5C636A; margin: 15px 0;",
                                             div(style = "flex: 1; border-bottom: 1px dashed #dee2e6;"),
                                             span(style = "padding: 0 10px;", "OR"),
                                             div(style = "flex: 1; border-bottom: 1px dashed #dee2e6;")),
                                         div(style = "text-align: center;",
                                             actionButton("demo_data", "Download and Run a demo data", icon = icon("download"), class = "btn-primary"),
-                                            tags$small(style = "display: block; color: #6c757d; margin-top: 8px;",
+                                            tags$small(style = "display: block; color: #5C636A; margin-top: 8px;",
                                                        "Downloads a Fly gut demo dataset (~74 MB, 1000 cells) and loads it automatically. The file is cached locally for later use.")),
                                         uiOutput("dataOverview"))
                                   )
@@ -2045,6 +2045,163 @@ ui <-  function(){
           transform: rotate(-90deg);
         }
 
+        /* Accessibility: AA text tokens and fixed shinydashboard surfaces */
+        :root {
+          --se-primary: #2563EB;
+          --se-primary-text: #1D4ED8;
+          --se-success-text: #047857;
+          --se-warning-text: #B45309;
+          --se-pink-text: #BE185D;
+          --se-violet-text: #6D28D9;
+          --se-muted-text: #5C636A;
+        }
+
+        .skin-blue .main-header .navbar,
+        .skin-blue .main-header .logo,
+        .skin-blue .main-header .logo:hover {
+          background-color: #256b8e !important;
+        }
+
+        .sidebar-menu .treeview-menu > li > a {
+          color: #c4d1d8 !important;
+        }
+
+        .box.box-solid.box-primary > .box-header {
+          background-color: #256b8e !important;
+        }
+
+        .label-info,
+        .badge-info {
+          background-color: #0e7490 !important;
+          color: #fff !important;
+        }
+
+        .sidebar-menu .label-info {
+          font-size: 10px !important;
+          padding: 2px 4px !important;
+        }
+
+        .btn-primary,
+        .btn-primary:visited,
+        .btn-primary .action-label,
+        .btn-primary a {
+          background-color: #256b8e !important;
+          border-color: #256b8e !important;
+          color: #fff !important;
+        }
+
+        .btn-info {
+          background-color: #0e7490 !important;
+          border-color: #0e7490 !important;
+          color: #fff !important;
+        }
+
+        .btn-warning,
+        .btn-warning:visited,
+        .btn-warning .action-label {
+          background-color: #B45309 !important;
+          border-color: #B45309 !important;
+          color: #fff !important;
+        }
+
+        .content-wrapper a {
+          color: var(--se-primary-text);
+        }
+
+        #ClusterColorClearSaved {
+          color: #B42318 !important;
+          min-height: 24px;
+          line-height: 24px;
+          padding: 4px 0;
+        }
+
+        .bootstrap-select .filter-option-inner-inner,
+        .bootstrap-select .bs-placeholder,
+        .selectize-control .bs-placeholder,
+        .selectize-control .filter-option-inner-inner,
+        .selectize-control .selectized {
+          color: var(--se-muted-text) !important;
+        }
+
+        input[id$='-selectized'] {
+          min-width: 24px !important;
+          min-height: 24px !important;
+        }
+
+        .irs-single,
+        .irs-from,
+        .irs-to {
+          background-color: #256b8e !important;
+          color: #fff !important;
+        }
+
+        .irs-bar {
+          border-color: #256b8e !important;
+          background-color: #256b8e !important;
+        }
+
+        .form-control,
+        .form-control:disabled,
+        .form-control[readonly] {
+          color: #495057;
+        }
+
+        .form-control::placeholder {
+          color: var(--se-muted-text) !important;
+          opacity: 1;
+        }
+
+        .se-sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
+
+        .box-tools .btn-box-tool {
+          min-width: 28px;
+          min-height: 28px;
+          padding: 3px 4px;
+        }
+
+        .box-body details > summary {
+          min-height: 32px;
+          padding: 4px 0;
+        }
+
+        .param-group-summary:focus-visible {
+          outline: 2px solid #1D4ED8;
+          outline-offset: 2px;
+          border-radius: 4px;
+        }
+
+        .selectize-control .selectize-input {
+          min-height: 32px;
+        }
+
+        .selectize-control .selectized {
+          min-width: 24px !important;
+          min-height: 24px !important;
+        }
+
+        /* Keep native checkbox/radio sizing: Bootstrap positions the input
+           with a negative margin, so enlarging it overlaps the label text. */
+        .checkbox,
+        .radio {
+          min-height: 24px;
+        }
+
+        .checkbox label,
+        .radio label {
+          min-height: 24px;
+          line-height: 24px;
+        }
+
         /* Responsive optimization */
         @media (max-width: 768px) {
           .content-wrapper {
@@ -2105,6 +2262,60 @@ ui <-  function(){
           $(window).on('resize', measure);
           measure();
         }
+      })();
+    ")),
+    tags$script(HTML("
+      (function() {
+        document.documentElement.lang = 'en';
+
+        function fixA11y() {
+          // shinydashboard puts aria-selected on navigation links, where it is
+          // not an allowed attribute. The visual active state is class-based.
+          document.querySelectorAll('.sidebar-menu a[aria-selected]').forEach(function(a) {
+            a.removeAttribute('aria-selected');
+          });
+
+          // Font Awesome icons carry aria-label with role=presentation. Keep
+          // them decorative, but preserve the control name when the icon is
+          // the only content of a button/link.
+          document.querySelectorAll('i[aria-label]').forEach(function(i) {
+            var label = i.getAttribute('aria-label');
+            var control = i.closest('button,a');
+            if (control && !control.getAttribute('aria-label') &&
+                !control.textContent.trim()) {
+              control.setAttribute('aria-label',
+                                   control.getAttribute('title') ||
+                                   label.replace(/ icon$/, ''));
+            }
+            i.removeAttribute('aria-label');
+            i.setAttribute('aria-hidden', 'true');
+          });
+
+          // colourpicker renders label=NULL. Associate every picker with the
+          // visible cluster label in the same row.
+          document.querySelectorAll('input[id^=\"clustercolor_\"]').forEach(function(input) {
+            if (input.getAttribute('aria-label')) return;
+            var row = input.closest('.row');
+            var label = row ? row.querySelector('.col-sm-5') : null;
+            var text = label ? label.textContent.trim() : '';
+            input.setAttribute('aria-label', text ? 'Color for ' + text : 'Cluster color');
+          });
+
+          // The header GitHub dropdown is icon-only.
+          document.querySelectorAll('.main-header .dropdown-toggle').forEach(function(a) {
+            if (!a.getAttribute('aria-label') && a.querySelector('.fa-github')) {
+              a.setAttribute('aria-label', 'GitHub repositories');
+            }
+          });
+        }
+
+        fixA11y();
+        new MutationObserver(fixA11y).observe(document.body, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['aria-label', 'role']
+        });
       })();
     "))
   )

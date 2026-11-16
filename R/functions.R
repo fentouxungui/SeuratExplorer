@@ -1936,15 +1936,26 @@ save_cached_plot <- function(cache, key, file, dpi = getOption("SeuratExplorerPd
 #' @return A `shiny.tag` div representing the collapsible parameter group.
 #' @export
 param_group_collapse <- function(id, title, icon_name, color = "#3b82f6", ...) {
+  # Keep the accent border, but use an AA-contrast text tone on the pale panel.
+  text_color <- switch(
+    tolower(color),
+    "#3b82f6" = "#1D4ED8",
+    "#10b981" = "#047857",
+    "#f59e0b" = "#B45309",
+    "#ec4899" = "#BE185D",
+    "#8b5cf6" = "#6D28D9",
+    color
+  )
   # Pre-compute style strings
   border_css <- sprintf("background: #f8f9fa; border: 1px solid %s; border-left: 4px solid %s; padding: 12px; border-radius: 6px; margin-bottom: 15px;", color, color)
-  summary_css <- sprintf("list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; color: %s; outline: none;", color)
-  title_css <- sprintf("color: %s; font-size: 14px; font-weight: 600;", color)
+  summary_css <- sprintf("list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; color: %s;", text_color)
+  title_css <- sprintf("color: %s; font-size: 14px; font-weight: 600;", text_color)
 
   details_args <- list(
     open = "open",
     style = border_css,
     tags$summary(
+      class = "param-group-summary",
       style = summary_css,
       tags$span(
         style = "display: flex; align-items: center; gap: 8px;",
