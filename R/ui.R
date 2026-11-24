@@ -531,7 +531,7 @@ explorer_body_ui <- function(tab_list){
                                             id = "cellratio_subset", title = "Subset Cells",
                                             icon_name = "filter", color = "#8b5cf6",
                                             withSpinner(uiOutput("CellratioSubsetCells.UI"), proxy.height = "10px"),
-                                            withSpinner(uiOutput("CellratioSubsetCellsSelectedClusters.UI"), proxy.height = "10px"),
+                                            uiOutput("CellratioSubsetCellsAddFilter.UI"),
                                             uiOutput("CellratioSubsetCellsHint.UI")
                                           ),
 

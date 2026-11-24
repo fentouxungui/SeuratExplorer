@@ -460,10 +460,12 @@ Different visualization features support different assay slots:
   panels with different cell counts
 
 - Cells can be filtered before the percentages are calculated
-  (**Subset Cells**): choose a cluster/metadata column, then keep one or
-  more of its levels; with every level selected (the default) all cells
-  are used, so the plot and the table stay unchanged until a subset is
-  applied
+  (**Subset Cells**): each condition picks a cluster/metadata column and
+  the levels to keep, and further conditions can be stacked with **Add
+  filter condition**; a cell is kept when it passes **all** conditions
+  (intersection) and, within one condition, any of the selected levels.
+  With every level selected (the default) all cells are used, so the plot
+  and the table stay unchanged until a subset is applied
 - The table below the plot reports cell counts together with the
   percentage of each segment, calculated within the same groups as the
   plot (per sample, or per sample × facet) and with the same number of

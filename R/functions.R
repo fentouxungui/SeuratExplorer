@@ -445,6 +445,33 @@ color_luminance <- function(hex) {
   colSums(lin * c(0.2126, 0.7152, 0.0722))
 }
 
+# Resolve one or more metadata filters to the cell names they keep.
+#
+# Within one filter the values are combined with `%in%` (OR), several filters
+# are combined as an intersection (AND). Values are compared as characters so
+# factor and character columns behave the same. A filter with an empty value
+# vector keeps nothing; callers that treat "nothing selected" as "no filter"
+# (the Shiny app does) drop such a filter before calling this function.
+#
+# @param metadata data.frame of cell metadata, one row per cell
+# @param filters named list, e.g. list(celltype = c("T cell", "B cell"),
+#   sample = "S1"); names are metadata columns, values are levels to keep
+# @return character vector of kept cell names (the row names of `metadata`),
+#   or NULL when no filter is supplied
+subset_cells_by_filters <- function(metadata, filters = NULL) {
+  if (is.null(metadata) || is.null(filters) || length(filters) == 0) return(NULL)
+  if (is.null(names(filters))) return(NULL)
+  keep <- rep(TRUE, nrow(metadata))
+  for (col in names(filters)) {
+    if (is.null(col) || is.na(col) || !col %in% colnames(metadata)) next
+    vals <- filters[[col]]
+    # An empty selection cannot match any cell.
+    if (length(vals) == 0) return(character(0))
+    keep <- keep & (as.character(metadata[[col]]) %in% as.character(vals))
+  }
+  rownames(metadata)[keep]
+}
+
 globalVariables(c("num"))
 
 #' @title plot cell percentage barplot
@@ -480,6 +507,11 @@ globalVariables(c("num"))
 #' @param cells optional character vector of cell names to keep before the
 #'   percentages are calculated, e.g. a cluster-based subset; \code{NULL}
 #'   keeps every cell
+#' @param cell.filters optional named list of metadata filters, e.g.
+#'   \code{list(celltype = c("T cell", "B cell"), sample = "S1")}; values are
+#'   combined with \code{\%in\%} within one filter and the filters are
+#'   combined as an intersection. Applied before \code{cells}; \code{NULL}
+#'   disables it, so existing calls are unaffected
 #' @import dplyr
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
@@ -508,7 +540,8 @@ cellRatioPlot <- function(object = NULL,
                           percent_text_color = "auto",
                           list_rare = FALSE,
                           show_sample_size = FALSE,
-                          cells = NULL) {
+                          cells = NULL,
+                          cell.filters = NULL) {
   requireNamespace("dplyr")
   # Input validation
   if (is.null(object)) stop("object cannot be NULL")
@@ -525,9 +558,16 @@ cellRatioPlot <- function(object = NULL,
   # get meta info
   meta <- object@meta.data
 
-  # optional cell-level subsetting: drop the cells that are not listed in
-  # `cells` (e.g. the "Subset Cells" filter in the app) before counting, so
-  # that the percentages are calculated on the retained cells only.
+  # Optional cell subsetting, applied before any counting. `cells` is an
+  # explicit vector of cell names; `cell.filters` is a named list such as
+  # list(celltype = c("T cell", "B cell"), sample = "S1"). Either one alone,
+  # both together (intersected), or neither (the default) is supported, so
+  # existing calls are unaffected.
+  if (!is.null(cell.filters)) {
+    keep_cells <- subset_cells_by_filters(meta, cell.filters)
+    if (!is.null(cells)) keep_cells <- intersect(keep_cells, as.character(cells))
+    cells <- keep_cells
+  }
   if (!is.null(cells)) {
     cells <- as.character(cells)
     meta <- meta[rownames(meta) %in% cells, , drop = FALSE]

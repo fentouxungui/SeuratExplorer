@@ -25,7 +25,8 @@ cellRatioPlot(
   percent_text_color = "auto",
   list_rare = FALSE,
   show_sample_size = FALSE,
-  cells = NULL
+  cells = NULL,
+  cell.filters = NULL
 )
 }
 \arguments{
@@ -78,6 +79,12 @@ panels have different cell counts}
 \item{cells}{optional character vector of cell names to keep before the
 percentages are calculated, e.g. a cluster-based subset; \code{NULL}
 keeps every cell}
+
+\item{cell.filters}{optional named list of metadata filters, e.g.
+\code{list(celltype = c("T cell", "B cell"), sample = "S1")}; values are
+combined with \code{\%in\%} within one filter and the filters are
+combined as an intersection. Applied before \code{cells}; \code{NULL}
+disables it, so existing calls are unaffected}
 }
 \value{
 a ggplot2 object
