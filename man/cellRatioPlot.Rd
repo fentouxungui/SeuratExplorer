@@ -24,7 +24,8 @@ cellRatioPlot(
   percent_digits = 1,
   percent_text_color = "auto",
   list_rare = FALSE,
-  show_sample_size = FALSE
+  show_sample_size = FALSE,
+  cells = NULL
 )
 }
 \arguments{
@@ -73,6 +74,10 @@ caption instead of on the bars}
 \item{show_sample_size}{append the number of cells to the x-axis tick labels,
 e.g. "WT (n = 1,234)"; ignored when \code{facet.name} is set because the
 panels have different cell counts}
+
+\item{cells}{optional character vector of cell names to keep before the
+percentages are calculated, e.g. a cluster-based subset; \code{NULL}
+keeps every cell}
 }
 \value{
 a ggplot2 object

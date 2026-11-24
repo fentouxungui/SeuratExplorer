@@ -1669,6 +1669,79 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                 selected = "None")
   })
 
+  # Subset Cells: keep only the cells whose level of a chosen cluster column is
+  # selected. Mirrors "Filter Cells" in the Dot Plot tab and "Step 1: Filter
+  # Cells" in the DEGs tab; when every level is selected (the default) no cell
+  # is removed and the plot behaves exactly as before.
+  output$CellratioSubsetCells.UI <- renderUI({
+    if(verbose){message("SeuratExplorer: preparing CellratioSubsetCells.UI...")}
+    req(data$obj)
+    choices <- data$cluster_options
+    if (length(choices) == 0) return(NULL)
+    # Keep the current choice when this selector is rebuilt; the initial value
+    # follows the cluster resolution used for the bars.
+    current <- isolate(input$CellratioSubsetCells)
+    default_col <- data$cluster_default
+    if (is.null(default_col) || !default_col %in% choices) default_col <- choices[1]
+    selected <- if (!is.null(current) && current %in% choices) current else default_col
+    selectInput("CellratioSubsetCells", "Filter Cells By:",
+                choices = choices,
+                selected = selected)
+  })
+
+  output$CellratioSubsetCellsSelectedClusters.UI <- renderUI({
+    req(data$obj)
+    req(input$CellratioSubsetCells)
+    req(input$CellratioSubsetCells %in% colnames(data$obj@meta.data))
+    if(verbose){message("SeuratExplorer: preparing CellratioSubsetCellsSelectedClusters.UI...")}
+    cluster_levels <- levels(data$obj@meta.data[[input$CellratioSubsetCells]])
+    shinyWidgets::pickerInput(inputId = "CellratioSubsetCellsSelectedClusters",
+                              label = "Clusters to keep:",
+                              choices = cluster_levels,
+                              selected = cluster_levels,
+                              options = shinyWidgets::pickerOptions(actionsBox = TRUE,
+                                                                    size = 10,
+                                                                    selectedTextFormat = "count > 3"),
+                              multiple = TRUE)
+  })
+
+  # Cells kept by the Subset Cells filter. NULL means "no filter is active", in
+  # which case the plot and the table keep every cell, so the default
+  # (everything selected) reproduces the previous behaviour exactly.
+  cellratio_subset_cells <- reactive({
+    if (is.null(data$obj)) return(NULL)
+    col <- input$CellratioSubsetCells
+    vals <- input$CellratioSubsetCellsSelectedClusters
+    if (is.null(col) || length(col) != 1L ||
+        !col %in% colnames(data$obj@meta.data)) {
+      return(NULL)
+    }
+    # Nothing selected: keep all cells rather than drawing an empty plot.
+    if (is.null(vals) || length(vals) == 0) return(NULL)
+    meta <- data$obj@meta.data
+    cluster_levels <- levels(meta[[col]])
+    # Selecting every level is the same as no filter; skip the subsetting.
+    if (all(cluster_levels %in% vals)) return(NULL)
+    rownames(meta)[as.character(meta[[col]]) %in% as.character(vals)]
+  })
+
+  # One-line feedback so the active subset is visible next to the controls.
+  output$CellratioSubsetCellsHint.UI <- renderUI({
+    req(data$obj)
+    col <- input$CellratioSubsetCells
+    if (is.null(col) || !col %in% colnames(data$obj@meta.data)) return(NULL)
+    keep <- cellratio_subset_cells()
+    total <- ncol(data$obj)
+    if (is.null(keep)) {
+      return(p(paste0("No subset: all ", format(total, big.mark = ","),
+                      " cells are used."),
+               style = "font-size: 11px; color: #5C636A; margin: 2px 0 0 0;"))
+    }
+    p(paste0("Subset active: ", format(length(keep), big.mark = ","), " of ",
+             format(total, big.mark = ","), " cells kept."),
+      style = "font-size: 11px; color: #6D28D9; margin: 2px 0 0 0;")
+  })
+
   # Revise FacetChoice which will be appropriate for plot
   FacetChoice.Revised <- reactive({
     req(input$CellratioFacetChoice)
@@ -1730,6 +1803,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
     if(verbose){message("SeuratExplorer: preparing cellratioplot...")}
       cds <- data$obj
+    # Cells removed by the "Subset Cells" filter (NULL = no filter is active).
+    cr_cells <- cellratio_subset_cells()
     # Custom cluster colours take precedence over the palette selector.
     cr_map <- get_cluster_color_map(data, isolate(input$CellratioFillChoice))
     cr_fill <- if (is.null(cr_map)) NULL else
@@ -1765,7 +1840,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                          percent_digits = pct_digits,
                          percent_text_color = pct_text_col,
                          list_rare = pct_list_rare,
-                         show_sample_size = show_sample_n)
+                         show_sample_size = show_sample_n,
+                         cells = cr_cells)
     }else{
       p <- cellRatioPlot(object = cds,
                          idents = cr_fill_order,
@@ -1785,7 +1861,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                          percent_digits = pct_digits,
                          percent_text_color = pct_text_col,
                          list_rare = pct_list_rare,
-                         show_sample_size = FALSE)
+                         show_sample_size = FALSE,
+                         cells = cr_cells)
     }
     if (input$CellratioRotateAxis) {
       p <- p & ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
@@ -1850,6 +1927,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     req(input$CellratioXChoice %in% colnames(data$obj@meta.data))
 
     meta <- data$obj@meta.data
+    # keep only the cells that pass the "Subset Cells" filter, if any
+    cr_cells <- cellratio_subset_cells()
+    if (!is.null(cr_cells)) {
+      meta <- meta[rownames(meta) %in% cr_cells, , drop = FALSE]
+    }
     # subset
     meta <- meta[meta[,input$CellratioFillChoice] %in% input$CellratioIdentsSelected,]
     meta[,input$CellratioFillChoice] <- as.character(meta[,input$CellratioFillChoice])

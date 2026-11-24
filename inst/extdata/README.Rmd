@@ -464,6 +464,8 @@ if (for_github) {
 
 - Optionally appends the number of cells to the x-axis labels, e.g. `WT (n = 1,234)` (**Show sample sizes on x-axis**); this option is hidden when faceting, because the x-axis labels are shared by panels with different cell counts
 
+- Cells can be filtered before the percentages are calculated (**Subset Cells**): choose a cluster/metadata column (e.g. `Celltype`), then keep one or more of its levels. Every level is kept by default, so the plot and the table are unchanged until a subset is applied; the table below the plot always follows the same subset
+
 - The table below the plot reports cell counts together with the percentage of each segment, calculated within the same groups as the plot (per sample, or per sample × facet) and with the same number of decimals, so it always matches the labels drawn in the bars
 
 - Segment colors follow the palette selected here, or the custom cluster colors when a palette has been set in **Cluster Colors**

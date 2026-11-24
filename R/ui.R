@@ -526,6 +526,15 @@ explorer_body_ui <- function(tab_list){
                                             withSpinner(uiOutput("CellratioIdentsSelected.UI"), proxy.height = "10px")
                                           ),
 
+                                          # Subset Cells
+                                          param_group_collapse(
+                                            id = "cellratio_subset", title = "Subset Cells",
+                                            icon_name = "filter", color = "#8b5cf6",
+                                            withSpinner(uiOutput("CellratioSubsetCells.UI"), proxy.height = "10px"),
+                                            withSpinner(uiOutput("CellratioSubsetCellsSelectedClusters.UI"), proxy.height = "10px"),
+                                            uiOutput("CellratioSubsetCellsHint.UI")
+                                          ),
+
                                           # Plot Options
                                           param_group_collapse(
                                             id = "cellratio_plot", title = "Plot Options",

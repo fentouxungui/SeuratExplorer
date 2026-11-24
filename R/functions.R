@@ -477,6 +477,9 @@ globalVariables(c("num"))
 #' @param show_sample_size append the number of cells to the x-axis tick labels,
 #'   e.g. "WT (n = 1,234)"; ignored when \code{facet.name} is set because the
 #'   panels have different cell counts
+#' @param cells optional character vector of cell names to keep before the
+#'   percentages are calculated, e.g. a cluster-based subset; \code{NULL}
+#'   keeps every cell
 #' @import dplyr
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
@@ -504,7 +507,8 @@ cellRatioPlot <- function(object = NULL,
                           percent_digits = 1,
                           percent_text_color = "auto",
                           list_rare = FALSE,
-                          show_sample_size = FALSE) {
+                          show_sample_size = FALSE,
+                          cells = NULL) {
   requireNamespace("dplyr")
   # Input validation
   if (is.null(object)) stop("object cannot be NULL")
@@ -520,6 +524,14 @@ cellRatioPlot <- function(object = NULL,
 
   # get meta info
   meta <- object@meta.data
+
+  # optional cell-level subsetting: drop the cells that are not listed in
+  # `cells` (e.g. the "Subset Cells" filter in the app) before counting, so
+  # that the percentages are calculated on the retained cells only.
+  if (!is.null(cells)) {
+    cells <- as.character(cells)
+    meta <- meta[rownames(meta) %in% cells, , drop = FALSE]
+  }
 
   # subset
   meta <- meta[meta[,celltype.name] %in% idents,]

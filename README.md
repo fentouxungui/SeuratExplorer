@@ -459,6 +459,11 @@ Different visualization features support different assay slots:
   is hidden when faceting, because the x-axis labels are shared by
   panels with different cell counts
 
+- Cells can be filtered before the percentages are calculated
+  (**Subset Cells**): choose a cluster/metadata column, then keep one or
+  more of its levels; with every level selected (the default) all cells
+  are used, so the plot and the table stay unchanged until a subset is
+  applied
 - The table below the plot reports cell counts together with the
   percentage of each segment, calculated within the same groups as the
   plot (per sample, or per sample × facet) and with the same number of
