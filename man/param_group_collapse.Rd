@@ -4,7 +4,14 @@
 \alias{param_group_collapse}
 \title{Create a collapsible parameter group for Plot Settings}
 \usage{
-param_group_collapse(id, title, icon_name, color = "#3b82f6", ...)
+param_group_collapse(
+  id,
+  title,
+  icon_name,
+  color = "#3b82f6",
+  subtitle = NULL,
+  ...
+)
 }
 \arguments{
 \item{id}{A unique identifier for the collapse target (used as the div ID).}
@@ -14,6 +21,8 @@ param_group_collapse(id, title, icon_name, color = "#3b82f6", ...)
 \item{icon_name}{Character string passed to \code{shiny::icon()}.}
 
 \item{color}{Hex color string for the left border and title accent. Default: "#3b82f6".}
+
+\item{subtitle}{Optional one-line explanation shown under the group header.}
 
 \item{...}{UI elements to place inside the collapsible content area.}
 }

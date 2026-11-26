@@ -2114,12 +2114,13 @@ save_cached_plot <- function(cache, key, file, dpi = getOption("SeuratExplorerPd
 #' @param title Character string for the group header title.
 #' @param icon_name Character string passed to `shiny::icon()`.
 #' @param color Hex color string for the left border and title accent. Default: "#3b82f6".
+#' @param subtitle Optional one-line explanation shown under the group header.
 #' @param ... UI elements to place inside the collapsible content area.
 #'
 #' @import shiny
 #' @return A `shiny.tag` div representing the collapsible parameter group.
 #' @export
-param_group_collapse <- function(id, title, icon_name, color = "#3b82f6", ...) {
+param_group_collapse <- function(id, title, icon_name, color = "#3b82f6", subtitle = NULL, ...) {
   # Keep the accent border, but use an AA-contrast text tone on the pale panel.
   text_color <- switch(
     tolower(color),
@@ -2152,7 +2153,13 @@ param_group_collapse <- function(id, title, icon_name, color = "#3b82f6", ...) {
         style = "transition: transform 0.3s ease; display: inline-block;"
       )
     ),
-    tags$div(style = "margin-top: 10px;", ...)
+    tags$div(
+      style = "margin-top: 10px;",
+      if (!is.null(subtitle)) {
+        tags$p(subtitle, style = "font-size: 12px; line-height: 1.5; color: #5C636A; margin: 0 0 10px 0;")
+      },
+      ...
+    )
   )
   do.call(tags$details, details_args)
 }

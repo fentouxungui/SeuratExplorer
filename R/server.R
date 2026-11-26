@@ -2281,35 +2281,6 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
 
 
   ################################ DEGs analysis
-  # Warning
-  output$degs_info = renderText({
-    paste0('This usually takes longer, please wait patiently. Make sure to save current results before a new analysis!
-  - FindMarkers for All Clusters: calculate markers for all groups.
-  - Find DEGs for two groups: comparison between two groups; cells can be subset before the comparison.')
-  })
-
-  # Collapse / expand the hint body; the box header stays visible so the hints
-  # can always be brought back. The chevron is swapped on the same click.
-  observeEvent(input$close_degs_info, {
-    shinyjs::toggle("degs_info_body", anim = TRUE)
-    shinyjs::runjs("$('#close_degs_info i').toggleClass('fa-chevron-up fa-chevron-down');")
-  }, ignoreInit = TRUE)
-
-  observeEvent(input$close_topgenes_info, {
-    shinyjs::toggle("topgenes_info_body", anim = TRUE)
-    shinyjs::runjs("$('#close_topgenes_info i').toggleClass('fa-chevron-up fa-chevron-down');")
-  }, ignoreInit = TRUE)
-
-  observeEvent(input$close_featuresummary_info, {
-    shinyjs::toggle("featuresummary_info_body", anim = TRUE)
-    shinyjs::runjs("$('#close_featuresummary_info i').toggleClass('fa-chevron-up fa-chevron-down');")
-  }, ignoreInit = TRUE)
-
-  observeEvent(input$close_featurecorrelation_info, {
-    shinyjs::toggle("featurecorrelation_info_body", anim = TRUE)
-    shinyjs::runjs("$('#close_featurecorrelation_info i').toggleClass('fa-chevron-up fa-chevron-down');")
-  }, ignoreInit = TRUE)
-
   DEGs <- reactiveValues(degs = NULL, degs_ready = FALSE, run_info = NULL)
 
   # Long computations are executed in chunks (one cluster / one batch of cells
@@ -2897,13 +2868,6 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
   })
 
   ################################ Top genes analysis
-  # Warnings
-  output$topgenes_info = renderText({
-    paste0('This usually takes longer, please wait patiently. Save current results before a new analysis
-      - Find Top Genes by Cell: for each cell, find genes with a high UMI percentage, then summarize those genes for each cluster; see the About page for details.
-      - Find Top Genes by mean UMI Counts: for each cluster, calculate the top n highly expressed genes by mean UMI counts.')
-  })
-
   TopGenes <- reactiveValues(topgenes = NULL, topgenes_ready = FALSE, run_info = NULL)
 
   output$TopGenes_ready <- reactive({
@@ -3210,12 +3174,6 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
   })
 
   ################################ Feature Summary
-  # info
-  output$featuresummary_info = renderText({
-    paste0('Summary interested features by cluster, such as the percentage of positive cells, and mean/median expression level.
-           Attention: Unmatched features will be automatically ignored.')
-  })
-
   FeatureSummary <- reactiveValues(summary = NULL, summary_ready = FALSE, run_info = NULL)
 
   output$FeatureSummary_ready <- reactive({
@@ -3334,15 +3292,6 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
   })
 
   ################################ Feature Correlation
-  # Warning
-  output$featurecorrelation_info = renderText({
-    paste0('This usually takes longer, please wait patiently. Make sure to save current results before a new analysis!
-      - Top correlated pairs: return the top N correlated gene pairs (set N in Step 2).
-      - Correlated with one gene: find the genes most correlated with the input gene.
-      - All pairs in a gene list: calculate the correlation value for each pair of the input genes.
-    If nothing is returned, the input genes are probably expressed too low; genes with very low expression are removed before the analysis.')
-  })
-
   FeatureCorrelation <- reactiveValues(summary = NULL, summary_ready = FALSE, run_info = NULL)
 
   output$FeatureCorrelation_ready <- reactive({
@@ -4185,6 +4134,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
   combinedclusters_generated <- reactiveVal(FALSE)
   combinedclusters_new_col <- reactiveVal("")
 
+  # Drives the placeholder / table switch on the page.
+  output$combinedclusters_ready <- reactive({ combinedclusters_generated() })
+  outputOptions(output, 'combinedclusters_ready', suspendWhenHidden = FALSE)
+
   # Default empty table (shown before Generate)
   output$combinedclusters_table <- DT::renderDataTable({
     DT::datatable(combinedclusters_df(),
@@ -4729,23 +4682,6 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
   })
 
   ################################ Cluster Colors
-  output$clustercolors_info <- renderText({
-    paste0('Assign custom colors to the groups of one cluster resolution, then submit them so the same
-    colors are used by every plot that colors cells by cluster.
-    - Step 1: choose the cluster resolution.
-    - Step 2: edit colors one by one, or apply a palette first and adjust a few. Each picker accepts
-      any color: type a hex value (e.g. #E41A1C) or choose from the full color square. Groups you
-      leave alone keep their default colors.
-    - Step 3: Submit saves the palette for this session and into
-      obj@misc$SeuratExplorer$cluster_colors, so an object exported from here keeps its colors.
-    Export or import a CSV (columns: cluster, color) to reuse a palette in another session or dataset.
-    Note: split violins (Split Plot) use the colors saved for the Split by variable; unsplit violins use the cluster-resolution colors.')
-  })
-
-  observeEvent(input$close_clustercolors_info, {
-    shinyjs::toggle("clustercolors_info_body", anim = TRUE)
-    shinyjs::runjs("$('#close_clustercolors_info i').toggleClass('fa-chevron-up fa-chevron-down');")
-  }, ignoreInit = TRUE)
 
   # Draft palette being edited in the UI (not yet submitted)
   cluster_color_draft <- reactiveValues(col = NULL, levels = character(0), colors = character(0))
@@ -5069,22 +5005,6 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
   # Can be turned off for multi-user deployments with
   # options(SeuratExplorerEnableObjectExport = FALSE).
   if (isTRUE(getOption("SeuratExplorerEnableObjectExport", TRUE))) {
-
-    output$exportdata_info <- renderText({
-      paste0('Export the Seurat object loaded in this session, including metadata columns added here
-      (Rename Clusters, Gene Based Cluster, Combination Based Cluster, Module Score).
-      The original file on disk is never modified.
-      - Step 1 (optional): keep only cells matching all filter conditions.
-      - Step 2: choose .qs2 or .rds.
-      - Step 3: optional size and clean-up settings.
-      Exporting copies and serializes the object, so a large object takes a while and the page
-      stays unresponsive until the browser starts downloading.')
-    })
-
-    observeEvent(input$close_exportdata_info, {
-      shinyjs::toggle("exportdata_info_body", anim = TRUE)
-      shinyjs::runjs("$('#close_exportdata_info i').toggleClass('fa-chevron-up fa-chevron-down');")
-    }, ignoreInit = TRUE)
 
     ## ---- filter rows (same interaction as DEGs Step 1) --------------------
     exportFilterState <- reactiveValues(count = 1)
