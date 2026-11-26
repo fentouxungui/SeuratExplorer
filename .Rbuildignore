@@ -2,3 +2,11 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^README\.Rmd$
+^\.Rhistory$
+^\.github$
+^wiki$
+^tutorials$
+^before-submit-to-CRAN\.md$
+^Build-Desktop-software-by-shinyelectron\.R$
+^\.gitignore$
+^\.gitattributes$

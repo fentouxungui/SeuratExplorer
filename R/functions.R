@@ -638,7 +638,10 @@ cellRatioPlot <- function(object = NULL,
   fill.col <- if (!is.null(fill.values)) {
     fill.values
   } else {
-    getColors(color.platte = color_list, choice = color.choice, n = length(idents))
+    # The colour count must match the number of fill levels that actually appear,
+    # not length(idents) (which may list groups absent from the filtered data).
+    getColors(color.platte = color_list, choice = color.choice,
+              n = length(unique(as.character(meta[, celltype.name]))))
   }
 
 
@@ -947,6 +950,11 @@ summary_features <- function(SeuratObj, features, group.by, assay = 'RNA'){
 
 
 summary_features_core <- function(expr_mat, features, group = 'merged'){
+  features <- features[features %in% rownames(expr_mat)]
+  if (length(features) == 0L) {
+    return(data.frame(CellType = character(0), TotalCells = integer(0), Gene = character(0),
+                      PCT = numeric(0), Expr.mean = numeric(0), Expr.median = numeric(0)))
+  }
   mean.expr <- row_means_safe(expr_mat[features,,drop = FALSE])
   # median has no sparse shortcut; the subset here is features x cells (small).
   median.expr <- apply(expr_mat[features,,drop = FALSE], 1, stats::median)
@@ -987,6 +995,8 @@ calculate_most_correlated <- function(SeuratObj, feature, method, assay = 'RNA')
   # Use helper function to get data matrix
   normalized.expr <- get_data_matrix(SeuratObj, assay)
 
+  if (!feature %in% rownames(normalized.expr))
+    stop(sprintf("feature '%s' is not present in assay '%s'", feature, assay), call. = FALSE)
   x <- normalized.expr[feature, ,drop = FALSE]
   y <- normalized.expr[rownames(normalized.expr)[rownames(normalized.expr) != feature],,drop = FALSE]
   # filter cells: remove genes with low expression, accumulated expression should more than 1/10 cell numbers.
@@ -1005,6 +1015,8 @@ calculate_correlation <- function(SeuratObj, features, method, assay = 'RNA'){
   normalized.expr <- get_data_matrix(SeuratObj, assay)
 
   normalized.expr <- normalized.expr[rownames(normalized.expr) %in% features,,drop = FALSE]
+  if (nrow(normalized.expr) < 2L)
+    stop("need at least two of the requested genes in this assay", call. = FALSE)
   # filter cells: remove genes with low expression, accumulated expression should more than 1/10 cell numbers.
   normalized.expr <- normalized.expr[row_sums_safe(normalized.expr) > 0.1 * ncol(SeuratObj),,drop = FALSE]
   cor.res = stats::cor(t(as.matrix(normalized.expr)), method = method)
@@ -1138,9 +1150,17 @@ AverageHeatmap <- function(
       )
     )
   )
-  colnames(mean_gene_exp) <- levels(Seurat::Idents(object))
+  # `AverageExpression()` returns one column per group that actually has cells.
+  # Name them after the groups present in `group.by` (which may differ from the
+  # active ident), and never error when an empty factor level was dropped.
+  grp_vec <- if (identical(group.by, "ident")) Seurat::Idents(object)
+             else object@meta.data[[group.by]]
+  grp_levels <- if (is.factor(grp_vec)) levels(grp_vec) else sort(unique(as.character(grp_vec)))
+  grp_present <- grp_levels[grp_levels %in% unique(as.character(grp_vec))]
+  if (length(grp_present) == ncol(mean_gene_exp)) {
+    colnames(mean_gene_exp) <- grp_present
+  }
 
-  # Z-score
   # Z-score. A gene that is flat across the selected groups has sd = 0; scale()
   # would return NaN for the whole row and ComplexHeatmap() would then error out.
   # Such rows are centred to 0 instead.
@@ -1152,12 +1172,14 @@ AverageHeatmap <- function(
 
   # cluster order
   if (!is.null(cluster.order)) {
-    htdf <- htdf[, cluster.order]
+    cluster.order <- cluster.order[cluster.order %in% colnames(htdf)]
+    if (length(cluster.order) > 0L) htdf <- htdf[, cluster.order, drop = FALSE]
   }
 
   # gene order
   if (!is.null(gene.order)) {
-    htdf <- htdf[gene.order, ]
+    gene.order <- gene.order[gene.order %in% rownames(htdf)]
+    if (length(gene.order) > 0L) htdf <- htdf[gene.order, , drop = FALSE]
   }
 
   # color

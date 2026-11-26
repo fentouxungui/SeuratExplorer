@@ -39,9 +39,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   # to make shinyBS::updateCollapse() runs correctly, refer to: https://github.com/ebailey78/shinyBS/issues/92
   shiny::addResourcePath("sbs", system.file("www", package="shinyBS"))
 
-  # Using an un-exported function from another R package:
-  # https://stackoverflow.com/questions/32535773/using-un-exported-function-from-another-r-package
-  subset_Seurat <- utils::getFromNamespace('subset.Seurat', 'SeuratObject')
+  # `subset.Seurat` is a registered S3 method but is not exported by SeuratObject;
+  # going through the generic keeps dispatch intact without reaching into another
+  # package's namespace (which R CMD check flags).
+  subset_Seurat <- function(object, ...) subset(object, ...)
 
   # batch define some output elements
   ## dimension reduction options for dimplot and featureplot
@@ -532,7 +533,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     return(p)
   }, height = function(){
     if (input$FeaturePlotMode) {
-      session$clientData$output_featureplot_width * input$FeaturePlotHWRatio
+num_or(session$clientData$output_featureplot_width, 800) * num_or(input$FeaturePlotHWRatio, 1)
     }else{
       if (is.null(featureplot_dims$height)) 720 else featureplot_dims$height
     }
@@ -890,7 +891,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     return(p)
   }, height = function(){
     if (input$VlnPlotMode) {
-      session$clientData$output_vlnplot_width * input$VlnPlotHWRatio
+num_or(session$clientData$output_vlnplot_width, 800) * num_or(input$VlnPlotHWRatio, 1)
     }else{
       if (is.null(vlnplot_dims$height)) 720 else vlnplot_dims$height
     }
@@ -1109,7 +1110,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     return(p)
   }, height = function(){
     if (input$DotPlotMode) {
-      session$clientData$output_dotplot_width * input$DotPlotHWRatio
+num_or(session$clientData$output_dotplot_width, 800) * num_or(input$DotPlotHWRatio, 1)
     }else{
       if (is.null(dotplot_dims$height)) 720 else dotplot_dims$height
     }
@@ -1262,7 +1263,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     return(p)
   }, height = function(){
     if (input$HeatmapPlotMode) {
-      session$clientData$output_heatmap_width * input$HeatmapPlotHWRatio
+num_or(session$clientData$output_heatmap_width, 800) * num_or(input$HeatmapPlotHWRatio, 1)
     }else{
       if (is.null(heatmap_dims$height)) 720 else heatmap_dims$height
     }
@@ -1399,7 +1400,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     return(p)
   }, height = function(){
     if (input$AveragedHeatmapPlotMode) {
-      session$clientData$output_averagedheatmap_width * input$AveragedHeatmapPlotHWRatio
+num_or(session$clientData$output_averagedheatmap_width, 800) * num_or(input$AveragedHeatmapPlotHWRatio, 1)
     }else{
       if (is.null(averagedheatmap_dims$height)) 720 else averagedheatmap_dims$height
     }
@@ -1613,7 +1614,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     return(p)
   }, height = function(){
     if (input$RidgeplotPlotMode) {
-      session$clientData$output_ridgeplot_width * input$RidgeplotHWRatio
+num_or(session$clientData$output_ridgeplot_width, 800) * num_or(input$RidgeplotHWRatio, 1)
     }else{
       if (is.null(ridgeplot_dims$height)) 720 else ridgeplot_dims$height
     }
@@ -2051,7 +2052,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     return(p)
   }, height = function(){
     if (input$CellratioMode) {
-      session$clientData$output_cellratioplot_width * input$CellratioPlotHWRatio
+num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$CellratioPlotHWRatio, 1)
     }else{
       if (is.null(cellratioplot_dims$height)) 720 else cellratioplot_dims$height
     }
@@ -2355,7 +2356,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   }, ignoreInit = TRUE)
 
   output$IntraClusterDEGsAddFilter.UI <- renderUI({
-    max_filters <- length(data$cluster_options) - 1L
+    max_filters <- min(length(data$cluster_options) - 1L, 50L)
     if (degFilterState$count < max_filters) {
       div(style = "margin-top: 8px;",
         actionLink("IntraClusterDEGsAddFilter", label = NULL, icon = icon("plus-circle"),
@@ -2366,7 +2367,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
   })
 
   # Pre-create remove button observers for rows 2-10
-  lapply(2:10, function(ii) {
+  lapply(2:50, function(ii) {
     observeEvent(input[[paste0("IntraClusterDEGsRemoveFilter_", ii)]], {
       if (ii <= degFilterState$count) {
         degFilterState$count <- degFilterState$count - 1
