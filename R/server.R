@@ -5486,7 +5486,7 @@ server <- function(input, output, session) {
     }
     if (used_cache) {
       showModal(modalDialog(
-        title = tagList(icon("hourglass-start", class = "fa-spin"), " Loading Demo Data"),
+        title = "Loading Demo Data",
         tags$div(
           style = "text-align: center; padding: 20px;",
           icon("circle-notch", class = "fa-spin fa-3x", style = "color: #1D4ED8; margin-bottom: 15px;"),

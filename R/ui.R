@@ -454,7 +454,12 @@ explorer_body_ui <- function(tab_list){
                                           uiOutput("ridgeplot_resizable_ui"),
                                           div(style = "display:inline-block; float:right", downloadButton("downloadridgeplot", label = "Download PDF", class = "btn-primary")),
                                           width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
-                                      box(title = "Settings", solidHeader = TRUE, status = "primary", width = 3,
+                                      box(title = div(
+                                            icon("sliders-h"),
+                                            strong(" Plot Settings"),
+                                            style = "display: flex; align-items: center; gap: 8px; color: white;"
+                                          ),
+                                          solidHeader = TRUE, status = "primary", width = 3,
 
                                           # Data Selection
                                           param_group_collapse(
@@ -508,7 +513,12 @@ explorer_body_ui <- function(tab_list){
                                               DT::dataTableOutput('cellratiodata'),
                                               align="center"),
                                           width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
-                                      box(title = "Settings", solidHeader = TRUE, status = "primary", width = 3,
+                                      box(title = div(
+                                            icon("sliders-h"),
+                                            strong(" Plot Settings"),
+                                            style = "display: flex; align-items: center; gap: 8px; color: white;"
+                                          ),
+                                          solidHeader = TRUE, status = "primary", width = 3,
 
                                           # Data Selection (Fill, X, Facet)
                                           param_group_collapse(
@@ -1571,7 +1581,12 @@ explorer_body_ui <- function(tab_list){
       box(title = "Gene Expression Histogram",
         plotOutput("geneclusters_histogram"),
         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
-      box(title = "Settings", solidHeader = TRUE, status = "primary", width = 3,
+      box(title = div(
+            icon("sliders-h"),
+            strong(" Plot Settings"),
+            style = "display: flex; align-items: center; gap: 8px; color: white;"
+          ),
+          solidHeader = TRUE, status = "primary", width = 3,
         textInput("geneclustersGeneSymbol", "Gene Symbol or Metadata Column:", value = "", width = '100%'),
         div(
           style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
@@ -1663,7 +1678,12 @@ explorer_body_ui <- function(tab_list){
       box(title = "Combination Table",
         DT::dataTableOutput('combinedclusters_table'),
         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
-      box(title = "Settings", solidHeader = TRUE, status = "primary", width = 3,
+      box(title = div(
+            icon("sliders-h"),
+            strong(" Plot Settings"),
+            style = "display: flex; align-items: center; gap: 8px; color: white;"
+          ),
+          solidHeader = TRUE, status = "primary", width = 3,
         withSpinner(uiOutput("CombinedClusterResolution.UI"), proxy.height = "10px"),
         withSpinner(uiOutput("CombinedClusterResolutionSecond.UI"), proxy.height = "10px"),
         selectInput("CombinedClusterConnector", "Connector:",
@@ -2084,6 +2104,18 @@ ui <-  function(){
 
         .sidebar-menu .treeview-menu > li > a {
           color: #c4d1d8 !important;
+        }
+
+        /* Current page in the sidebar. The muted colour above applies to every
+           sub-item link with !important, which also hid the built-in active
+           state; restate it explicitly so the selected page is obvious. */
+        .sidebar-menu .treeview-menu > li.active > a,
+        .sidebar-menu .treeview-menu > li.active > a:hover,
+        .sidebar-menu .treeview-menu > li.active > a:focus {
+          color: #ffffff !important;
+          background-color: rgba(255, 255, 255, 0.14) !important;
+          font-weight: 600;
+          box-shadow: inset 3px 0 0 #67c1e8;
         }
 
         .box.box-solid.box-primary > .box-header {
