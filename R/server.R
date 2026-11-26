@@ -1,6 +1,150 @@
 # server.R
 ## the server side
 
+# Display metadata for the Top Genes result tables: header label, hover text
+# and the longer explanation shown in the on-page column guide. Kept in one
+# place so the three presentations cannot drift apart.
+top_genes_column_dict <- function() {
+  data.frame(
+    column = c("celltype", "total.cells", "Gene", "total.pos.cells",
+               "total.UMI.pct", "cut.Cells", "cut.pct.mean", "cut.pct.median",
+               "MeanUMICounts", "PCT"),
+    label = c("Cell group", "Cells in group", "Gene", "Cells expressing",
+              "UMI share (%)", "Cells passing cutoff",
+              "Mean share (%)", "Median share (%)",
+              "Mean UMI counts", "UMI share (%)"),
+    help = c("Cell group this row belongs to",
+             "Number of cells in this group",
+             "Gene symbol",
+             "Cells in the group with a non-zero count for this gene",
+             "Gene UMI count / total UMI count in the group",
+             "Cells where this gene passed the per-cell UMI percentage cutoff",
+             "Mean per-cell UMI share of this gene, among cells passing the cutoff",
+             "Median per-cell UMI share of this gene, among cells passing the cutoff",
+             "Gene UMI count / number of cells in the group",
+             "Gene UMI count / total UMI count in the group"),
+    full = c(
+      "The cell group this row belongs to. 'AllSelectedCells' means the analysis was run without grouping.",
+      "Number of cells in this group.",
+      "Gene symbol.",
+      "Number of cells in the group with a non-zero count for this gene.",
+      "This gene's UMI counts divided by the total UMI counts of the group, shown as a percentage.",
+      "Number of cells in which this gene exceeded the per-cell UMI percentage cutoff, i.e. how often it entered a cell's top-gene set.",
+      "Mean, over the cells that passed the cutoff, of this gene's per-cell UMI share (its UMI count in that cell divided by the cell's total UMI count).",
+      "Median of the same per-cell UMI share, across the cells that passed the cutoff.",
+      "This gene's total UMI counts in the group divided by the number of cells in the group.",
+      "This gene's UMI counts divided by the total UMI counts of the group, shown as a percentage."
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Render a character vector as a JavaScript array literal of single-quoted
+# strings, for use inside DT::JS.
+js_chr_array <- function(x) {
+  x <- gsub("'", "\\\\'", x)
+  paste0("[", paste0("'", x, "'", collapse = ","), "]")
+}
+
+# Display metadata for the DEGs table (columns depend on the Seurat test used).
+degs_column_dict <- function() {
+  data.frame(
+    column = c("cluster", "gene", "p_val", "p_val_adj",
+               "avg_log2FC", "avg_logFC", "avg_diff", "pct.1", "pct.2"),
+    label = c("Cluster", "Gene", "p-value", "Adj. p-value",
+              "log2 FC", "log2 FC (legacy)", "Avg. difference",
+              "Cells in group 1", "Cells in group 2"),
+    help = c("Cluster these markers were computed for",
+             "Gene symbol",
+             "Unadjusted p-value of the test",
+             "p-value adjusted for multiple testing",
+             "Average log2 fold change between the groups",
+             "Average log fold change, as named by older Seurat versions",
+             "Average difference in expression between the groups",
+             "Fraction of cells expressing the gene in group 1 (0-1)",
+             "Fraction of cells expressing the gene in group 2 (0-1)"),
+    full = c(
+      "The cluster the markers were computed for (Find Markers for All Clusters).",
+      "Gene symbol.",
+      "Raw p-value from the differential expression test, before multiple-testing correction.",
+      "p-value corrected for the number of genes tested (Bonferroni by default). Use this to call significance.",
+      "Average log2 fold change between the two groups. Positive means higher in the first (case) group.",
+      "Average log fold change as reported by older Seurat versions; equivalent to avg_log2FC.",
+      "Average difference in expression between the groups, reported by tests that do not use a log fold change.",
+      "Fraction of cells with non-zero expression in the first group: the cluster for Find Markers for All Clusters, or the case group for a two-group comparison.",
+      "Fraction of cells with non-zero expression in the comparison group: all other cells for Find Markers for All Clusters, or the control group for a two-group comparison."
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Display metadata for the Feature Summary table.
+feature_summary_column_dict <- function() {
+  data.frame(
+    column = c("CellType", "TotalCells", "Gene", "PCT", "Expr.mean", "Expr.median"),
+    label = c("Cell group", "Cells in group", "Gene", "Cells expressing",
+              "Mean expression", "Median expression"),
+    help = c("Group this summary belongs to",
+             "Number of cells in this group",
+             "Gene symbol",
+             "Fraction of cells with non-zero expression (0-1)",
+             "Mean expression across all cells in the group",
+             "Median expression across all cells in the group"),
+    full = c(
+      "The group this row summarizes. 'AllSelectedCells' means the analysis was run without grouping.",
+      "Number of cells in the group.",
+      "Gene symbol.",
+      "Fraction of cells in the group with non-zero expression of the gene, 0-1.",
+      "Mean normalized expression across all cells of the group, zeros included.",
+      "Median normalized expression across all cells of the group, zeros included."
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Column labels plus a header tooltip callback built from a column dictionary.
+# Columns missing from the dictionary keep their raw names and get no tooltip.
+dt_column_artifacts <- function(df, dict) {
+  dict <- dict[match(names(df), dict$column), , drop = FALSE]
+  labels <- ifelse(is.na(dict$label), names(df), dict$label)
+  help_text <- ifelse(is.na(dict$help), "", dict$help)
+  list(
+    labels = labels,
+    header_callback = DT::JS(sprintf(
+      "function(thead){var h=%s;var th=$(thead).find('th');var off=th.length-h.length;th.each(function(i){var k=i-off;if(k>=0&&h[k]){$(this).attr('title',h[k]);}});}",
+      js_chr_array(help_text)))
+  )
+}
+
+# Collapsible "what do the columns mean" panel for a result table.
+column_guide_ui <- function(df, dict) {
+  if (is.null(df) || ncol(df) == 0) return(NULL)
+  dict <- dict[match(names(df), dict$column), , drop = FALSE]
+  keep <- !is.na(dict$column)
+  if (!any(keep)) return(NULL)
+  dict <- dict[keep, , drop = FALSE]
+  tags$details(
+    class = "se-colguide",
+    tags$summary(
+      icon("circle-info"),
+      "What do the columns mean?",
+      tags$span(class = "param-group-chevron", style = "font-size: 11px;", icon("chevron-down"))
+    ),
+    tags$table(
+      class = "table table-condensed se-colguide-table",
+      tags$thead(tags$tr(tags$th("Column"), tags$th("Meaning"))),
+      tags$tbody(
+        lapply(seq_len(nrow(dict)), function(i) {
+          tags$tr(
+            tags$td(tags$code(dict$label[i]), tags$span(class = "se-colguide-raw", dict$column[i])),
+            tags$td(dict$full[i])
+          )
+        })
+      )
+    )
+  )
+}
+
 #' server side functions related to `explorer_sidebar_ui`
 #'
 #' @param input server input
@@ -2579,6 +2723,23 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
              icon("clock-rotate-left"), " ", DEGs$run_info)
   })
 
+  # Display copy of the DEGs table. FindMarkers() puts the gene symbol in the
+  # row names instead of a `gene` column; promote it so the table always has a
+  # labelled Gene column, and let the column guide describe it.
+  degs_display <- reactive({
+    df <- DEGs$degs
+    if (is.null(df)) return(NULL)
+    if (!"gene" %in% names(df) && !is.null(rownames(df))) {
+      df <- data.frame(gene = rownames(df), df, check.names = FALSE, stringsAsFactors = FALSE)
+      rownames(df) <- NULL
+    }
+    df
+  })
+
+  output$degs_colguide <- renderUI({
+    column_guide_ui(degs_display(), degs_column_dict())
+  })
+
   output$dataset_degs <-  DT::renderDT(server=FALSE,{
     req(DEGs$degs)
     if(verbose){message("SeuratExplorer: preparing dataset_degs...")}
@@ -2596,26 +2757,33 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       ))
       return(NULL)
     }else{
-      data_res <- DT::datatable(DEGs$degs,
+      df <- degs_display()
+      col_art <- dt_column_artifacts(df, degs_column_dict())
+      data_res <- DT::datatable(df,
                                 extensions = 'Buttons',
                                 selection = "single",
-                                options = list(scrollX=TRUE,
+                                rownames = FALSE,
+                                colnames = col_art$labels,
+                                # A single <table> (no scrollX): the header and body
+                                # share one layout, so they cannot drift apart after
+                                # sorting. Narrow screens scroll the wrapper instead.
+                                options = list(scrollX = FALSE,
                                                paging = TRUE,
                                                searching = TRUE,
-                                               fixedColumns = TRUE,
                                                autoWidth = TRUE,
                                                ordering = TRUE,
                                                dom = 'Bfrtip',
+                                               headerCallback = col_art$header_callback,
                                                buttons = list('copy',
                                                               list(extend = 'csv', title = "DEGs"),
                                                               list(extend = 'excel', title = "DEGs"))))
       for (acolumn in c("p_val","p_val_adj")) {
-        if (acolumn %in% colnames(DEGs$degs)) {
+        if (acolumn %in% colnames(df)) {
           data_res <- DT::formatSignif(data_res, columns = acolumn, digits = 3)
         }
       }
       for (acolumn in c("avg_log2FC", "avg_diff", "avg_logFC")) {
-        if (acolumn %in% colnames(DEGs$degs)) {
+        if (acolumn %in% colnames(df)) {
           data_res <- DT::formatRound(data_res, columns = acolumn, digits = 3)
         }
       }
@@ -3005,18 +3173,40 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
              icon("clock-rotate-left"), " ", TopGenes$run_info)
   })
 
+  # Collapsible column guide above the Top Genes table.
+  output$topgenes_colguide <- renderUI({
+    column_guide_ui(TopGenes$topgenes, top_genes_column_dict())
+  })
+
   output$dataset_topgenes <-  DT::renderDT(server=FALSE,{
     req(TopGenes$topgenes)
     if(verbose){message("SeuratExplorer: preparing topgenes...")}
+    df <- TopGenes$topgenes
+    # Readable headers and hover explanations come from the shared dictionary;
+    # columns that are not in it fall back to their raw name.
+    col_art <- dt_column_artifacts(df, top_genes_column_dict())
     # Show data
-    DT::datatable(TopGenes$topgenes, extensions = 'Buttons',
-                  options = list(scrollX=TRUE,
+    # scrollX splits the table into a separate header table and body table; their
+    # column widths can drift apart after sorting (header cells end up sized from
+    # the header text, body cells from the data). Keep a single <table> instead, so
+    # header and body share one layout and cannot become misaligned.
+    dt <- DT::datatable(df, extensions = 'Buttons',
+                  colnames = col_art$labels,
+                  options = list(scrollX = FALSE,
                                  paging = TRUE, searching = TRUE,
-                                 fixedColumns = TRUE, autoWidth = TRUE,
+                                 autoWidth = TRUE,
                                  ordering = TRUE, dom = 'Bfrtip',
+                                 headerCallback = col_art$header_callback,
                                  buttons = list('copy',
                                                 list(extend = 'csv', title = "top-features"),
                                                 list(extend = 'excel', title = "top-features"))))
+    # Values are stored as 0-1 fractions; show them as percentages. The exported
+    # CSV/Excel keep the raw values because the export reads the underlying data.
+    pct_cols <- intersect(c("total.UMI.pct", "cut.pct.mean", "cut.pct.median", "PCT"), names(df))
+    if (length(pct_cols) > 0) {
+      dt <- DT::formatPercentage(dt, pct_cols, digits = 2)
+    }
+    dt
   })
 
   ################################ Feature Summary
@@ -3115,19 +3305,29 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
              icon("clock-rotate-left"), " ", FeatureSummary$run_info)
   })
 
+  output$featuresummary_colguide <- renderUI({
+    column_guide_ui(FeatureSummary$summary, feature_summary_column_dict())
+  })
+
   output$dataset_featuresummary <-  DT::renderDT(server=FALSE,{
     req(FeatureSummary$summary)
     if(verbose){message("SeuratExplorer: preparing dataset_featuresummary...")}
+    df <- FeatureSummary$summary
+    col_art <- dt_column_artifacts(df, feature_summary_column_dict())
     # Show data
-    DT::datatable(FeatureSummary$summary, extensions = 'Buttons',
-                  options = list(scrollX=TRUE,
+    DT::datatable(df, extensions = 'Buttons',
+                  rownames = FALSE,
+                  colnames = col_art$labels,
+                  # A single <table> (no scrollX): the header and body share one
+                  # layout, so they cannot drift apart after sorting.
+                  options = list(scrollX = FALSE,
                                  # lengthMenu = c(5,10,15),
                                  paging = TRUE,
                                  searching = TRUE,
-                                 fixedColumns = TRUE,
                                  autoWidth = TRUE,
                                  ordering = TRUE,
                                  dom = 'Bfrtip',
+                                 headerCallback = col_art$header_callback,
                                  buttons = list('copy',
                                                 list(extend = 'csv', title = "feature-summary"),
                                                 list(extend = 'excel', title = "feature-summary"))))
@@ -3447,9 +3647,11 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     if(verbose){message("SeuratExplorer: preparing dataset_featuresummary...")}
     # Show data
     DT::datatable(FeatureCorrelation$summary, extensions = 'Buttons',
-                  options = list(scrollX=TRUE,
+                  # A single <table> (no scrollX): the header and body share one
+                  # layout, so they cannot drift apart after sorting.
+                  options = list(scrollX = FALSE,
                                  paging = TRUE, searching = TRUE,
-                                 fixedColumns = TRUE, autoWidth = TRUE,
+                                 autoWidth = TRUE,
                                  ordering = TRUE, dom = 'Bfrtip',
                                  buttons = list('copy',
                                                 list(extend = 'csv', title = "feature-correlation"),

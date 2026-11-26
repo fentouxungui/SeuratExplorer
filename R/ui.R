@@ -780,7 +780,10 @@ explorer_body_ui <- function(tab_list){
                                              class = "box-body",
                                              style = "padding: 20px;",
                                              uiOutput("degs_run_info"),
-                                             withSpinner(DT::dataTableOutput('dataset_degs'))
+                                             uiOutput("degs_colguide"),
+                                             # Single <table> (no scrollX); scroll on narrow screens.
+                                             div(style = "overflow-x: auto;",
+                                               withSpinner(DT::dataTableOutput('dataset_degs')))
                                            )
                                          )
                                        ),
@@ -968,7 +971,12 @@ explorer_body_ui <- function(tab_list){
                                              class = "box-body",
                                              style = "padding: 20px;",
                                              uiOutput("topgenes_run_info"),
-                                             withSpinner(DT::dataTableOutput('dataset_topgenes'))
+                                             uiOutput("topgenes_colguide"),
+                                             # The table is a single <table> (no scrollX), so on very
+                                             # narrow screens let the wrapper scroll rather than
+                                             # letting the table overflow the card.
+                                             div(style = "overflow-x: auto;",
+                                               withSpinner(DT::dataTableOutput('dataset_topgenes')))
                                            )
                                          )
                                        )
@@ -1066,7 +1074,10 @@ explorer_body_ui <- function(tab_list){
                                          class = "box-body",
                                          style = "padding: 20px;",
                                          uiOutput("featuresummary_run_info"),
-                                         withSpinner(DT::dataTableOutput('dataset_featuresummary'))
+                                         uiOutput("featuresummary_colguide"),
+                                         # Single <table> (no scrollX); scroll on narrow screens.
+                                         div(style = "overflow-x: auto;",
+                                           withSpinner(DT::dataTableOutput('dataset_featuresummary')))
                                        )
                                      )
                                    )
@@ -1272,7 +1283,9 @@ explorer_body_ui <- function(tab_list){
                                          class = "box-body",
                                          style = "padding: 20px;",
                                          uiOutput("correlation_run_info"),
-                                         withSpinner(DT::dataTableOutput('dataset_correlation'))
+                                         # Single <table> (no scrollX); scroll on narrow screens.
+                                         div(style = "overflow-x: auto;",
+                                           withSpinner(DT::dataTableOutput('dataset_correlation')))
                                        )
                                      )
                                    )
@@ -2298,6 +2311,54 @@ ui <-  function(){
           display: flex;
           justify-content: center;
           margin-top: 16px;
+        }
+
+        /* Collapsible column guide shown above result tables. */
+        .se-colguide {
+          margin: 0 0 10px 0;
+        }
+
+        .se-colguide > summary {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          cursor: pointer;
+          color: #1D4ED8;
+          font-size: 13px;
+          font-weight: 600;
+          list-style: none;
+        }
+
+        .se-colguide > summary::-webkit-details-marker {
+          display: none;
+        }
+
+        .se-colguide[open] > summary {
+          margin-bottom: 8px;
+        }
+
+        .se-colguide-table {
+          margin: 0;
+          font-size: 13px;
+          max-width: 900px;
+        }
+
+        .se-colguide-table > thead > tr > th {
+          color: #374151;
+          font-weight: 600;
+          border-top: none;
+        }
+
+        .se-colguide-table > tbody > tr > td {
+          color: #5C636A;
+          vertical-align: top;
+        }
+
+        .se-colguide-raw {
+          display: block;
+          color: #9CA3AF;
+          font-size: 11px;
+          margin-top: 2px;
         }
 
         /* Segmented method switch (#TopGenesMethod).
