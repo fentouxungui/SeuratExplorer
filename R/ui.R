@@ -519,13 +519,6 @@ explorer_body_ui <- function(tab_list){
                                             withSpinner(uiOutput("CellratioFacetChoice.UI"), proxy.height = "10px")
                                           ),
 
-                                          # Cluster Settings
-                                          param_group_collapse(
-                                            id = "cellratio_cluster", title = "Cluster Settings",
-                                            icon_name = "layer-group", color = "#10b981",
-                                            withSpinner(uiOutput("CellratioIdentsSelected.UI"), proxy.height = "10px")
-                                          ),
-
                                           # Subset Cells
                                           param_group_collapse(
                                             id = "cellratio_subset", title = "Subset Cells",

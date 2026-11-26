@@ -1633,22 +1633,6 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                 selected = data$cluster_default)
   })
 
-  # define the idents used
-  output$CellratioIdentsSelected.UI <- renderUI({
-    req(input$CellratioFillChoice)
-    req(input$CellratioFillChoice %in% colnames(data$obj@meta.data))
-
-    if(verbose){message("SeuratExplorer: preparing CellratioIdentsSelected.UI...")}
-    shinyWidgets::pickerInput(inputId = "CellratioIdentsSelected",
-                              label = "Clusters Used:",
-                              choices = levels(data$obj@meta.data[,input$CellratioFillChoice]),
-                              selected = levels(data$obj@meta.data[,input$CellratioFillChoice]),
-                              options = shinyWidgets::pickerOptions(actionsBox = TRUE,
-                                                                    size = 10,
-                                                                    selectedTextFormat = "count > 3"),
-                              multiple = TRUE)
-  })
-
   # define X choices
   output$CellratioXChoice.UI <- renderUI({
     req(input$CellratioFillChoice)
@@ -1708,12 +1692,13 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
 
   output$CellratioSubsetCellsAddFilter.UI <- renderUI({
     if (cellratio_row_count() >= cellratio_max_filters()) return(NULL)
-    div(style = "margin-top: 8px;",
+    div(style = paste0("margin: 0 0 2px 10px; display: flex; ",
+                       "align-items: center; gap: 4px;"),
         actionLink("CellratioSubsetCellsAddFilter", label = NULL,
                    icon = icon("plus-circle"),
-                   style = "color: #6D28D9; font-size: 16px;"),
+                   style = "color: #6D28D9; font-size: 15px;"),
         tags$span("Add filter condition",
-                  style = "color: #5C636A; font-size: 13px; margin-left: 4px;"))
+                  style = "color: #5C636A; font-size: 13px;"))
   })
 
   # Remove buttons are pre-created for rows 2-10, like the DEGs filter rows.
@@ -1742,6 +1727,41 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }, ignoreInit = FALSE, ignoreNULL = TRUE)
   })
 
+  # When "Fill by" changes the first filter row follows it - but only while that
+  # row has not been narrowed, so an explicit filter is never silently dropped.
+  observeEvent(input$CellratioFillChoice, {
+    if (is.null(data$obj)) return(invisible(NULL))
+    fill_col <- input$CellratioFillChoice
+    if (is.null(fill_col) || length(fill_col) != 1L ||
+        !fill_col %in% colnames(data$obj@meta.data)) {
+      return(invisible(NULL))
+    }
+    cur_col <- input$CellratioSubsetCells
+    if (!is.null(cur_col) && length(cur_col) == 1L &&
+        identical(as.character(cur_col), as.character(fill_col))) {
+      return(invisible(NULL))
+    }
+    cur_levels <- if (!is.null(cur_col) && length(cur_col) == 1L &&
+                      cur_col %in% colnames(data$obj@meta.data)) {
+      levels(data$obj@meta.data[[cur_col]])
+    } else {
+      character(0)
+    }
+    vals <- input$CellratioSubsetCellsSelectedClusters
+    row_is_untouched <- is.null(vals) || length(vals) == 0 ||
+      (length(cur_levels) > 0 && all(cur_levels %in% vals))
+    if (!row_is_untouched) return(invisible(NULL))
+    new_levels <- levels(data$obj@meta.data[[fill_col]])
+    shiny::updateSelectInput(session, inputId = "CellratioSubsetCells",
+                                    choices = data$cluster_options,
+                                    selected = fill_col)
+    shinyWidgets::updatePickerInput(session,
+                                    inputId = "CellratioSubsetCellsSelectedClusters",
+                                    choices = new_levels,
+                                    selected = new_levels)
+    invisible(NULL)
+  }, ignoreInit = TRUE)
+
   # renderUI only depends on the row count and the data; current selections are
   # preserved with isolate() so adding or removing a row does not reset them.
   output$CellratioSubsetCells.UI <- renderUI({
@@ -1749,10 +1769,17 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     req(data$obj)
     choices <- data$cluster_options
     if (length(choices) == 0) return(NULL)
-    default_col <- data$cluster_default
+    # Default filter column: follow "Fill by" so that the filter and the bars
+    # refer to the same annotation, exactly as "Clusters Used" used to.
+    default_col <- isolate(input$CellratioFillChoice)
+    if (is.null(default_col) || length(default_col) != 1L ||
+        !default_col %in% choices) {
+      default_col <- data$cluster_default
+    }
     if (is.null(default_col) || !default_col %in% choices) default_col <- choices[1]
 
-    lapply(seq_len(cellratio_row_count()), function(i) {
+    n_rows <- cellratio_row_count()
+    lapply(seq_len(n_rows), function(i) {
       ids <- cellratio_filter_ids(i)
       cur_col <- isolate(input[[ids$col]])
       cur_vals <- isolate(input[[ids$vals]])
@@ -1766,22 +1793,36 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         level_choices
       }
 
-      fluidRow(
-        column(5, selectInput(ids$col,
-                              label = if (i == 1L) "Filter Cells By:" else paste0("Filter ", i, " By:"),
-                              choices = choices,
-                              selected = cur_col)),
-        column(5, shinyWidgets::pickerInput(inputId = ids$vals,
-                                            label = "Keep:",
-                                            choices = level_choices,
-                                            selected = cur_vals,
-                                            multiple = TRUE,
-                                            options = shinyWidgets::pickerOptions(
-                                              actionsBox = TRUE, size = 10,
-                                              selectedTextFormat = "count > 3"))),
-        column(2, if (i > 1L) actionLink(paste0("CellratioSubsetCellsRemove_", i),
-                                         label = NULL, icon = icon("times-circle"),
-                                         style = "color: #dc3545; font-size: 16px; margin-top: 25px;"))
+      # One condition per card. The column selector and the level picker are
+      # stacked on two lines: side by side they were too cramped in the 3/12
+      # sidebar, and the remove button stole width from the picker. Input ids
+      # are unchanged, so the filtering logic is untouched.
+      div(
+        style = paste0("padding: 8px 10px 2px 10px; margin-bottom: 8px; ",
+                       "background: #ffffff; border: 1px solid #ede9fe; ",
+                       "border-radius: 6px;"),
+        if (n_rows > 1L) {
+          div(style = paste0("display: flex; align-items: center; ",
+                             "justify-content: space-between; margin-bottom: 4px;"),
+              tags$span(paste0("Condition ", i),
+                        style = "font-size: 11px; font-weight: 600; color: #6D28D9;"),
+              if (i > 1L) actionLink(paste0("CellratioSubsetCellsRemove_", i),
+                                     label = NULL, icon = icon("times-circle"),
+                                     style = "color: #dc3545; font-size: 14px;"))
+        },
+        div(style = "margin-bottom: 6px;",
+            selectInput(ids$col, label = "Filter Cells By:",
+                        choices = choices, selected = cur_col,
+                        width = "100%")),
+        shinyWidgets::pickerInput(inputId = ids$vals,
+                                  label = "Keep:",
+                                  choices = level_choices,
+                                  selected = cur_vals,
+                                  multiple = TRUE,
+                                  width = "100%",
+                                  options = shinyWidgets::pickerOptions(
+                                    actionsBox = TRUE, size = 10,
+                                    selectedTextFormat = "count > 3"))
       )
     })
   })
@@ -1834,13 +1875,17 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (is.null(keep)) {
       return(p(paste0("No subset: all ", format(total, big.mark = ","),
                       " cells are used."),
-               style = "font-size: 11px; color: #5C636A; margin: 2px 0 0 0;"))
+               style = paste0("font-size: 11px; color: #5C636A;",
+                              "margin: 6px 0 0 0; padding-top: 6px;",
+                              "border-top: 1px solid #ede9fe;")))
     }
     n_cond <- length(filters)
     p(paste0("Subset active (", n_cond, if (n_cond > 1L) " conditions" else " condition",
              "): ", format(length(keep), big.mark = ","), " of ",
              format(total, big.mark = ","), " cells kept."),
-      style = "font-size: 11px; color: #6D28D9; margin: 2px 0 0 0;")
+      style = paste0("font-size: 11px; color: #6D28D9;",
+                     "margin: 6px 0 0 0; padding-top: 6px;",
+                     "border-top: 1px solid #ede9fe;"))
   })
 
   # Revise FacetChoice which will be appropriate for plot
@@ -1896,8 +1941,9 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     req(input$CellratioFillChoice != input$CellratioXChoice)
 
     fill_levels <- levels(data$obj@meta.data[[input$CellratioFillChoice]])
-    cr_fill_order <- fill_levels[fill_levels %in% input$CellratioIdentsSelected]
-    if (length(cr_fill_order) == 0) cr_fill_order <- fill_levels
+    # "Clusters Used" was removed: every level of the fill column is drawn and
+    # the cell subset is narrowed with the "Subset Cells" filters instead.
+    cr_fill_order <- fill_levels
     cr_sample_levels <- levels(data$obj@meta.data[[input$CellratioXChoice]])
     cr_facet_levels <- if (is.null(FacetChoice.Revised())) NULL else
       levels(data$obj@meta.data[[FacetChoice.Revised()]])
@@ -2036,10 +2082,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (!is.null(cr_cells)) {
       meta <- meta[rownames(meta) %in% cr_cells, , drop = FALSE]
     }
-    # subset
-    meta <- meta[meta[,input$CellratioFillChoice] %in% input$CellratioIdentsSelected,]
     # filters that keep no cell produce an empty table instead of an error
     if (nrow(meta) == 0) return(DT::datatable(data.frame()))
+    # "Clusters Used" was removed: the cells kept by "Subset Cells" already
+    # decide which fill levels exist, and as.character() below means table()
+    # only reports the levels that are actually present.
     meta[,input$CellratioFillChoice] <- as.character(meta[,input$CellratioFillChoice])
     if (is.null(FacetChoice.Revised())) {
       df <- reshape2::melt(table(meta[,input$CellratioFillChoice], meta[,input$CellratioXChoice]))
