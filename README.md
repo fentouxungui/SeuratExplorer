@@ -945,8 +945,8 @@ SeuratExplorer is built upon excellent work by:
 #>   [1] pbapply_1.7-5         gridExtra_2.3.1       rlang_1.3.0          
 #>   [4] magrittr_2.0.5        shinydashboard_0.7.3  RcppAnnoy_0.0.23     
 #>   [7] otel_0.2.0            matrixStats_1.5.0     ggridges_0.5.7       
-#>  [10] compiler_4.6.1        ggalluvial_0.12.6     png_0.1-9            
-#>  [13] systemfonts_1.3.2     vctrs_0.7.3           reshape2_1.4.5       
+#>  [10] compiler_4.6.1        systemfonts_1.3.2     ggalluvial_0.12.6    
+#>  [13] png_0.1-9             vctrs_0.7.3           reshape2_1.4.5       
 #>  [16] stringr_1.6.0         pkgconfig_2.0.3       fastmap_1.2.0        
 #>  [19] fontawesome_0.5.3     labeling_0.4.3        shinyjqui_0.4.1      
 #>  [22] promises_1.5.0        markdown_2.0          ragg_1.5.2           
@@ -966,17 +966,17 @@ SeuratExplorer is built upon excellent work by:
 #>  [64] pillar_1.11.1         shinycssloaders_1.1.0 Seurat_6.0.0         
 #>  [67] KernSmooth_2.23-26    DT_0.34.0             shinyjs_2.1.1        
 #>  [70] generics_0.1.4        RcppHNSW_0.7.0        sp_2.2-3             
-#>  [73] ggplot2_4.0.3         scales_1.4.0          globals_0.19.1       
-#>  [76] xtable_1.8-8          glue_1.8.1            tools_4.6.1          
-#>  [79] RSpectra_0.16-2       colourpicker_1.3.0    RANN_2.6.3           
-#>  [82] dotCall64_1.2         cowplot_1.2.0         grid_4.6.1           
-#>  [85] tidyr_1.3.2           crosstalk_1.2.2       shinyBS_0.65.0       
-#>  [88] patchwork_1.3.2       cli_3.6.6             textshaping_1.0.5    
-#>  [91] spam_2.11-4           dplyr_1.2.1           uwot_0.2.5           
-#>  [94] gtable_0.3.6          pls_2.9-0             sass_0.4.10          
-#>  [97] digest_0.6.39         progressr_1.0.0       ggrepel_0.9.8        
-#> [100] htmlwidgets_1.6.4     SeuratObject_5.4.0    farver_2.1.2         
-#> [103] memoise_2.0.1         htmltools_0.5.9       lifecycle_1.0.5      
-#> [106] httr_1.4.9            shinyWidgets_0.9.1    mime_0.13            
-#> [109] MASS_7.3-65
+#>  [73] ggplot2_4.0.3         commonmark_2.0.0      scales_1.4.0         
+#>  [76] globals_0.19.1        xtable_1.8-8          glue_1.8.1           
+#>  [79] tools_4.6.1           RSpectra_0.16-2       colourpicker_1.3.0   
+#>  [82] RANN_2.6.3            dotCall64_1.2         cowplot_1.2.0        
+#>  [85] grid_4.6.1            tidyr_1.3.2           crosstalk_1.2.2      
+#>  [88] shinyBS_0.65.0        patchwork_1.3.2       cli_3.6.6            
+#>  [91] textshaping_1.0.5     spam_2.11-4           dplyr_1.2.1          
+#>  [94] uwot_0.2.5            gtable_0.3.6          pls_2.9-0            
+#>  [97] sass_0.4.10           digest_0.6.39         progressr_1.0.0      
+#> [100] ggrepel_0.9.8         htmlwidgets_1.6.4     SeuratObject_5.4.0   
+#> [103] farver_2.1.2          memoise_2.0.1         htmltools_0.5.9      
+#> [106] lifecycle_1.0.5       httr_1.4.9            shinyWidgets_0.9.1   
+#> [109] mime_0.13             MASS_7.3-65
 ```

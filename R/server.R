@@ -4297,6 +4297,257 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     }
   )
 
+  ############################## Cluster Cells
+  # FindNeighbors + FindClusters on a chosen reduction. The graphs stay in
+  # memory; Save writes one metadata column into data$obj and leaves both the
+  # active Idents and obj@graphs untouched.
+  cluster_cells <- reactiveValues(nn = NULL, snn = NULL, key = NULL,
+                                  clusters = NULL, reduction = NULL,
+                                  preview_reduction = NULL, run_info = NULL)
+
+  leiden_available <- function() {
+    isTRUE(tryCatch(
+      requireNamespace("reticulate", quietly = TRUE) &&
+        reticulate::py_module_available("leidenalg"),
+      error = function(e) FALSE))
+  }
+
+  output$ClusterCellsReduction.UI <- renderUI({
+    req(data$obj)
+    reds <- SeuratObject::Reductions(data$obj)
+    if (length(reds) == 0) {
+      return(div(style = "background: #fdf2f8; border: 1px solid #ec4899; padding: 10px; border-radius: 4px; color: #92400e;",
+                 tags$strong("No dimensionality reduction found."),
+                 tags$p("Run PCA / UMAP first, or load an object that already contains one.",
+                        style = "margin: 6px 0 0 0; font-size: 12px;")))
+    }
+    selectInput("ClusterCellsReduction", "Reduction:", choices = reds,
+                selected = if ("pca" %in% reds) "pca" else reds[1],
+                width = "100%")
+  })
+
+  output$ClusterCellsDims.UI <- renderUI({
+    req(data$obj, input$ClusterCellsReduction)
+    red <- input$ClusterCellsReduction
+    if (!red %in% SeuratObject::Reductions(data$obj)) return(NULL)
+    n <- ncol(SeuratObject::Embeddings(data$obj, red))
+    if (n < 2) {
+      return(p("This reduction has fewer than two dimensions.",
+               style = "font-size: 12px; color: #92400e;"))
+    }
+    sliderInput("ClusterCellsDims", "Dimensions (dims):", min = 1, max = n,
+                value = c(1, min(10, n)), step = 1)
+  })
+
+  output$ClusterCellsAssay.UI <- renderUI({
+    req(data$obj)
+    selectInput("ClusterCellsAssay", "Assay:", choices = SeuratObject::Assays(data$obj),
+                selected = SeuratObject::DefaultAssay(data$obj), width = "100%")
+  })
+
+  output$ClusterCells_ready <- reactive({ !is.null(cluster_cells$clusters) })
+  outputOptions(output, "ClusterCells_ready", suspendWhenHidden = FALSE)
+
+  output$ClusterCells_run_info <- renderUI({
+    if (is.null(cluster_cells$run_info)) return(NULL)
+    tags$div(style = "color: #5C636A; font-size: 12px; margin-bottom: 6px;",
+             icon("clock-rotate-left"), " ", cluster_cells$run_info)
+  })
+
+  cluster_cells_input_error <- function() {
+    if (is.null(data$obj)) return("Load a dataset first.")
+    red <- input$ClusterCellsReduction
+    if (is.null(red) || !red %in% SeuratObject::Reductions(data$obj)) return("Choose a valid reduction.")
+    n_dim <- ncol(SeuratObject::Embeddings(data$obj, red))
+    dims <- input$ClusterCellsDims
+    if (is.null(dims) || length(dims) < 2) return("Select at least two dimensions.")
+    if (min(dims) < 1 || max(dims) > n_dim) return(sprintf("dims must lie within 1-%d for this reduction.", n_dim))
+    n_cells <- ncol(data$obj)
+    k <- input$ClusterCellsK
+    if (is.null(k) || !is.finite(k) || k < 2 || k >= n_cells) return(sprintf("k.param must be between 2 and %d.", n_cells - 1))
+    prune <- input$ClusterCellsPrune
+    if (is.null(prune) || !is.finite(prune) || prune < 0 || prune >= 1) return("prune.SNN must be between 0 and 1.")
+    resn <- input$ClusterCellsResolution
+    if (is.null(resn) || !is.finite(resn) || resn <= 0) return("Resolution must be greater than 0.")
+    trees <- input$ClusterCellsTrees
+    if (is.null(trees) || !is.finite(trees) || trees < 1) return("n.trees must be at least 1.")
+    alg <- as.integer(input$ClusterCellsAlgorithm)
+    if (is.na(alg) || !alg %in% 1:4) return("Choose a clustering algorithm.")
+    if (alg == 4 && !leiden_available()) {
+      return("Leiden clustering needs the leidenalg Python module. Install it with reticulate::py_install('leidenalg').")
+    }
+    NULL
+  }
+
+  observeEvent(input$ClusterCellsCompute, {
+    err <- cluster_cells_input_error()
+    if (!is.null(err)) { show_error("Cannot run clustering", err); return() }
+
+    red    <- input$ClusterCellsReduction
+    dims   <- sort(as.integer(input$ClusterCellsDims))
+    k      <- as.integer(input$ClusterCellsK)
+    prune  <- as.numeric(input$ClusterCellsPrune)
+    method <- input$ClusterCellsNNMethod
+    metric <- input$ClusterCellsMetric
+    trees  <- as.integer(input$ClusterCellsTrees)
+    assay  <- input$ClusterCellsAssay
+    resn   <- as.numeric(input$ClusterCellsResolution)
+    alg    <- as.integer(input$ClusterCellsAlgorithm)
+    seed   <- as.integer(input$ClusterCellsSeed)
+    nm     <- trimws(input$ClusterCellsName)
+    if (!nzchar(nm)) nm <- paste0(assay, "_snn_res.", resn)
+
+    key <- paste(data$Path, red, min(dims), max(dims), assay, k, prune, method, metric, trees, sep = "|")
+
+    showModal(modalDialog(
+      title = "Clustering cells",
+      tags$div(style = "text-align: center; padding: 20px;",
+        icon("circle-notch", class = "fa-spin fa-3x", style = "color: #1D4ED8; margin-bottom: 15px;"),
+        tags$p("Finding neighbours and clustering. Large objects can take a while.",
+               style = "color: #5C636A;")),
+      footer = NULL, easyClose = FALSE, size = "m"))
+
+    res <- tryCatch({
+      cds <- data$obj
+      if (!is.null(cluster_cells$snn) && identical(key, cluster_cells$key)) {
+        cds@graphs[["se_cluster_nn"]]  <- cluster_cells$nn
+        cds@graphs[["se_cluster_snn"]] <- cluster_cells$snn
+      } else {
+        cds <- Seurat::FindNeighbors(cds,
+                     reduction = red, dims = seq(min(dims), max(dims)),
+                     k.param = k, prune.SNN = prune,
+                     nn.method = method, annoy.metric = metric, n.trees = trees,
+                     assay = assay,
+                     graph.name = c("se_cluster_nn", "se_cluster_snn"),
+                     verbose = FALSE)
+        cluster_cells$nn  <- cds@graphs[["se_cluster_nn"]]
+        cluster_cells$snn <- cds@graphs[["se_cluster_snn"]]
+        cluster_cells$key <- key
+      }
+      cds <- Seurat::FindClusters(cds, graph.name = "se_cluster_snn",
+                 resolution = resn, algorithm = alg, random.seed = seed,
+                 verbose = FALSE)
+      list(clusters = SeuratObject::Idents(cds), reduction = red)
+    }, error = function(e) e)
+
+    removeModal()
+
+    if (inherits(res, "error")) {
+      show_error("Clustering failed", conditionMessage(res),
+                 subtitle = "Common causes: dims exceed the reduction, k is larger than the number of cells, or Leiden is unavailable.")
+      return()
+    }
+
+    # The preview opens on PCA by default; the selector above it can switch to
+    # any other embedding without recomputing the clusters.
+    preview_reds <- SeuratObject::Reductions(data$obj)
+    cluster_cells$preview_reduction <- if ("pca" %in% preview_reds) "pca" else res$reduction
+    cluster_cells$clusters  <- res$clusters
+    cluster_cells$reduction <- res$reduction
+    cluster_cells$run_info  <- run_info_line(
+      "Clustering", paste(ncol(data$obj), "cells"),
+      paste0("reduction: ", red, " (", min(dims), "-", max(dims), ")"),
+      paste("k:", k), paste("resolution:", resn),
+      paste0("clusters: ", nlevels(res$clusters)),
+      paste("algorithm:", alg))
+
+    updateTextInput(session, "ClusterCellsName", value = nm)
+    showNotification(ui = tagList(icon("check-circle"), " Clustering finished. Review the preview, then Save."),
+                     type = "message", duration = 5)
+  })
+
+  output$ClusterCellsPreviewReduction.UI <- renderUI({
+    req(data$obj, cluster_cells$clusters)
+    reds <- SeuratObject::Reductions(data$obj)
+    if (length(reds) < 2) return(NULL)
+    sel <- cluster_cells$preview_reduction
+    if (is.null(sel) || !sel %in% reds) sel <- if ("pca" %in% reds) "pca" else reds[1]
+    div(style = "max-width: 320px;",
+      selectInput("ClusterCellsPreviewReduction", "Preview on:", choices = reds,
+                  selected = sel, width = "100%")
+    )
+  })
+
+  # Remember the user's preview choice so a later re-render of the selector
+  # does not jump back to the default.
+  observeEvent(input$ClusterCellsPreviewReduction, {
+    if (!is.null(input$ClusterCellsPreviewReduction)) {
+      cluster_cells$preview_reduction <- input$ClusterCellsPreviewReduction
+    }
+  }, ignoreInit = TRUE)
+
+  output$ClusterCellsPreview <- renderPlot({
+    req(cluster_cells$clusters)
+    red <- input$ClusterCellsPreviewReduction
+    if (is.null(red) || !red %in% SeuratObject::Reductions(data$obj)) {
+      red <- cluster_cells$reduction
+    }
+    cds <- data$obj
+    cds@meta.data[["se_cluster_preview"]] <- cluster_cells$clusters
+    Seurat::DimPlot(cds, reduction = red,
+                    group.by = "se_cluster_preview",
+                    label = isTRUE(input$ClusterCellsShowLabel),
+                    label.size = 5, pt.size = 0.8) +
+      ggplot2::labs(color = "Cluster")
+  })
+
+  output$ClusterCellsSummary <- DT::renderDataTable({
+    req(cluster_cells$clusters)
+    df <- as.data.frame(table(cluster = as.character(cluster_cells$clusters)),
+                        stringsAsFactors = FALSE)
+    colnames(df) <- c("Cluster", "Cells")
+    df$Percent <- round(100 * df$Cells / sum(df$Cells), 2)
+    DT::datatable(df, rownames = FALSE,
+                  options = list(dom = 't', paging = FALSE, ordering = TRUE))
+  })
+
+  observeEvent(input$ClusterCellsSave, {
+    cl <- cluster_cells$clusters
+    if (is.null(cl)) { show_error("Nothing to save", "Click Compute first."); return() }
+    nm <- trimws(input$ClusterCellsName)
+    if (!nzchar(nm)) {
+      nm <- paste0(input$ClusterCellsAssay, "_snn_res.", as.numeric(input$ClusterCellsResolution))
+    }
+    if (!grepl("^[A-Za-z][A-Za-z0-9_.]{0,63}$", nm)) {
+      show_error("Invalid column name",
+                 "Use letters, numbers, dots and underscores, starting with a letter.")
+      return()
+    }
+    if (nm %in% colnames(data$obj@meta.data)) {
+      show_error("Column already exists",
+                 sprintf("'%s' is already a metadata column. Choose another name.", nm))
+      return()
+    }
+    lv <- levels(cl)
+    lv_num <- suppressWarnings(as.integer(lv))
+    if (!anyNA(lv_num)) lv <- lv[order(lv_num)]
+    cds <- data$obj
+    cds@meta.data[[nm]] <- factor(as.character(cl), levels = lv)
+    data$obj <- cds
+    data$cluster_options <- prepare_cluster_options(df = data$obj@meta.data,
+                                                    verbose = getOption("SeuratExplorerVerbose"))
+    data$split_options <- prepare_split_options(df = data$obj@meta.data,
+                                                max.level = data$split_maxlevel,
+                                                verbose = getOption("SeuratExplorerVerbose"))
+    data$version <- data$version + 1
+    updateTextInput(session, "ClusterCellsName", value = nm)
+    showModal(modalDialog(title = "Success",
+                          paste0("'", nm, "' was added to the metadata."),
+                          easyClose = TRUE, footer = modalButton("OK")))
+    showNotification(ui = tagList(icon("check-circle"), " Clusters saved to the object."),
+                     type = "message", duration = 5)
+  })
+
+  output$ClusterCellsDownload <- downloadHandler(
+    filename = function() "cluster_cells_mapping.csv",
+    content = function(file) {
+      cl <- cluster_cells$clusters
+      if (is.null(cl)) { write.csv(data.frame(), file, row.names = FALSE); return() }
+      write.csv(data.frame(cell = names(cl), cluster = as.character(cl)),
+                file, row.names = FALSE)
+    }
+  )
+
   ############################## Rename Clusters
   cell_annotation_df <- reactiveVal(data.frame())
 

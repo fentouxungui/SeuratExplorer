@@ -48,6 +48,7 @@ explorer_sidebar_ui <- function(){
     clustercolors = "Assign custom colors to the groups of a cluster resolution and share them across plots.",
     geneclusters = "Group cells by a gene's expression level with custom cutoffs.",
     combinedclusters = "Combine two cluster annotations into a new grouping.",
+    clustercells = "Run FindNeighbors and FindClusters on a chosen reduction and save the result as a new metadata column.",
     addmodulescore = "Score cells with a gene set using AddModuleScore (Seurat) or AUCell.",
     featuresdf = "Search and browse feature / gene names across assays.",
     cellmetadata = "Browse and download cell-level metadata.",
@@ -73,6 +74,7 @@ explorer_sidebar_ui <- function(){
                          menuSubItem(text = span(title = tooltips[["featurecorrelation"]], "Feature Correlation"), tabName = "featurecorrelation", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["addmodulescore"]], "Module Score", tags$small(class = "label label-info", title = "This feature is still under validation", style = "margin-left: 4px; font-size: 8px; padding: 1px 3px;", "BETA")), tabName = "addmodulescore", icon = shiny::icon("angle-right")),
                          menu_divider(),
+                         menuSubItem(text = span(title = tooltips[["clustercells"]], "Cluster Cells"), tabName = "clustercells", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["renameclusters"]], "Rename Clusters"), tabName = "renameclusters", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["reorderclusters"]], "Reorder Cluster Levels"), tabName = "reorderclusters", icon = shiny::icon("angle-right")),
                          menuSubItem(text = span(title = tooltips[["clustercolors"]], "Cluster Colors"), tabName = "clustercolors", icon = shiny::icon("angle-right")),
@@ -274,7 +276,21 @@ param_hints <- function() {
     ExportQsLevel = "Compression level for qs2; 0 is the fastest and largest.",
     ExportDropScaleData = "Remove the scale.data slot to shrink the file.",
     ExportDroplevels = "Drop unused factor levels from metadata columns.",
-    ExportWriteProvenance = "Record the export settings in obj@misc."
+    ExportWriteProvenance = "Record the export settings in obj@misc.",
+    ClusterCellsReduction = "Embedding used to build the neighbour graph (usually PCA).",
+    ClusterCellsDims = "Dimensions of that embedding used for the graph.",
+    ClusterCellsAssay = "Assay passed to FindNeighbors; it only names the graph.",
+    ClusterCellsK = "Nearest neighbours per cell (Seurat default 20).",
+    ClusterCellsPrune = "SNN edges weaker than this are dropped (Seurat default 1/15).",
+    ClusterCellsNNMethod = "annoy ships with Seurat; rann needs the RANN package.",
+    ClusterCellsMetric = "Distance metric used by annoy.",
+    ClusterCellsTrees = "Number of annoy trees; more is slower and slightly more accurate.",
+    ClusterCellsResolution = "Higher values give more, smaller clusters.",
+    ClusterCellsAlgorithm = "1 Louvain, 2 Louvain refined, 3 SLM, 4 Leiden (needs leidenalg).",
+    ClusterCellsSeed = "Random seed, so the same settings give the same clusters.",
+    ClusterCellsShowLabel = "Print cluster names on the preview plot.",
+    ClusterCellsName = "Metadata column that will store the new clusters; saved only on Save.",
+    ClusterCellsPreviewReduction = "Embedding used only for the preview plot; the clustering itself is unchanged."
   )
 }
 
@@ -1856,6 +1872,106 @@ explorer_body_ui <- function(tab_list){
       )
     ),
     uiOutput("ModuleScoreResult.UI")
+  )
+  tab_list[["clustercells"]] = tabItem(tabName = "clustercells",
+    div(
+      class = "se-page-hint",
+      icon("circle-info"),
+      tags$span("Choose a reduction and parameters, then Compute. Nothing is written to the object until you click Save.")
+    ),
+    fluidRow(
+      div(
+        class = "col-md-9",
+        div(
+          class = "box",
+          style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); height: 100%;",
+          div(
+            class = "box-header",
+            style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+            div(
+              style = "display: flex; align-items: center; gap: 10px;",
+              icon("image", style = "color: #1D4ED8; font-size: 18px;"),
+              h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Cluster Preview")
+            )
+          ),
+          div(
+            class = "box-body",
+            style = "padding: 20px;",
+            conditionalPanel(
+              condition = "!output.ClusterCells_ready",
+              div(class = "se-empty-state",
+                  icon("arrow-down"),
+                  tags$span("Set the parameters on the right and click Compute. The preview appears here."))
+            ),
+            conditionalPanel(
+              condition = "output.ClusterCells_ready",
+              uiOutput("ClusterCells_run_info"),
+              # Plot the same clusters on any other embedding after Compute.
+              div(style = "display: flex; align-items: center; gap: 10px; margin-bottom: 8px;",
+                uiOutput("ClusterCellsPreviewReduction.UI")
+              ),
+              withSpinner(plotOutput("ClusterCellsPreview", height = "520px")),
+              DT::dataTableOutput("ClusterCellsSummary"),
+              div(style = "text-align: right; margin-top: 10px;",
+                downloadButton("ClusterCellsDownload", "Download mapping (CSV)", class = "btn-primary"))
+            )
+          )
+        )
+      ),
+      div(
+        class = "col-md-3",
+        div(
+          style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+          h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+
+          h5(icon("database"), "Data", style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+          withSpinner(uiOutput("ClusterCellsReduction.UI"), proxy.height = "10px"),
+          withSpinner(uiOutput("ClusterCellsDims.UI"), proxy.height = "10px"),
+          withSpinner(uiOutput("ClusterCellsAssay.UI"), proxy.height = "10px"),
+
+          hr(),
+          h5(icon("layer-group"), "Graph", style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+          numericInput("ClusterCellsK", "Neighbours (k.param):", value = 20, min = 2, step = 1, width = "100%"),
+          numericInput("ClusterCellsPrune", "prune.SNN:", value = 0.0667, min = 0, max = 1, step = 0.01, width = "100%"),
+          selectInput("ClusterCellsNNMethod", "nn.method:",
+                      choices = c("annoy" = "annoy", "rann" = "rann"), width = "100%"),
+          selectInput("ClusterCellsMetric", "annoy.metric:",
+                      choices = c("euclidean" = "euclidean", "cosine" = "cosine", "manhattan" = "manhattan"), width = "100%"),
+          numericInput("ClusterCellsTrees", "n.trees (annoy):", value = 50, min = 10, max = 200, step = 10, width = "100%"),
+
+          hr(),
+          h5(icon("chart-line"), "Clustering", style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+          numericInput("ClusterCellsResolution", "resolution:", value = 0.8, min = 0.01, max = 10, step = 0.1, width = "100%"),
+          selectInput("ClusterCellsAlgorithm", "algorithm:",
+                      choices = c("1 - Louvain" = "1", "2 - Louvain refined" = "2",
+                                  "3 - SLM" = "3", "4 - Leiden (needs leidenalg)" = "4"),
+                      width = "100%"),
+          numericInput("ClusterCellsSeed", "random.seed:", value = 0, min = 0, step = 1, width = "100%"),
+          checkboxInput("ClusterCellsShowLabel", "Show cluster labels in preview", TRUE),
+
+          hr(),
+          h5(icon("tag"), "Output", style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+          textInput("ClusterCellsName", "New metadata column:", value = "",
+                    placeholder = "auto: assay_snn_res.<resolution>", width = "100%"),
+
+          div(style = "text-align: center; margin-top: 15px;",
+            actionButton("ClusterCellsCompute", "Compute",
+                         icon = icon("play"),
+                         class = "btn-primary btn-lg",
+                         style = "padding: 10px 30px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #047857 0%, #065F46 100%); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);")
+          ),
+          conditionalPanel(
+            condition = "output.ClusterCells_ready",
+            div(style = "text-align: center; margin-top: 10px;",
+              actionButton("ClusterCellsSave", "Save to object",
+                           icon = icon("check"),
+                           class = "btn-success",
+                           style = "padding: 10px 20px; border-radius: 8px; font-weight: 600;")
+            )
+          )
+        )
+      )
+    )
   )
   tab_list[["combinedclusters"]] = tabItem(tabName = "combinedclusters",
     div(
