@@ -2220,6 +2220,796 @@ explorer_body_ui <- function(tab_list){
 }
 
 
+#' Shared global styles
+#'
+#' The style block used by both SeuratExplorer and SeuratExplorerServer, so the
+#' two apps cannot drift apart.
+#'
+#' @return A `tags$head` object holding the shared styles.
+#' @export
+explorer_global_css <- function() {
+      tags$head(
+        tags$style(HTML("
+          /* Global font optimization */
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          }
+  
+          /* Reserve the vertical scrollbar so auto-sized plots cannot feed a
+             scrollbar-appears/disappears loop back into their measured width. */
+          html {
+            overflow-y: scroll;
+            scrollbar-gutter: stable;
+          }
+  
+          /* Sidebar menu: compact spacing */
+          .sidebar-menu .treeview-menu li a {
+            white-space: nowrap;
+            padding: 4px 5px 4px 12px !important;
+          }
+  
+          /* Optimize box style - keep default background */
+          .box {
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: box-shadow 0.2s ease;
+          }
+  
+          .box:hover {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+          }
+  
+          .box.box-solid .box-title {
+            font-weight: 600;
+          }
+  
+          /* Optimize button style */
+          .btn {
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+          }
+  
+          .btn:hover {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+          }
+  
+          /* Modal Dialog Styles */
+          .modal-content {
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+          }
+  
+          .modal-header {
+            border-radius: 8px 8px 0 0;
+            padding: 16px 20px;
+          }
+  
+          .modal-body {
+            padding: 20px;
+          }
+  
+          .modal-footer {
+            border-top: 1px solid #dee2e6;
+            padding: 16px 20px;
+          }
+  
+          .modal-footer .btn {
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+          }
+  
+          /* Collapsible parameter group styles */
+          summary::-webkit-details-marker,
+          summary::marker {
+            display: none;
+          }
+  
+          .param-group-chevron {
+            transition: transform 0.3s ease;
+            display: inline-block;
+          }
+  
+          details:not([open]) .param-group-chevron {
+            transform: rotate(-90deg);
+          }
+  
+          /* Accessibility: AA text tokens and fixed shinydashboard surfaces */
+          :root {
+            --se-primary: #2563EB;
+            --se-primary-text: #1D4ED8;
+            --se-success-text: #047857;
+            --se-warning-text: #B45309;
+            --se-pink-text: #BE185D;
+            --se-violet-text: #6D28D9;
+            --se-muted-text: #5C636A;
+          }
+  
+          .skin-blue .main-header .navbar,
+          .skin-blue .main-header .logo,
+          .skin-blue .main-header .logo:hover {
+            background-color: #256b8e !important;
+          }
+  
+          .sidebar-menu .treeview-menu > li > a {
+            color: #c4d1d8 !important;
+          }
+  
+          /* Current page in the sidebar. The muted colour above applies to every
+             sub-item link with !important, which also hid the built-in active
+             state; restate it explicitly so the selected page is obvious. */
+          .sidebar-menu .treeview-menu > li.active > a,
+          .sidebar-menu .treeview-menu > li.active > a:hover,
+          .sidebar-menu .treeview-menu > li.active > a:focus {
+            color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.14) !important;
+            font-weight: 600;
+            box-shadow: inset 3px 0 0 #67c1e8;
+          }
+  
+          .box.box-solid.box-primary > .box-header {
+            background-color: #256b8e !important;
+          }
+  
+          .label-info,
+          .badge-info {
+            background-color: #0e7490 !important;
+            color: #fff !important;
+          }
+  
+          .sidebar-menu .label-info {
+            font-size: 10px !important;
+            padding: 2px 4px !important;
+          }
+  
+          .btn-primary,
+          .btn-primary:visited {
+            background-color: #256b8e !important;
+            border-color: #256b8e !important;
+            color: #fff !important;
+          }
+  
+          /* actionButton wraps its label in .action-label. Do not paint that
+             inner span: it must stay transparent over the button surface. */
+          .btn-primary .action-label,
+          .btn-primary a {
+            background-color: transparent !important;
+            color: #fff !important;
+          }
+  
+          .btn-info {
+            background-color: #0e7490 !important;
+            border-color: #0e7490 !important;
+            color: #fff !important;
+          }
+  
+          .btn-info .action-label {
+            background-color: transparent !important;
+            color: #fff !important;
+          }
+  
+          .btn-warning,
+          .btn-warning:visited {
+            background-color: #B45309 !important;
+            border-color: #B45309 !important;
+            color: #fff !important;
+          }
+  
+          .btn-warning .action-label,
+          .btn-warning a {
+            background-color: transparent !important;
+            color: #fff !important;
+          }
+  
+          .content-wrapper a {
+            color: var(--se-primary-text);
+          }
+  
+          #ClusterColorClearSaved {
+            color: #B42318 !important;
+            min-height: 24px;
+            line-height: 24px;
+            padding: 4px 0;
+          }
+  
+          .bootstrap-select .filter-option-inner-inner,
+          .bootstrap-select .bs-placeholder,
+          .selectize-control .bs-placeholder,
+          .selectize-control .filter-option-inner-inner,
+          .selectize-control .selectized {
+            color: var(--se-muted-text) !important;
+          }
+  
+          input[id$='-selectized'] {
+            min-width: 24px !important;
+            min-height: 24px !important;
+          }
+  
+          .irs-single,
+          .irs-from,
+          .irs-to {
+            background-color: #256b8e !important;
+            color: #fff !important;
+          }
+  
+          .irs-bar {
+            border-color: #256b8e !important;
+            background-color: #256b8e !important;
+          }
+  
+          .form-control,
+          .form-control:disabled,
+          .form-control[readonly] {
+            color: #495057;
+          }
+  
+          .form-control::placeholder {
+            color: var(--se-muted-text) !important;
+            opacity: 1;
+          }
+  
+          .se-sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+          }
+  
+          .box-tools .btn-box-tool {
+            min-width: 28px;
+            min-height: 28px;
+            padding: 3px 4px;
+          }
+  
+          .box-body details > summary {
+            min-height: 32px;
+            padding: 4px 0;
+          }
+  
+          .param-group-summary:focus-visible {
+            outline: 2px solid #1D4ED8;
+            outline-offset: 2px;
+            border-radius: 4px;
+          }
+  
+          .selectize-control .selectize-input {
+            min-height: 32px;
+          }
+  
+          .selectize-control .selectized {
+            min-width: 24px !important;
+            min-height: 24px !important;
+          }
+  
+          /* Keep native checkbox/radio sizing: Bootstrap positions the input
+             with a negative margin, so enlarging it overlaps the label text. */
+          .checkbox,
+          .radio {
+            min-height: 24px;
+          }
+  
+          .checkbox label,
+          .radio label {
+            min-height: 24px;
+            line-height: 24px;
+          }
+  
+          /* tabBox title row.
+             shinydashboard renders the tabBox() `title` as a right-floated
+             <li class='header'> inside the tab strip, so it competes with the tab
+             labels for the same line: on narrow windows it wraps to two lines or
+             drops onto the strip's bottom border. Lay it out as its own
+             full-width row above the tabs instead, so the tab labels never share
+             a line with it. Applies to the DEGs and Feature Correlation tab
+             boxes. */
+          [id$='tabbox-container'] .nav-tabs-custom > ul.nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+          }
+  
+          [id$='tabbox-container'] .nav-tabs-custom > ul.nav-tabs > li.header {
+            order: -1;
+            flex: 0 0 100%;
+            float: none !important;
+            padding: 0 0 8px 0;
+            margin: 0;
+            line-height: 1.35;
+            font-size: inherit;
+            border: none;
+          }
+  
+          /* Step card: header + plain form body. Used by the Top Genes page,
+             where the two ranking modes are a segmented control rather than a
+             tab strip, so the card keeps a single closed outline. */
+          .se-step-card {
+            background: #ffffff;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          }
+  
+          .se-step-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 20px 12px 20px;
+            border-bottom: 1px solid #eef2f7;
+          }
+  
+          .se-step-header h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #1D4ED8;
+          }
+  
+          .se-step-body {
+            padding: 20px;
+          }
+  
+          .se-step-body .control-label,
+          .se-step-body .se-field-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin: 0 0 8px 0;
+          }
+  
+          .se-hint {
+            margin: 8px 0 0 0;
+            color: #5C636A;
+            font-size: 13px;
+            line-height: 1.5;
+          }
+  
+          .se-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 16px;
+          }
+  
+          /* Short usage banner shown at the top of a page. */
+          .se-page-hint {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 10px 0;
+            padding: 8px 36px 8px 12px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            color: #1e40af;
+            font-size: 13px;
+            line-height: 1.5;
+          }
+  
+          .se-page-hint-close {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: inherit;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0 6px;
+            cursor: pointer;
+            opacity: 0.65;
+            border-radius: 4px;
+          }
+  
+          .se-page-hint-close:hover,
+          .se-page-hint-close:focus {
+            opacity: 1;
+            background: rgba(30, 64, 175, 0.12);
+          }
+  
+          /* Floating control that brings the page hints back after they were
+             dismissed; only visible while the hints are hidden. */
+          .se-hint-toggle {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 1040;
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            border-radius: 50%;
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: #1e40af;
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            display: none;
+            align-items: center;
+            justify-content: center;
+          }
+  
+          .se-hint-toggle:hover,
+          .se-hint-toggle:focus {
+            background: #dbeafe;
+          }
+  
+          /* Placeholder shown in a results area before the first analysis run. */
+          .se-empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 22px 16px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            background: #f8fafc;
+            color: #5C636A;
+            font-size: 13px;
+            text-align: center;
+          }
+  
+          /* Collapsible column guide shown above result tables. */
+          .se-colguide {
+            margin: 0 0 10px 0;
+          }
+  
+          .se-colguide > summary {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            color: #1D4ED8;
+            font-size: 13px;
+            font-weight: 600;
+            list-style: none;
+          }
+  
+          .se-colguide > summary::-webkit-details-marker {
+            display: none;
+          }
+  
+          .se-colguide[open] > summary {
+            margin-bottom: 8px;
+          }
+  
+          .se-colguide-table {
+            margin: 0;
+            font-size: 13px;
+            max-width: 900px;
+          }
+  
+          .se-colguide-table > thead > tr > th {
+            color: #374151;
+            font-weight: 600;
+            border-top: none;
+          }
+  
+          .se-colguide-table > tbody > tr > td {
+            color: #5C636A;
+            vertical-align: top;
+          }
+  
+          .se-colguide-raw {
+            display: block;
+            color: #9CA3AF;
+            font-size: 11px;
+            margin-top: 2px;
+          }
+  
+          /* Segmented method switch (#TopGenesMethod).
+             shinyWidgets gives every button the same btn-<status> class, and the
+             global .btn-primary rule paints them all with !important, so the
+             selected button is indistinguishable. Restate both states
+             explicitly: white outline for unselected, solid accent for selected. */
+          #TopGenesMethod .btn-group {
+            display: inline-flex;
+          }
+  
+          #TopGenesMethod .btn-group > .btn {
+            background: #ffffff !important;
+            background-image: none !important;
+            border: 1px solid #cfd8e3 !important;
+            border-radius: 6px !important;
+            color: #374151 !important;
+            font-weight: 500;
+            box-shadow: none !important;
+            /* Space the pills apart and cancel Bootstrap's -1px collapsed border. */
+            margin: 0 12px 0 0 !important;
+            padding: 8px 16px;
+          }
+  
+          #TopGenesMethod .btn-group > .btn:hover:not(.active) {
+            background: #f3f6fb !important;
+          }
+  
+          #TopGenesMethod .btn-group > .btn.active {
+            background: #1D4ED8 !important;
+            border-color: #1D4ED8 !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            box-shadow: none !important;
+            position: relative;
+            z-index: 2;
+          }
+  
+          /* Two-column analysis pages (3/12 settings + 9/12 content).
+             Bootstrap's two 15px gutters left a 30px channel between the two
+             panels, wider than the 8px gap each page has between its Information
+             box and the panel below. Narrow both gutters to 4px so the panel
+             spacing matches in both directions. Only applies while the columns
+             sit side by side; below md they stack and keep their normal gutters. */
+          @media (min-width: 992px) {
+            #topgenes-main-row > .col-md-3,
+            #featuresummary-main-row > .col-md-3,
+            #featurecorrelation-main-row > .col-md-3 {
+              padding-right: 4px !important;
+            }
+  
+            #topgenes-main-row > .col-md-9,
+            #featuresummary-main-row > .col-md-9,
+            #featurecorrelation-main-row > .col-md-9 {
+              padding-left: 4px !important;
+            }
+          }
+  
+          /* Responsive optimization */
+          @media (max-width: 768px) {
+            .content-wrapper {
+              padding: 10px;
+            }
+  
+            .box {
+              margin-bottom: 10px;
+            }
+          }
+        "))
+      )
+}
+
+#' Shared client-side helpers
+#'
+#' Parameter tooltips, page-hint dismissal, accessibility fixes and the plot
+#' width observer used by both SeuratExplorer and SeuratExplorerServer.
+#'
+#' @return A tag list of script blocks.
+#' @export
+explorer_global_scripts <- function() {
+  tagList(
+        # Parameter hints: put the one-line explanations from param_hints() on the
+        # label of each matching input. Re-runs when Shiny binds an output and when
+        # the DOM changes, so inputs created by renderUI get the tooltip too.
+        tags$script(HTML(sprintf("
+          (function() {
+            var hints = %s;
+            var optionHints = %s;
+            function applyOptions() {
+              Object.keys(optionHints).forEach(function(id) {
+                var root = document.getElementById(id);
+                if (!root) return;
+                var map = optionHints[id];
+                root.querySelectorAll('button, label.btn, a').forEach(function(btn) {
+                  if (btn.title) return;
+                  var text = (btn.textContent || '').trim();
+                  if (map[text]) {
+                    btn.title = map[text];
+                    btn.style.cursor = 'help';
+                  }
+                });
+              });
+            }
+            var HINT_KEY = 'se-page-hints-hidden';
+            function hintsAreHidden() {
+              try { return window.sessionStorage.getItem(HINT_KEY) === '1'; }
+              catch (e) { return false; }
+            }
+            function setHintsHidden(hidden) {
+              try {
+                if (hidden) { window.sessionStorage.setItem(HINT_KEY, '1'); }
+                else { window.sessionStorage.removeItem(HINT_KEY); }
+              } catch (e) {}
+              applyHintVisibility();
+            }
+            function applyHintVisibility() {
+              var hidden = hintsAreHidden();
+              document.querySelectorAll('.se-page-hint').forEach(function(box) {
+                box.style.display = hidden ? 'none' : '';
+              });
+              var toggle = document.getElementById('se-hint-toggle');
+              if (toggle) { toggle.style.display = hidden ? 'flex' : 'none'; }
+            }
+            function addHintCloseButtons() {
+              document.querySelectorAll('.se-page-hint').forEach(function(box) {
+                if (box.querySelector('.se-page-hint-close')) return;
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'se-page-hint-close';
+                btn.title = 'Hide all page hints';
+                btn.setAttribute('aria-label', 'Hide all page hints');
+                btn.textContent = String.fromCharCode(215);
+                btn.addEventListener('click', function() { setHintsHidden(true); });
+                box.appendChild(btn);
+              });
+              if (!document.getElementById('se-hint-toggle')) {
+                var toggle = document.createElement('button');
+                toggle.id = 'se-hint-toggle';
+                toggle.type = 'button';
+                toggle.className = 'se-hint-toggle';
+                toggle.title = 'Show page hints';
+                toggle.setAttribute('aria-label', 'Show page hints');
+                toggle.textContent = '?';
+                toggle.addEventListener('click', function() { setHintsHidden(false); });
+                document.body.appendChild(toggle);
+              }
+              applyHintVisibility();
+            }
+            function apply() {
+              Object.keys(hints).forEach(function(id) {
+                var el = document.getElementById(id);
+                if (!el || el.getAttribute('data-se-hint')) return;
+                var label = null;
+                if (el.labels && el.labels.length) { label = el.labels[0]; }
+                if (!label && el.closest) {
+                  var group = el.closest('.form-group');
+                  if (group) { label = group.querySelector('label'); }
+                }
+                if (!label && el.closest) { label = el.closest('label'); }
+                if (!label) { label = document.querySelector('label[for=' + id + ']'); }
+                if (!label) return;
+                if (!label.title) { label.title = hints[id]; }
+                label.style.cursor = 'help';
+                el.setAttribute('data-se-hint', '1');
+              });
+              applyOptions();
+              addHintCloseButtons();
+            }
+            function later() { setTimeout(apply, 0); }
+            if (window.jQuery) { jQuery(document).on('shiny:bound shiny:connected', later); }
+            window.addEventListener('load', later);
+            later();
+            var timer = null;
+            new MutationObserver(function() {
+              clearTimeout(timer);
+              timer = setTimeout(apply, 150);
+            }).observe(document.body, { childList: true, subtree: true });
+          })();
+        ", param_hints_js(param_hints()), param_option_hints_js(param_option_hints())))),
+        tags$script(HTML(
+          "document.querySelector('body > div.wrapper > header > nav > div > ul > li > a > span').style.visibility = 'hidden';"
+        )), # to hide how many notifications in shinydashboard::dropdownMenu(), refer to:https://stackoverflow.com/questions/65915414/alter-dropdown-menu-in-shiny
+        tags$script(HTML("
+          (function() {
+            var lastWidth = null;
+            var timer = null;
+    
+            function sendWidth(width) {
+              clearTimeout(timer);
+              timer = setTimeout(function() {
+                if (window.Shiny) {
+                  Shiny.setInputValue('dimplot_measured_width', Math.round(width),
+                                      {priority: 'event'});
+                }
+              }, 200);
+            }
+    
+            function measure() {
+              var el = document.getElementById('dimplot_plot_container');
+              if (!el) return;
+              var width = el.getBoundingClientRect().width;
+              if (!width) return;
+              // Ignore scrollbar-width changes (~15-17px) otherwise the plot height
+              // can toggle the scrollbar and feed an endless resize loop.
+              if (lastWidth === null || Math.abs(width - lastWidth) >= 30) {
+                lastWidth = width;
+                sendWidth(width);
+              }
+            }
+    
+            if (window.ResizeObserver) {
+              var observer = new ResizeObserver(measure);
+              var tries = 0;
+              (function attach() {
+                var el = document.getElementById('dimplot_plot_container');
+                if (el) {
+                  observer.observe(el);
+                  measure();
+                } else if (tries++ < 40) {
+                  setTimeout(attach, 250);
+                }
+              })();
+            } else {
+              $(window).on('resize', measure);
+              measure();
+            }
+          })();
+        ")),
+        tags$script(HTML("
+          (function() {
+            document.documentElement.lang = 'en';
+    
+            function fixA11y() {
+              // shinydashboard puts aria-selected on navigation links, where it is
+              // not an allowed attribute. The visual active state is class-based.
+              document.querySelectorAll('.sidebar-menu a[aria-selected]').forEach(function(a) {
+                a.removeAttribute('aria-selected');
+              });
+    
+              // Font Awesome icons carry aria-label with role=presentation. Keep
+              // them decorative, but preserve the control name when the icon is
+              // the only content of a button/link.
+              document.querySelectorAll('i[aria-label]').forEach(function(i) {
+                var label = i.getAttribute('aria-label');
+                var control = i.closest('button,a');
+                if (control && !control.getAttribute('aria-label') &&
+                    !control.textContent.trim()) {
+                  control.setAttribute('aria-label',
+                                       control.getAttribute('title') ||
+                                       label.replace(/ icon$/, ''));
+                }
+                i.removeAttribute('aria-label');
+                i.setAttribute('aria-hidden', 'true');
+              });
+    
+              // colourpicker renders label=NULL. Associate every picker with the
+              // visible cluster label in the same row.
+              document.querySelectorAll('input[id^=\"clustercolor_\"]').forEach(function(input) {
+                if (input.getAttribute('aria-label')) return;
+                var row = input.closest('.row');
+                var label = row ? row.querySelector('.col-sm-5') : null;
+                var text = label ? label.textContent.trim() : '';
+                input.setAttribute('aria-label', text ? 'Color for ' + text : 'Cluster color');
+              });
+    
+              // The header GitHub dropdown is icon-only.
+              document.querySelectorAll('.main-header .dropdown-toggle').forEach(function(a) {
+                if (!a.getAttribute('aria-label') && a.querySelector('.fa-github')) {
+                  a.setAttribute('aria-label', 'GitHub repositories');
+                }
+              });
+    
+              // Legacy shinyWidgets::downloadBttn wraps an empty Shiny download
+              // link in a button. Keep the link out of the tab order.
+              document.querySelectorAll('.bttn .shiny-download-link').forEach(function(a) {
+                a.style.display = 'none';
+                a.setAttribute('aria-hidden', 'true');
+                a.setAttribute('tabindex', '-1');
+                a.setAttribute('aria-live', 'off');
+              });
+            }
+    
+            fixA11y();
+            new MutationObserver(fixA11y).observe(document.body, {
+              childList: true,
+              subtree: true,
+              attributes: true,
+              attributeFilter: ['aria-label', 'role']
+            });
+          })();
+        "))
+  )
+}
+
+#' Shared head for SeuratExplorer and SeuratExplorerServer
+#'
+#' Convenience wrapper returning both the shared styles and the shared scripts.
+#'
+#' @return A tag list with the shared style and script blocks.
+#' @export
+explorer_global_head <- function() {
+  tagList(
+    explorer_global_css(),
+    explorer_global_scripts()
+  )
+}
+
 #' UI
 #' @import shiny shinydashboard shinyWidgets
 #' @export
@@ -2276,753 +3066,9 @@ ui <-  function(){
 
   body <- shinydashboard::dashboardBody(
     shinyjs::useShinyjs(),
-    tags$head(
-      tags$style(HTML("
-        /* Global font optimization */
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        }
-
-        /* Reserve the vertical scrollbar so auto-sized plots cannot feed a
-           scrollbar-appears/disappears loop back into their measured width. */
-        html {
-          overflow-y: scroll;
-          scrollbar-gutter: stable;
-        }
-
-        /* Sidebar menu: compact spacing */
-        .sidebar-menu .treeview-menu li a {
-          white-space: nowrap;
-          padding: 4px 5px 4px 12px !important;
-        }
-
-        /* Optimize box style - keep default background */
-        .box {
-          border-radius: 6px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          transition: box-shadow 0.2s ease;
-        }
-
-        .box:hover {
-          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-
-        .box.box-solid .box-title {
-          font-weight: 600;
-        }
-
-        /* Optimize button style */
-        .btn {
-          border-radius: 6px;
-          font-weight: 500;
-          transition: all 0.2s ease;
-        }
-
-        .btn:hover {
-          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-
-        /* Modal Dialog Styles */
-        .modal-content {
-          border-radius: 8px;
-          box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-
-        .modal-header {
-          border-radius: 8px 8px 0 0;
-          padding: 16px 20px;
-        }
-
-        .modal-body {
-          padding: 20px;
-        }
-
-        .modal-footer {
-          border-top: 1px solid #dee2e6;
-          padding: 16px 20px;
-        }
-
-        .modal-footer .btn {
-          border-radius: 6px;
-          padding: 8px 16px;
-          font-weight: 500;
-        }
-
-        /* Collapsible parameter group styles */
-        summary::-webkit-details-marker,
-        summary::marker {
-          display: none;
-        }
-
-        .param-group-chevron {
-          transition: transform 0.3s ease;
-          display: inline-block;
-        }
-
-        details:not([open]) .param-group-chevron {
-          transform: rotate(-90deg);
-        }
-
-        /* Accessibility: AA text tokens and fixed shinydashboard surfaces */
-        :root {
-          --se-primary: #2563EB;
-          --se-primary-text: #1D4ED8;
-          --se-success-text: #047857;
-          --se-warning-text: #B45309;
-          --se-pink-text: #BE185D;
-          --se-violet-text: #6D28D9;
-          --se-muted-text: #5C636A;
-        }
-
-        .skin-blue .main-header .navbar,
-        .skin-blue .main-header .logo,
-        .skin-blue .main-header .logo:hover {
-          background-color: #256b8e !important;
-        }
-
-        .sidebar-menu .treeview-menu > li > a {
-          color: #c4d1d8 !important;
-        }
-
-        /* Current page in the sidebar. The muted colour above applies to every
-           sub-item link with !important, which also hid the built-in active
-           state; restate it explicitly so the selected page is obvious. */
-        .sidebar-menu .treeview-menu > li.active > a,
-        .sidebar-menu .treeview-menu > li.active > a:hover,
-        .sidebar-menu .treeview-menu > li.active > a:focus {
-          color: #ffffff !important;
-          background-color: rgba(255, 255, 255, 0.14) !important;
-          font-weight: 600;
-          box-shadow: inset 3px 0 0 #67c1e8;
-        }
-
-        .box.box-solid.box-primary > .box-header {
-          background-color: #256b8e !important;
-        }
-
-        .label-info,
-        .badge-info {
-          background-color: #0e7490 !important;
-          color: #fff !important;
-        }
-
-        .sidebar-menu .label-info {
-          font-size: 10px !important;
-          padding: 2px 4px !important;
-        }
-
-        .btn-primary,
-        .btn-primary:visited {
-          background-color: #256b8e !important;
-          border-color: #256b8e !important;
-          color: #fff !important;
-        }
-
-        /* actionButton wraps its label in .action-label. Do not paint that
-           inner span: it must stay transparent over the button surface. */
-        .btn-primary .action-label,
-        .btn-primary a {
-          background-color: transparent !important;
-          color: #fff !important;
-        }
-
-        .btn-info {
-          background-color: #0e7490 !important;
-          border-color: #0e7490 !important;
-          color: #fff !important;
-        }
-
-        .btn-info .action-label {
-          background-color: transparent !important;
-          color: #fff !important;
-        }
-
-        .btn-warning,
-        .btn-warning:visited {
-          background-color: #B45309 !important;
-          border-color: #B45309 !important;
-          color: #fff !important;
-        }
-
-        .btn-warning .action-label,
-        .btn-warning a {
-          background-color: transparent !important;
-          color: #fff !important;
-        }
-
-        .content-wrapper a {
-          color: var(--se-primary-text);
-        }
-
-        #ClusterColorClearSaved {
-          color: #B42318 !important;
-          min-height: 24px;
-          line-height: 24px;
-          padding: 4px 0;
-        }
-
-        .bootstrap-select .filter-option-inner-inner,
-        .bootstrap-select .bs-placeholder,
-        .selectize-control .bs-placeholder,
-        .selectize-control .filter-option-inner-inner,
-        .selectize-control .selectized {
-          color: var(--se-muted-text) !important;
-        }
-
-        input[id$='-selectized'] {
-          min-width: 24px !important;
-          min-height: 24px !important;
-        }
-
-        .irs-single,
-        .irs-from,
-        .irs-to {
-          background-color: #256b8e !important;
-          color: #fff !important;
-        }
-
-        .irs-bar {
-          border-color: #256b8e !important;
-          background-color: #256b8e !important;
-        }
-
-        .form-control,
-        .form-control:disabled,
-        .form-control[readonly] {
-          color: #495057;
-        }
-
-        .form-control::placeholder {
-          color: var(--se-muted-text) !important;
-          opacity: 1;
-        }
-
-        .se-sr-only {
-          position: absolute;
-          width: 1px;
-          height: 1px;
-          padding: 0;
-          margin: -1px;
-          overflow: hidden;
-          clip: rect(0, 0, 0, 0);
-          white-space: nowrap;
-          border: 0;
-        }
-
-        .box-tools .btn-box-tool {
-          min-width: 28px;
-          min-height: 28px;
-          padding: 3px 4px;
-        }
-
-        .box-body details > summary {
-          min-height: 32px;
-          padding: 4px 0;
-        }
-
-        .param-group-summary:focus-visible {
-          outline: 2px solid #1D4ED8;
-          outline-offset: 2px;
-          border-radius: 4px;
-        }
-
-        .selectize-control .selectize-input {
-          min-height: 32px;
-        }
-
-        .selectize-control .selectized {
-          min-width: 24px !important;
-          min-height: 24px !important;
-        }
-
-        /* Keep native checkbox/radio sizing: Bootstrap positions the input
-           with a negative margin, so enlarging it overlaps the label text. */
-        .checkbox,
-        .radio {
-          min-height: 24px;
-        }
-
-        .checkbox label,
-        .radio label {
-          min-height: 24px;
-          line-height: 24px;
-        }
-
-        /* tabBox title row.
-           shinydashboard renders the tabBox() `title` as a right-floated
-           <li class='header'> inside the tab strip, so it competes with the tab
-           labels for the same line: on narrow windows it wraps to two lines or
-           drops onto the strip's bottom border. Lay it out as its own
-           full-width row above the tabs instead, so the tab labels never share
-           a line with it. Applies to the DEGs and Feature Correlation tab
-           boxes. */
-        [id$='tabbox-container'] .nav-tabs-custom > ul.nav-tabs {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: flex-end;
-        }
-
-        [id$='tabbox-container'] .nav-tabs-custom > ul.nav-tabs > li.header {
-          order: -1;
-          flex: 0 0 100%;
-          float: none !important;
-          padding: 0 0 8px 0;
-          margin: 0;
-          line-height: 1.35;
-          font-size: inherit;
-          border: none;
-        }
-
-        /* Step card: header + plain form body. Used by the Top Genes page,
-           where the two ranking modes are a segmented control rather than a
-           tab strip, so the card keeps a single closed outline. */
-        .se-step-card {
-          background: #ffffff;
-          border: 2px solid #3b82f6;
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .se-step-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 14px 20px 12px 20px;
-          border-bottom: 1px solid #eef2f7;
-        }
-
-        .se-step-header h4 {
-          margin: 0;
-          font-size: 18px;
-          font-weight: 600;
-          color: #1D4ED8;
-        }
-
-        .se-step-body {
-          padding: 20px;
-        }
-
-        .se-step-body .control-label,
-        .se-step-body .se-field-label {
-          display: block;
-          font-weight: 600;
-          color: #374151;
-          margin: 0 0 8px 0;
-        }
-
-        .se-hint {
-          margin: 8px 0 0 0;
-          color: #5C636A;
-          font-size: 13px;
-          line-height: 1.5;
-        }
-
-        .se-actions {
-          display: flex;
-          justify-content: center;
-          margin-top: 16px;
-        }
-
-        /* Short usage banner shown at the top of a page. */
-        .se-page-hint {
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin: 0 0 10px 0;
-          padding: 8px 36px 8px 12px;
-          background: #eff6ff;
-          border: 1px solid #bfdbfe;
-          border-radius: 6px;
-          color: #1e40af;
-          font-size: 13px;
-          line-height: 1.5;
-        }
-
-        .se-page-hint-close {
-          position: absolute;
-          top: 50%;
-          right: 8px;
-          transform: translateY(-50%);
-          border: none;
-          background: transparent;
-          color: inherit;
-          font-size: 18px;
-          line-height: 1;
-          padding: 0 6px;
-          cursor: pointer;
-          opacity: 0.65;
-          border-radius: 4px;
-        }
-
-        .se-page-hint-close:hover,
-        .se-page-hint-close:focus {
-          opacity: 1;
-          background: rgba(30, 64, 175, 0.12);
-        }
-
-        /* Floating control that brings the page hints back after they were
-           dismissed; only visible while the hints are hidden. */
-        .se-hint-toggle {
-          position: fixed;
-          right: 18px;
-          bottom: 18px;
-          z-index: 1040;
-          width: 34px;
-          height: 34px;
-          padding: 0;
-          border-radius: 50%;
-          border: 1px solid #bfdbfe;
-          background: #eff6ff;
-          color: #1e40af;
-          font-size: 15px;
-          font-weight: 600;
-          line-height: 1;
-          cursor: pointer;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-          display: none;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .se-hint-toggle:hover,
-        .se-hint-toggle:focus {
-          background: #dbeafe;
-        }
-
-        /* Placeholder shown in a results area before the first analysis run. */
-        .se-empty-state {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 22px 16px;
-          border: 1px dashed #cbd5e1;
-          border-radius: 8px;
-          background: #f8fafc;
-          color: #5C636A;
-          font-size: 13px;
-          text-align: center;
-        }
-
-        /* Collapsible column guide shown above result tables. */
-        .se-colguide {
-          margin: 0 0 10px 0;
-        }
-
-        .se-colguide > summary {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          cursor: pointer;
-          color: #1D4ED8;
-          font-size: 13px;
-          font-weight: 600;
-          list-style: none;
-        }
-
-        .se-colguide > summary::-webkit-details-marker {
-          display: none;
-        }
-
-        .se-colguide[open] > summary {
-          margin-bottom: 8px;
-        }
-
-        .se-colguide-table {
-          margin: 0;
-          font-size: 13px;
-          max-width: 900px;
-        }
-
-        .se-colguide-table > thead > tr > th {
-          color: #374151;
-          font-weight: 600;
-          border-top: none;
-        }
-
-        .se-colguide-table > tbody > tr > td {
-          color: #5C636A;
-          vertical-align: top;
-        }
-
-        .se-colguide-raw {
-          display: block;
-          color: #9CA3AF;
-          font-size: 11px;
-          margin-top: 2px;
-        }
-
-        /* Segmented method switch (#TopGenesMethod).
-           shinyWidgets gives every button the same btn-<status> class, and the
-           global .btn-primary rule paints them all with !important, so the
-           selected button is indistinguishable. Restate both states
-           explicitly: white outline for unselected, solid accent for selected. */
-        #TopGenesMethod .btn-group {
-          display: inline-flex;
-        }
-
-        #TopGenesMethod .btn-group > .btn {
-          background: #ffffff !important;
-          background-image: none !important;
-          border: 1px solid #cfd8e3 !important;
-          border-radius: 6px !important;
-          color: #374151 !important;
-          font-weight: 500;
-          box-shadow: none !important;
-          /* Space the pills apart and cancel Bootstrap's -1px collapsed border. */
-          margin: 0 12px 0 0 !important;
-          padding: 8px 16px;
-        }
-
-        #TopGenesMethod .btn-group > .btn:hover:not(.active) {
-          background: #f3f6fb !important;
-        }
-
-        #TopGenesMethod .btn-group > .btn.active {
-          background: #1D4ED8 !important;
-          border-color: #1D4ED8 !important;
-          color: #ffffff !important;
-          font-weight: 600;
-          box-shadow: none !important;
-          position: relative;
-          z-index: 2;
-        }
-
-        /* Two-column analysis pages (3/12 settings + 9/12 content).
-           Bootstrap's two 15px gutters left a 30px channel between the two
-           panels, wider than the 8px gap each page has between its Information
-           box and the panel below. Narrow both gutters to 4px so the panel
-           spacing matches in both directions. Only applies while the columns
-           sit side by side; below md they stack and keep their normal gutters. */
-        @media (min-width: 992px) {
-          #topgenes-main-row > .col-md-3,
-          #featuresummary-main-row > .col-md-3,
-          #featurecorrelation-main-row > .col-md-3 {
-            padding-right: 4px !important;
-          }
-
-          #topgenes-main-row > .col-md-9,
-          #featuresummary-main-row > .col-md-9,
-          #featurecorrelation-main-row > .col-md-9 {
-            padding-left: 4px !important;
-          }
-        }
-
-        /* Responsive optimization */
-        @media (max-width: 768px) {
-          .content-wrapper {
-            padding: 10px;
-          }
-
-          .box {
-            margin-bottom: 10px;
-          }
-        }
-      "))
-    ),
+    explorer_global_css(),
     div(class= "tab-content", tab_list),
-    # Parameter hints: put the one-line explanations from param_hints() on the
-    # label of each matching input. Re-runs when Shiny binds an output and when
-    # the DOM changes, so inputs created by renderUI get the tooltip too.
-    tags$script(HTML(sprintf("
-      (function() {
-        var hints = %s;
-        var optionHints = %s;
-        function applyOptions() {
-          Object.keys(optionHints).forEach(function(id) {
-            var root = document.getElementById(id);
-            if (!root) return;
-            var map = optionHints[id];
-            root.querySelectorAll('button, label.btn, a').forEach(function(btn) {
-              if (btn.title) return;
-              var text = (btn.textContent || '').trim();
-              if (map[text]) {
-                btn.title = map[text];
-                btn.style.cursor = 'help';
-              }
-            });
-          });
-        }
-        var HINT_KEY = 'se-page-hints-hidden';
-        function hintsAreHidden() {
-          try { return window.sessionStorage.getItem(HINT_KEY) === '1'; }
-          catch (e) { return false; }
-        }
-        function setHintsHidden(hidden) {
-          try {
-            if (hidden) { window.sessionStorage.setItem(HINT_KEY, '1'); }
-            else { window.sessionStorage.removeItem(HINT_KEY); }
-          } catch (e) {}
-          applyHintVisibility();
-        }
-        function applyHintVisibility() {
-          var hidden = hintsAreHidden();
-          document.querySelectorAll('.se-page-hint').forEach(function(box) {
-            box.style.display = hidden ? 'none' : '';
-          });
-          var toggle = document.getElementById('se-hint-toggle');
-          if (toggle) { toggle.style.display = hidden ? 'flex' : 'none'; }
-        }
-        function addHintCloseButtons() {
-          document.querySelectorAll('.se-page-hint').forEach(function(box) {
-            if (box.querySelector('.se-page-hint-close')) return;
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'se-page-hint-close';
-            btn.title = 'Hide all page hints';
-            btn.setAttribute('aria-label', 'Hide all page hints');
-            btn.textContent = String.fromCharCode(215);
-            btn.addEventListener('click', function() { setHintsHidden(true); });
-            box.appendChild(btn);
-          });
-          if (!document.getElementById('se-hint-toggle')) {
-            var toggle = document.createElement('button');
-            toggle.id = 'se-hint-toggle';
-            toggle.type = 'button';
-            toggle.className = 'se-hint-toggle';
-            toggle.title = 'Show page hints';
-            toggle.setAttribute('aria-label', 'Show page hints');
-            toggle.textContent = '?';
-            toggle.addEventListener('click', function() { setHintsHidden(false); });
-            document.body.appendChild(toggle);
-          }
-          applyHintVisibility();
-        }
-        function apply() {
-          Object.keys(hints).forEach(function(id) {
-            var el = document.getElementById(id);
-            if (!el || el.getAttribute('data-se-hint')) return;
-            var label = null;
-            if (el.labels && el.labels.length) { label = el.labels[0]; }
-            if (!label && el.closest) {
-              var group = el.closest('.form-group');
-              if (group) { label = group.querySelector('label'); }
-            }
-            if (!label && el.closest) { label = el.closest('label'); }
-            if (!label) { label = document.querySelector('label[for=' + id + ']'); }
-            if (!label) return;
-            if (!label.title) { label.title = hints[id]; }
-            label.style.cursor = 'help';
-            el.setAttribute('data-se-hint', '1');
-          });
-          applyOptions();
-          addHintCloseButtons();
-        }
-        function later() { setTimeout(apply, 0); }
-        if (window.jQuery) { jQuery(document).on('shiny:bound shiny:connected', later); }
-        window.addEventListener('load', later);
-        later();
-        var timer = null;
-        new MutationObserver(function() {
-          clearTimeout(timer);
-          timer = setTimeout(apply, 150);
-        }).observe(document.body, { childList: true, subtree: true });
-      })();
-    ", param_hints_js(param_hints()), param_option_hints_js(param_option_hints())))),
-    tags$script(HTML(
-      "document.querySelector('body > div.wrapper > header > nav > div > ul > li > a > span').style.visibility = 'hidden';"
-    )), # to hide how many notifications in shinydashboard::dropdownMenu(), refer to:https://stackoverflow.com/questions/65915414/alter-dropdown-menu-in-shiny
-    tags$script(HTML("
-      (function() {
-        var lastWidth = null;
-        var timer = null;
-
-        function sendWidth(width) {
-          clearTimeout(timer);
-          timer = setTimeout(function() {
-            if (window.Shiny) {
-              Shiny.setInputValue('dimplot_measured_width', Math.round(width),
-                                  {priority: 'event'});
-            }
-          }, 200);
-        }
-
-        function measure() {
-          var el = document.getElementById('dimplot_plot_container');
-          if (!el) return;
-          var width = el.getBoundingClientRect().width;
-          if (!width) return;
-          // Ignore scrollbar-width changes (~15-17px) otherwise the plot height
-          // can toggle the scrollbar and feed an endless resize loop.
-          if (lastWidth === null || Math.abs(width - lastWidth) >= 30) {
-            lastWidth = width;
-            sendWidth(width);
-          }
-        }
-
-        if (window.ResizeObserver) {
-          var observer = new ResizeObserver(measure);
-          var tries = 0;
-          (function attach() {
-            var el = document.getElementById('dimplot_plot_container');
-            if (el) {
-              observer.observe(el);
-              measure();
-            } else if (tries++ < 40) {
-              setTimeout(attach, 250);
-            }
-          })();
-        } else {
-          $(window).on('resize', measure);
-          measure();
-        }
-      })();
-    ")),
-    tags$script(HTML("
-      (function() {
-        document.documentElement.lang = 'en';
-
-        function fixA11y() {
-          // shinydashboard puts aria-selected on navigation links, where it is
-          // not an allowed attribute. The visual active state is class-based.
-          document.querySelectorAll('.sidebar-menu a[aria-selected]').forEach(function(a) {
-            a.removeAttribute('aria-selected');
-          });
-
-          // Font Awesome icons carry aria-label with role=presentation. Keep
-          // them decorative, but preserve the control name when the icon is
-          // the only content of a button/link.
-          document.querySelectorAll('i[aria-label]').forEach(function(i) {
-            var label = i.getAttribute('aria-label');
-            var control = i.closest('button,a');
-            if (control && !control.getAttribute('aria-label') &&
-                !control.textContent.trim()) {
-              control.setAttribute('aria-label',
-                                   control.getAttribute('title') ||
-                                   label.replace(/ icon$/, ''));
-            }
-            i.removeAttribute('aria-label');
-            i.setAttribute('aria-hidden', 'true');
-          });
-
-          // colourpicker renders label=NULL. Associate every picker with the
-          // visible cluster label in the same row.
-          document.querySelectorAll('input[id^=\"clustercolor_\"]').forEach(function(input) {
-            if (input.getAttribute('aria-label')) return;
-            var row = input.closest('.row');
-            var label = row ? row.querySelector('.col-sm-5') : null;
-            var text = label ? label.textContent.trim() : '';
-            input.setAttribute('aria-label', text ? 'Color for ' + text : 'Cluster color');
-          });
-
-          // The header GitHub dropdown is icon-only.
-          document.querySelectorAll('.main-header .dropdown-toggle').forEach(function(a) {
-            if (!a.getAttribute('aria-label') && a.querySelector('.fa-github')) {
-              a.setAttribute('aria-label', 'GitHub repositories');
-            }
-          });
-        }
-
-        fixA11y();
-        new MutationObserver(fixA11y).observe(document.body, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ['aria-label', 'role']
-        });
-      })();
-    "))
+    explorer_global_scripts()
   )
 
   # combine

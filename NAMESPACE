@@ -2,6 +2,9 @@
 
 export(cellRatioPlot)
 export(explorer_body_ui)
+export(explorer_global_css)
+export(explorer_global_head)
+export(explorer_global_scripts)
 export(explorer_server)
 export(explorer_sidebar_ui)
 export(getColors)
