@@ -2215,19 +2215,27 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                  progress_id = "clustermarkers_progress",
                  cancel_id = "ClustermarkersCancel",
                  total = total_clusters)
-      if (is.null(input$DEGsAssay)){
-        if (DefaultAssay(cds) == 'SCT') {
+      prefix_ok <- tryCatch({
+        if (is.null(input$DEGsAssay)) {
+          if (DefaultAssay(cds) == 'SCT') {
+            cds <- check_SCT_assay(cds)
+          }
+        } else if (input$DEGsAssay == "SCT") {
           cds <- check_SCT_assay(cds)
         }
-      } else if(input$DEGsAssay == "SCT") {
-        cds <- check_SCT_assay(cds)
-      }
 
-      cluster_res <- input$ClusterMarkersClusterResolution
-      if (!is.null(cluster_res) && !identical(cluster_res, "ident")) {
-        Idents(cds) <- cluster_res
-      }
-      idents_all <- sort(unique(Idents(cds)))
+        cluster_res <- input$ClusterMarkersClusterResolution
+        if (!is.null(cluster_res) && !identical(cluster_res, "ident")) {
+          Idents(cds) <- cluster_res
+        }
+        idents_all <- sort(unique(Idents(cds)))
+        TRUE
+      }, error = function(e) {
+        removeModal()
+        show_error("Cluster markers failed", conditionMessage(e))
+        FALSE
+      })
+      if (!isTRUE(prefix_ok)) return()
       total_clusters <- length(idents_all)
 
       long_task_state$cancelled <- FALSE
@@ -2754,11 +2762,18 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                progress_id = "topgenes_progress",
                cancel_id = "TopGenesCancel")
 
-    cds <- data$obj
-    Idents(cds) <- input$TopGenesClusterResolution
-    cds <- subset_Seurat(cds, idents = input$TopGenesSelectedClusters)
-
-    counts.expr <- get_counts_matrix(cds, input$TopGenesAssay)
+    prefix_ok <- tryCatch({
+      cds <- data$obj
+      Idents(cds) <- input$TopGenesClusterResolution
+      cds <- subset_Seurat(cds, idents = input$TopGenesSelectedClusters)
+      counts.expr <- get_counts_matrix(cds, input$TopGenesAssay)
+      TRUE
+    }, error = function(e) {
+      removeModal()
+      show_error("Top genes analysis failed", conditionMessage(e))
+      FALSE
+    })
+    if (!isTRUE(prefix_ok)) return()
     # later() callbacks are NOT reactive contexts: every input used by the
     # chunked loop (including the provenance line) must be captured here.
     tg_assay <- input$TopGenesAssay
@@ -2883,11 +2898,18 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                progress_id = "topgenes_acc_progress",
                cancel_id = "TopGenesCancel")
 
-    cds <- data$obj
-    Idents(cds) <- input$TopGenesClusterResolution
-    cds <- subset_Seurat(cds, idents = input$TopGenesSelectedClusters)
-
-    counts.expr <- get_counts_matrix(cds, input$TopGenesAssay)
+    prefix_ok <- tryCatch({
+      cds <- data$obj
+      Idents(cds) <- input$TopGenesClusterResolution
+      cds <- subset_Seurat(cds, idents = input$TopGenesSelectedClusters)
+      counts.expr <- get_counts_matrix(cds, input$TopGenesAssay)
+      TRUE
+    }, error = function(e) {
+      removeModal()
+      show_error("Accumulated top genes failed", conditionMessage(e))
+      FALSE
+    })
+    if (!isTRUE(prefix_ok)) return()
     # captured for the later() callbacks, see the note in TopGenesAnalysis()
     tg_assay <- input$TopGenesAssay
     group_by <- if (input$TopGenesClusterLevel) input$TopGenesClusterResolution else NULL
@@ -3043,20 +3065,27 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     }else{
       wait_modal("Summarizing Features",
                  detail = "Please wait, summarizing features usually takes a few minutes.")
-      cds <- data$obj
-      Idents(cds) <- input$FeatureSummaryClusterResolution
-      cds <- subset_Seurat(cds, idents = input$FeatureSummarySelectedClusters)
-      if (input$FeatureSummaryClusterLevel) {
-        FeatureSummary$summary <- summary_features(SeuratObj = cds,
-                                                   features = GeneRevised,
-                                                   group.by = input$FeatureSummaryClusterResolution,
-                                                   assay = input$FeatureSummaryAssay)
-      }else{
-        FeatureSummary$summary <- summary_features(SeuratObj = cds,
-                                                   features = GeneRevised,
-                                                   group.by = NULL,
-                                                   assay = input$FeatureSummaryAssay)
-      }
+      on.exit(removeModal(), add = TRUE)   # never leave the wait modal behind
+      compute_ok <- tryCatch({
+        cds <- data$obj
+        Idents(cds) <- input$FeatureSummaryClusterResolution
+        cds <- subset_Seurat(cds, idents = input$FeatureSummarySelectedClusters)
+        if (input$FeatureSummaryClusterLevel) {
+          FeatureSummary$summary <- summary_features(SeuratObj = cds,
+                                                     features = GeneRevised,
+                                                     group.by = input$FeatureSummaryClusterResolution,
+                                                     assay = input$FeatureSummaryAssay)
+        }else{
+          FeatureSummary$summary <- summary_features(SeuratObj = cds,
+                                                     features = GeneRevised,
+                                                     group.by = NULL,
+                                                     assay = input$FeatureSummaryAssay)
+        }
+        TRUE
+      }, error = function(e) {
+        show_error("Feature summary failed", conditionMessage(e))
+      })
+      if (!isTRUE(compute_ok)) return()
       removeModal()
       FeatureSummary$run_info <- run_info_line(
         "Feature summary",
@@ -3146,13 +3175,21 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
                progress_id = "topcor_progress",
                cancel_id = "TopCorrelationCancel")
 
-    cds <- data$obj
-    Seurat::Idents(cds) <- cor_res_col
-    cds <- subset_Seurat(cds, idents = cor_idents)
+    prefix_ok <- tryCatch({
+      cds <- data$obj
+      Seurat::Idents(cds) <- cor_res_col
+      cds <- subset_Seurat(cds, idents = cor_idents)
 
-    normalized.expr <- get_data_matrix(cds, cor_assay)
-    gene_means <- rowMeans(normalized.expr)
-    normalized.expr <- normalized.expr[gene_means > 0.1, , drop = FALSE]
+      normalized.expr <- get_data_matrix(cds, cor_assay)
+      gene_means <- rowMeans(normalized.expr)
+      normalized.expr <- normalized.expr[gene_means > 0.1, , drop = FALSE]
+      TRUE
+    }, error = function(e) {
+      removeModal()
+      show_error("Top correlation analysis failed", conditionMessage(e))
+      FALSE
+    })
+    if (!isTRUE(prefix_ok)) return()
 
     if (nrow(normalized.expr) < 2) {
       removeModal()
@@ -3167,7 +3204,10 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
         size = "m"
       ))
     } else {
-      expr_t <- t(as.matrix(normalized.expr))
+      # Keep this sparse: the blocked correlation path never needs a dense
+      # cells x genes matrix (see pearson_block_cor()).
+      expr_t <- if (inherits(normalized.expr, "Matrix")) Matrix::t(normalized.expr) else t(normalized.expr)
+      normalized.expr <- NULL
       n_genes <- ncol(expr_t)
       # Top N comes from the UI; fall back to 1000 when the input is not ready.
       keep_n <- input$correlationTopN
@@ -3280,13 +3320,20 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       wait_modal("Calculating Correlations",
                  detail = "Calculating the genes most correlated with the input gene, which usually takes longer...",
                  note = "This step runs in one pass and cannot be cancelled.")
-      cds <- data$obj
-      Seurat::Idents(cds) <- input$FeatureCorrelationClusterResolution
-      cds <- subset_Seurat(cds, idents = input$FeatureCorrelationIdentsSelected)
-      FeatureCorrelation$summary <- calculate_most_correlated(SeuratObj = cds,
-                                                              feature = feature.revised,
-                                                              method = input$correlationmethod,
-                                                              assay = input$FeatureCorrelationAssay)
+      on.exit(removeModal(), add = TRUE)   # never leave the wait modal behind
+      compute_ok <- tryCatch({
+        cds <- data$obj
+        Seurat::Idents(cds) <- input$FeatureCorrelationClusterResolution
+        cds <- subset_Seurat(cds, idents = input$FeatureCorrelationIdentsSelected)
+        FeatureCorrelation$summary <- calculate_most_correlated(SeuratObj = cds,
+                                                               feature = feature.revised,
+                                                               method = input$correlationmethod,
+                                                               assay = input$FeatureCorrelationAssay)
+        TRUE
+      }, error = function(e) {
+        show_error("Correlation analysis failed", conditionMessage(e))
+      })
+      if (!isTRUE(compute_ok)) return()
       removeModal()
       if (nrow(FeatureCorrelation$summary) > 0) {
         FeatureCorrelation$run_info <- run_info_line(
@@ -3343,13 +3390,20 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       wait_modal("Calculating Correlations",
                  detail = "Calculating the correlation for the specified gene list...",
                  note = "This step runs in one pass and cannot be cancelled.")
-      cds <- data$obj
-      Seurat::Idents(cds) <- input$FeatureCorrelationClusterResolution
-      cds <- subset_Seurat(cds, idents = input$FeatureCorrelationIdentsSelected)
-      FeatureCorrelation$summary <- calculate_correlation(SeuratObj = cds,
-                                                          features = GeneRevised,
-                                                          method = input$correlationmethod,
-                                                          assay = input$FeatureCorrelationAssay)
+      on.exit(removeModal(), add = TRUE)   # never leave the wait modal behind
+      compute_ok <- tryCatch({
+        cds <- data$obj
+        Seurat::Idents(cds) <- input$FeatureCorrelationClusterResolution
+        cds <- subset_Seurat(cds, idents = input$FeatureCorrelationIdentsSelected)
+        FeatureCorrelation$summary <- calculate_correlation(SeuratObj = cds,
+                                                           features = GeneRevised,
+                                                           method = input$correlationmethod,
+                                                           assay = input$FeatureCorrelationAssay)
+        TRUE
+      }, error = function(e) {
+        show_error("Correlation analysis failed", conditionMessage(e))
+      })
+      if (!isTRUE(compute_ok)) return()
       removeModal()
       if (nrow(FeatureCorrelation$summary) > 0) {
         FeatureCorrelation$run_info <- run_info_line(
@@ -5211,8 +5265,19 @@ server <- function(input, output, session) {
     on.exit(shinyjs::enable("demo_data"), add = TRUE)
     demo_url <- getOption("SeuratExplorerDemoDataURL")
     demo_md5 <- getOption("SeuratExplorerDemoDataMD5")
-    demo_dest <- normalizePath(file.path(demo_cache_dir(), "G101_PC20res04.rds"))
+    demo_dest <- normalizePath(file.path(demo_cache_dir(), demo_cache_filename(demo_url)),
+                               mustWork = FALSE)
     used_cache <- file.exists(demo_dest) && file.size(demo_dest) > 0
+    # A cache written for another URL (or a truncated download) must not be
+    # treated as the requested demo data.
+    if (used_cache && !is.null(demo_md5) && nzchar(demo_md5)) {
+      cached_md5 <- tryCatch(tolower(unname(tools::md5sum(demo_dest))),
+                             error = function(e) NA_character_)
+      if (!identical(cached_md5, tolower(demo_md5))) {
+        used_cache <- FALSE
+        unlink(demo_dest, force = TRUE)
+      }
+    }
     if (used_cache) {
       showModal(modalDialog(
         title = tagList(icon("hourglass-start", class = "fa-spin"), " Loading Demo Data"),

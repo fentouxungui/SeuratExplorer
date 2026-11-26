@@ -64,6 +64,18 @@ get_data_matrix <- function(SeuratObj, assay = 'RNA') {
 }
 
 
+# Sparse-safe row summaries: base apply() densifies the whole matrix first.
+row_sums_safe <- function(x) {
+  out <- if (inherits(x, "Matrix")) Matrix::rowSums(x) else base::rowSums(x)
+  if (is.null(names(out))) names(out) <- rownames(x)   # apply() keeps names
+  out
+}
+row_means_safe <- function(x) {
+  out <- if (inherits(x, "Matrix")) Matrix::rowMeans(x) else base::rowMeans(x)
+  if (is.null(names(out))) names(out) <- rownames(x)   # apply() keeps names
+  out
+}
+
 # Converts eligible non-factor columns to factor type, and converts strings that may be numbers to numbers.
 modify_columns_types <- function(df, types_to_check = c("numeric", "character"), unique_max_counts = 200, unique_max_percent = 0.1, verbose = FALSE){
   # first, extract all columns in types_to_check types
@@ -845,8 +857,8 @@ top_genes_aggregate <- function(gene_list, expr_mat, celltype){
     dplyr::summarise(cut.pct.mean = round(mean(Expr),digits = 4),
                      cut.pct.median = round(stats::median(Expr),digits = 4),
                      cut.Cells = length(Expr))
-  genes.statics$total.pos.cells <- apply(expr_mat[genes.statics$Gene,,drop = FALSE] > 0, 1, sum)
-  genes.statics$total.UMI.pct <- round(apply(expr_mat[genes.statics$Gene,,drop = FALSE], 1, sum)/sum(expr_mat),digits = 4)
+  genes.statics$total.pos.cells <- row_sums_safe(expr_mat[genes.statics$Gene,,drop = FALSE] > 0)
+  genes.statics$total.UMI.pct <- round(row_sums_safe(expr_mat[genes.statics$Gene,,drop = FALSE])/sum(expr_mat),digits = 4)
   genes.statics$total.cells <- ncol(expr_mat)
   genes.statics$celltype <- celltype
   genes.statics <- genes.statics[,c("celltype", "total.cells", "Gene", "total.pos.cells", "total.UMI.pct", "cut.Cells", "cut.pct.mean", "cut.pct.median")]
@@ -882,12 +894,12 @@ top_accumulated_genes <- function(SeuratObj, top_n = 100, group.by, assay = 'RNA
 }
 
 top_accumulated_genes_core <- function(expr_mat, top_n, celltype){
-  expr_sum <- sort(apply(expr_mat, 1, sum),decreasing = TRUE)
+  expr_sum <- sort(row_sums_safe(expr_mat),decreasing = TRUE)
   if (length(expr_sum) > top_n) {
     expr_sum <- expr_sum[1:top_n]
   }
   res <- data.frame(Gene = names(expr_sum), MeanUMICounts = round(unname(expr_sum)/ncol(expr_mat),digits = 4), PCT = round(unname(expr_sum)/sum(expr_mat),digits = 4))
-  res$total.pos.cells <- unname(apply(expr_mat[res$Gene,,drop = FALSE] > 0, 1, sum))
+  res$total.pos.cells <- unname(row_sums_safe(expr_mat[res$Gene,,drop = FALSE] > 0))
   res$total.cells <- ncol(expr_mat)
   res$celltype <- celltype
   res <- res[,c("celltype", "total.cells", "Gene", "total.pos.cells", "MeanUMICounts", "PCT")]
@@ -922,9 +934,10 @@ summary_features <- function(SeuratObj, features, group.by, assay = 'RNA'){
 
 
 summary_features_core <- function(expr_mat, features, group = 'merged'){
-  mean.expr <- apply(expr_mat[features,,drop = FALSE], 1, mean)
+  mean.expr <- row_means_safe(expr_mat[features,,drop = FALSE])
+  # median has no sparse shortcut; the subset here is features x cells (small).
   median.expr <- apply(expr_mat[features,,drop = FALSE], 1, stats::median)
-  pct <- apply(expr_mat[features,,drop = FALSE] > 0, 1, mean)
+  pct <- row_means_safe(expr_mat[features,,drop = FALSE] > 0)
   single.res <- data.frame(Gene = features, Expr.mean = round(mean.expr,digits = 4), Expr.median = round(median.expr, digits = 4), PCT = round(pct,digits = 4))
   single.res$CellType <- group
   single.res$TotalCells <- ncol(expr_mat)
@@ -964,7 +977,7 @@ calculate_most_correlated <- function(SeuratObj, feature, method, assay = 'RNA')
   x <- normalized.expr[feature, ,drop = FALSE]
   y <- normalized.expr[rownames(normalized.expr)[rownames(normalized.expr) != feature],,drop = FALSE]
   # filter cells: remove genes with low expression, accumulated expression should more than 1/10 cell numbers.
-  y <- y[apply(y, 1, sum) > 0.1 * ncol(SeuratObj),,drop = FALSE]
+  y <- y[row_sums_safe(y) > 0.1 * ncol(SeuratObj),,drop = FALSE]
   cor.res = stats::cor(x = t(as.matrix(x)), y =  t(as.matrix(y)), method = method)
   cor.res <- reshape2::melt(cor.res)
   colnames(cor.res) <- c("GeneA","GeneB","correlation")
@@ -980,7 +993,7 @@ calculate_correlation <- function(SeuratObj, features, method, assay = 'RNA'){
 
   normalized.expr <- normalized.expr[rownames(normalized.expr) %in% features,,drop = FALSE]
   # filter cells: remove genes with low expression, accumulated expression should more than 1/10 cell numbers.
-  normalized.expr <- normalized.expr[apply(normalized.expr, 1, sum) > 0.1 * ncol(SeuratObj),,drop = FALSE]
+  normalized.expr <- normalized.expr[row_sums_safe(normalized.expr) > 0.1 * ncol(SeuratObj),,drop = FALSE]
   cor.res = stats::cor(t(as.matrix(normalized.expr)), method = method)
   cor.res[lower.tri(cor.res, diag = TRUE)] <- 0
   cor.res <- reshape2::melt(cor.res)
@@ -999,14 +1012,40 @@ calculate_correlation <- function(SeuratObj, features, method, assay = 'RNA'){
 # event loop can run between blocks, which makes the run cancelable.
 # Each block keeps only its own top `keep` pairs; the global top-N is always a
 # subset of that union, so the final table matches the unblocked computation.
+# Pearson correlation between two gene blocks without ever materialising a
+# dense cells x genes matrix:
+#   cor_ij = (t(x)y - n*mx*my) / sqrt((sum x^2 - n*mx^2)(sum y^2 - n*my^2))
+# Only the k x m result block is dense, which is the size the caller keeps.
+pearson_block_cor <- function(x, y) {
+  n <- nrow(x)
+  sparse <- inherits(x, "Matrix") || inherits(y, "Matrix")
+  cs  <- function(m) if (sparse) Matrix::colSums(m) else base::colSums(m)
+  cs2 <- function(m) if (sparse) Matrix::colSums(m * m) else base::colSums(m^2)
+  sxy <- if (sparse) as.matrix(Matrix::crossprod(x, y)) else crossprod(x, y)
+  mx <- cs(x) / n; my <- cs(y) / n
+  vx <- cs2(x) - n * mx^2
+  vy <- cs2(y) - n * my^2
+  vx[vx <= 0] <- NA_real_      # constant genes -> NA, as stats::cor() does
+  vy[vy <= 0] <- NA_real_
+  out <- (sxy - n * outer(mx, my)) / sqrt(outer(vx, vy))
+  dimnames(out) <- list(colnames(x), colnames(y))
+  out
+}
+
 calculate_top_correlations_block <- function(expr_t, from, to, method = "pearson",
-                                             keep = 1000L) {
+                                            keep = 1000L) {
   n <- ncol(expr_t)
   if (from > n) return(NULL)
   to <- min(to, n)
   x <- expr_t[, from:to, drop = FALSE]
   y <- expr_t[, from:n, drop = FALSE]
-  cm <- stats::cor(x = x, y = y, method = method)
+  # Pearson goes through the sparse-safe path; rank-based methods still need a
+  # dense slice (unchanged behaviour, and not the large-data path).
+  cm <- if (identical(method, "pearson")) {
+    pearson_block_cor(x, y)
+  } else {
+    stats::cor(x = as.matrix(x), y = as.matrix(y), method = method)
+  }
 
   # keep only pairs (i < j): zero the diagonal block's lower triangle + diagonal
   k <- to - from + 1L
@@ -1016,7 +1055,7 @@ calculate_top_correlations_block <- function(expr_t, from, to, method = "pearson
 
   res <- reshape2::melt(cm)
   colnames(res) <- c("GeneA", "GeneB", "correlation")
-  res <- res[res$correlation != 0, , drop = FALSE]
+  res <- res[is.finite(res$correlation) & res$correlation != 0, , drop = FALSE]
   if (nrow(res) == 0) return(NULL)
   res <- res[order(abs(res$correlation), decreasing = TRUE), , drop = FALSE]
   if (nrow(res) > keep) res <- res[seq_len(keep), , drop = FALSE]
@@ -1334,9 +1373,27 @@ is_writable_dir <- function(path){
   }, error = function(e) FALSE)
 }
 
+# Cache file name derived from the configured demo data URL, so that changing
+# `DemoDataURL` can never silently reuse an unrelated file already in the cache.
+# For the built-in default URL this returns exactly the historical file name,
+# so existing caches keep working.
+demo_cache_filename <- function(url) {
+  urls <- as.character(url)
+  urls <- urls[!is.na(urls) & nzchar(urls)]
+  if (length(urls) == 0) return("demo-data.rds")
+  path_part <- sub("[?#].*$", "", urls[1])   # drop query string / fragment
+  base <- basename(path_part)
+  base <- gsub("[^A-Za-z0-9._-]", "_", base)
+  if (!nzchar(base) || base %in% c(".", "..")) base <- "demo-data"
+  # keep the per-URL stem even without an .rds extension, otherwise any two
+  # extension-less URLs would collapse onto the same cache entry
+  if (!grepl("\\.rds$", base, ignore.case = TRUE)) base <- paste0(base, ".rds")
+  base
+}
+
 demo_cache_dir <- function(){
   candidates <- c(
-    getOption("SeuratExplorerDemoCacheDir"),
+    getOption("SeuratExplorerDemoDataCacheDir"),
     Sys.getenv("SEURATEXPLORER_CACHE_DIR", unset = NA_character_),
     tryCatch(tools::R_user_dir("SeuratExplorer", which = "cache"), error = function(e) NA_character_)
   )
