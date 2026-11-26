@@ -1415,8 +1415,11 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       pdf(file = file,
           width = num_or(cached$width, 800) / pdf_dpi,
           height = num_or(cached$height, 720) / pdf_dpi)
+      # Close our own device even if print() fails, without touching other devices.
+      dev_id <- grDevices::dev.cur()
+      on.exit(try(grDevices::dev.off(which = dev_id), silent = TRUE), add = TRUE)
       print(cached$plot)
-      dev.off()
+      grDevices::dev.off(which = dev_id)
     })
 
   # AveragedHeatmap Related bugs

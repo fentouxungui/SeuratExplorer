@@ -21,8 +21,14 @@ prepare_seurat_object <- function(obj, verbose = FALSE){
 #' @param assay Assay name
 #' @return Seurat object with joined layers
 join_layers_if_needed <- function(SeuratObj, assay = 'RNA') {
-  if (inherits(SeuratObj[[assay]], "Assay5")) {
-    SeuratObj <- JoinLayers(SeuratObj)
+  assay_obj <- SeuratObj[[assay]]
+  if (inherits(assay_obj, "Assay5")) {
+    layers <- tryCatch(SeuratObject::Layers(assay_obj), error = function(e) character(0))
+    # JoinLayers() copies the whole object, so only pay for it when a split
+    # actually left several layers of the same kind (counts.1, counts.2, ...).
+    if (any(grepl("^(counts|data|scale\\.data)\\.", layers))) {
+      SeuratObj <- JoinLayers(SeuratObj)
+    }
   }
   return(SeuratObj)
 }
@@ -92,7 +98,12 @@ modify_columns_types <- function(df, types_to_check = c("numeric", "character"),
   candidates.unique.logic <- sapply(df, FUN = function(x)length(unique(x))) <= cutoff
   candidates.logic <- candidates.types.logic & candidates.unique.logic & !sapply(df, is.factor)
   # before trans to factor, trans numeric character vector to numeric vector: c('1','2','1') to c(1,2,1)
-  char2numeric_columns.logic <- suppressWarnings(unlist(lapply(df[candidates.logic], function(x)any(!is.na(as.numeric(unique(x)))))))
+  # Convert a character column to numeric only when *every* value is numeric;
+  # any() would silently turn c("1", "2", "A") into c(1, 2, NA).
+  char2numeric_columns.logic <- suppressWarnings(unlist(lapply(df[candidates.logic], function(x) {
+    if (is.numeric(x) || length(x) == 0L) return(FALSE)
+    all(!is.na(as.numeric(x)))
+  })))
   char2numeric_columns <- names(char2numeric_columns.logic)[char2numeric_columns.logic]
   df[char2numeric_columns] <- lapply(df[char2numeric_columns], as.numeric)
   # finally trans all char and numeric to factor
@@ -783,9 +794,10 @@ top_genes <- function(SeuratObj, percent.cut = 0.01, group.by, assay = 'RNA') {
   if (!is.null(group.by)) {
     # calculate by cell type
     all.cell.types <- unique(SeuratObj@meta.data[,group.by])
+    all.cell.types <- all.cell.types[!is.na(all.cell.types)]
     results.statics <- list()
     for (celltype in all.cell.types) {
-      cells.sub <- colnames(SeuratObj)[as.character(SeuratObj@meta.data[,group.by]) == celltype]
+      cells.sub <- colnames(SeuratObj)[as.character(SeuratObj@meta.data[,group.by]) == as.character(celltype) & !is.na(SeuratObj@meta.data[,group.by])]
       if (length(cells.sub) < 3) {
         next
       }
@@ -916,9 +928,10 @@ summary_features <- function(SeuratObj, features, group.by, assay = 'RNA'){
 
   if (!is.null(group.by)) {
     all.cell.types <- unique(SeuratObj@meta.data[,group.by])
+    all.cell.types <- all.cell.types[!is.na(all.cell.types)]
     res <- list()
     for (celltype in all.cell.types) {
-      cells.sub <- colnames(SeuratObj)[as.character(SeuratObj@meta.data[,group.by]) == celltype]
+      cells.sub <- colnames(SeuratObj)[as.character(SeuratObj@meta.data[,group.by]) == as.character(celltype) & !is.na(SeuratObj@meta.data[,group.by])]
       if (length(cells.sub) < 3) {
         next
       }
@@ -1128,7 +1141,14 @@ AverageHeatmap <- function(
   colnames(mean_gene_exp) <- levels(Seurat::Idents(object))
 
   # Z-score
-  htdf <- t(scale(t(mean_gene_exp), scale = TRUE, center = TRUE))
+  # Z-score. A gene that is flat across the selected groups has sd = 0; scale()
+  # would return NaN for the whole row and ComplexHeatmap() would then error out.
+  # Such rows are centred to 0 instead.
+  mean_gene_exp <- as.matrix(mean_gene_exp)
+  gene_mean <- rowMeans(mean_gene_exp)
+  gene_sd <- apply(mean_gene_exp, 1, stats::sd)
+  gene_sd[!is.finite(gene_sd) | gene_sd == 0] <- 1
+  htdf <- (mean_gene_exp - gene_mean) / gene_sd
 
   # cluster order
   if (!is.null(cluster.order)) {
@@ -1176,23 +1196,29 @@ AverageHeatmap <- function(
     # target gene
     annoGene <- markGenes
 
-    # get target gene index
+    # get target gene index; genes missing from the averaged matrix cannot be marked
     index <- match(annoGene, rowGene)
+    keep_index <- !is.na(index)
+    annoGene <- annoGene[keep_index]
+    index <- index[keep_index]
 
     # some genes annotation
-    geneMark <- ComplexHeatmap::rowAnnotation(
-      gene = ComplexHeatmap::anno_mark(
-        at = index,
-        labels = annoGene,
-        labels_gp = grid::gpar(
-          fontface = "italic",
-          fontsize = feature.fontsize
-        )
-      ),
-      ...
-    )
-
-    right_annotation <- geneMark
+    if (length(index) > 0) {
+      geneMark <- ComplexHeatmap::rowAnnotation(
+        gene = ComplexHeatmap::anno_mark(
+          at = index,
+          labels = annoGene,
+          labels_gp = grid::gpar(
+            fontface = "italic",
+            fontsize = feature.fontsize
+          )
+        ),
+        ...
+      )
+      right_annotation <- geneMark
+    } else {
+      right_annotation <- NULL
+    }
   } else {
     right_annotation <- NULL
   }
