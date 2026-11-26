@@ -656,11 +656,11 @@ Calculates correlation values for gene pairs within cells from a cluster. Suppor
 
 #### Three analysis modes
 
-- ``Find Top Correlated Gene Pairs``: Identifies the top **N** correlated gene pairs; set **N** in Step 2 (default `1000`, range `10`–`100000`). The search is computed in blocks of genes and can be cancelled between blocks
+- ``Top correlated pairs``: Identifies the top **N** correlated gene pairs; set **N** in Step 2 (default `1000`, range `10`–`100000`). The search is computed in blocks of genes and can be cancelled between blocks
 
-- ``Find Top Correlated Genes for A Gene``: Finds the most correlated genes for a user-specified gene
+- ``Correlated with one gene``: Finds the most correlated genes for a user-specified gene
 
-- ``Calculate Correlation of All Pairs in A Gene List``: Calculates correlation values for all pairs in a user-provided gene list
+- ``All pairs in a gene list``: Calculates correlation values for all pairs in a user-provided gene list
 
 ```{r echo = FALSE}
 if (for_github) {

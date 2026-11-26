@@ -3137,9 +3137,9 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
   # Warning
   output$featurecorrelation_info = renderText({
     paste0('This usually takes longer, please wait patiently. Make sure to save current results before a new analysis!
-      - Find Top Correlated Gene Pairs: return the top N correlated gene pairs (set N in Step 2).
-      - Find Top Correlated Genes for A Gene: find the genes most correlated with the input gene.
-      - Calculate Correlation of All Pairs in A Gene List: calculate the correlation value for each pair of the input genes.
+      - Top correlated pairs: return the top N correlated gene pairs (set N in Step 2).
+      - Correlated with one gene: find the genes most correlated with the input gene.
+      - All pairs in a gene list: calculate the correlation value for each pair of the input genes.
     If nothing is returned, the input genes are probably expressed too low; genes with very low expression are removed before the analysis.')
   })
 

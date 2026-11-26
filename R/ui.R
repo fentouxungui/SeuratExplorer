@@ -573,56 +573,72 @@ explorer_body_ui <- function(tab_list){
                                # CSS styles for info text
                                tags$style(type="text/css", "#degs_info {white-space: pre-wrap; color: #495057; line-height: 1.8;}"),
 
-                               # Modernized tab styling - ONLY for DEGs page
+                               # Tab card styling - ONLY for DEGs page
                                tags$style("
-                                   /* Make sure the two main containers of the DEGs page are perfectly aligned */
+                                   /* One closed card with underline tabs: the border lives
+                                      on the card wrapper, the tab strip and the panel are
+                                      borderless. */
                                    #degstabbox-container {
                                      padding-left: 0 !important;
                                      padding-right: 0 !important;
                                      margin-left: 0 !important;
                                      margin-right: 0 !important;
                                    }
-                                   #degstabbox-container > .nav-tabs-custom {
+                                   /* tabBox() wraps itself in a Bootstrap column whose 15px
+                                      gutter made the card 15px narrower than the Information
+                                      box above. Cancel the gutter on the card itself with
+                                      negative margins so the rule does not depend on the
+                                      wrapper's class name or nesting depth. */
+                                   #degstabbox-container .nav-tabs-custom {
+                                     background: #ffffff;
+                                     border: 2px solid #10b981;
+                                     border-radius: 8px;
+                                     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
                                      margin-left: -15px !important;
                                      margin-right: -15px !important;
                                      width: calc(100% + 30px) !important;
                                      box-sizing: border-box !important;
                                    }
                                    #degstabbox-container .nav-tabs-custom .nav-tabs {
-                                     background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
-                                     border-bottom: 2px solid #10b981;
+                                     background: #ffffff;
+                                     border: none;
+                                     border-bottom: 1px solid #e5e7eb;
                                      border-radius: 8px 8px 0 0;
-                                     padding: 10px 15px 0 15px;
+                                     padding: 10px 20px 0 20px;
                                      margin: 0 !important;
+                                   }
+                                   #degstabbox-container .nav-tabs-custom .nav-tabs li {
+                                     border-top: none;
+                                     margin: 0 0 -1px 0;
+                                   }
+                                   #degstabbox-container .nav-tabs-custom .nav-tabs li a {
+                                     background: transparent;
+                                     border: none;
+                                     border-bottom: 2px solid transparent;
+                                     border-radius: 0;
+                                     color: #5C636A;
+                                     padding: 8px 0;
+                                     margin: 0 28px 0 0;
+                                     transition: color 0.2s ease, border-color 0.2s ease;
+                                   }
+                                   #degstabbox-container .nav-tabs-custom .nav-tabs li a:hover {
+                                     background: transparent;
+                                     color: #047857;
                                    }
                                    #degstabbox-container .nav-tabs-custom .nav-tabs li.active:hover a,
                                    #degstabbox-container .nav-tabs-custom .nav-tabs li.active a {
-                                     background-color: white;
-                                     border-color: #10b981 #10b981 white #10b981;
+                                     background: transparent;
+                                     border: none;
+                                     border-bottom: 2px solid #10b981;
                                      color: #047857;
                                      font-weight: 600;
                                    }
-                                   #degstabbox-container .nav-tabs-custom .nav-tabs li.active {
-                                     border-top-color: #10b981;
-                                     border-top-width: 3px;
-                                   }
-                                   #degstabbox-container .nav-tabs-custom .nav-tabs li a {
-                                     color: #5C636A;
-                                     border-radius: 6px 6px 0 0;
-                                     transition: all 0.2s ease;
-                                     margin-right: 5px;
-                                   }
-                                   #degstabbox-container .nav-tabs-custom .nav-tabs li a:hover {
-                                     background-color: #f8f9fa;
-                                     color: #047857;
-                                   }
                                    #degstabbox-container .tab-content {
-                                     background: white;
-                                     border: 2px solid #10b981;
-                                     border-top: none;
+                                     background: #ffffff;
+                                     border: none;
                                      border-radius: 0 0 8px 8px;
-                                     padding: 25px;
-                                     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                                     padding: 20px;
+                                     box-shadow: none;
                                      margin-left: 0 !important;
                                      margin-right: 0 !important;
                                    }
@@ -671,10 +687,12 @@ explorer_body_ui <- function(tab_list){
                                    style = "margin-bottom: 10px;",
                                    div(id = "degstabbox-container",
                                      tabBox(
-                                       title = div(
-                                         style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("chart-line", style = "color: #047857; font-size: 18px;"),
-                                         strong("Find Markers or DEGs", style = "color: #495057; font-size: 16px;")
+                                       # The title is laid out as its own row above the tabs
+                                       # by the shared .nav-tabs > li.header rules.
+                                       title = h4(
+                                         icon("chart-line"),
+                                         "Find Markers or DEGs",
+                                         style = "margin: 0; color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"
                                        ),
                                        id = "tabset_degs", width = 12,
                                        tabPanel("Find Markers for All Clusters",
@@ -807,59 +825,8 @@ explorer_body_ui <- function(tab_list){
                                # CSS styles for info text
                                tags$style(type="text/css", "#topgenes_info {white-space: pre-wrap; color: #495057; line-height: 1.8;}"),
 
-                               # Modernized tab styling - ONLY for topgenes page
-                               tags$style("
-                                   #topgenestabbox-container {
-                                     padding-left: 0 !important;
-                                     padding-right: 0 !important;
-                                     margin-left: 0 !important;
-                                     margin-right: 0 !important;
-                                   }
-                                   #topgenestabbox-container > .nav-tabs-custom {
-                                     margin-left: -15px !important;
-                                     margin-right: -15px !important;
-                                     width: calc(100% + 30px) !important;
-                                     box-sizing: border-box !important;
-                                   }
-                                   #topgenestabbox-container .nav-tabs-custom .nav-tabs {
-                                     background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
-                                     border-bottom: 2px solid #3b82f6;
-                                     border-radius: 8px 8px 0 0;
-                                     padding: 10px 15px 0 15px;
-                                     margin: 0 !important;
-                                   }
-                                   #topgenestabbox-container .nav-tabs-custom .nav-tabs li.active:hover a,
-                                   #topgenestabbox-container .nav-tabs-custom .nav-tabs li.active a {
-                                     background-color: white;
-                                     border-color: #3b82f6 #3b82f6 white #3b82f6;
-                                     color: #1D4ED8;
-                                     font-weight: 600;
-                                   }
-                                   #topgenestabbox-container .nav-tabs-custom .nav-tabs li.active {
-                                     border-top-color: #3b82f6;
-                                     border-top-width: 3px;
-                                   }
-                                   #topgenestabbox-container .nav-tabs-custom .nav-tabs li a {
-                                     color: #5C636A;
-                                     border-radius: 6px 6px 0 0;
-                                     transition: all 0.2s ease;
-                                     margin-right: 5px;
-                                   }
-                                   #topgenestabbox-container .nav-tabs-custom .nav-tabs li a:hover {
-                                     background-color: #f8f9fa;
-                                     color: #1D4ED8;
-                                   }
-                                   #topgenestabbox-container .tab-content {
-                                     background: white;
-                                     border: 2px solid #3b82f6;
-                                     border-top: none;
-                                     border-radius: 0 0 8px 8px;
-                                     padding: 25px;
-                                     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                                     margin-left: 0 !important;
-                                     margin-right: 0 !important;
-                                   }
-                                 "),
+                               # The Step 2 card uses the shared .se-step-* styles defined
+                               # in the global CSS block of dashboardBody.
 
                                # Single fluidRow containing both Information Box and Settings/Analysis
                                fluidRow(id = "topgenes-main-row",
@@ -918,38 +885,62 @@ explorer_body_ui <- function(tab_list){
                                  div(
                                    class = "col-md-9",
                                    style = "margin-bottom: 10px;",
-                                   div(id = "topgenestabbox-container",
-                                     tabBox(
-                                       title = div(
-                                         style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("chart-line", style = "color: #1D4ED8; font-size: 18px;"),
-                                         strong("Step 2: Calculate Top Genes", style = "color: #495057; font-size: 16px;")
+                                   # One card with a header and a plain form body. The two
+                                   # ranking modes are mutually exclusive settings, not pages,
+                                   # so they are a segmented control instead of a tab strip.
+                                   div(
+                                     class = "se-step-card",
+                                     div(
+                                       class = "se-step-header",
+                                       icon("chart-line", style = "color: #1D4ED8;"),
+                                       h4("Step 2: Calculate Top Genes")
+                                     ),
+                                     div(
+                                       class = "se-step-body",
+                                       tags$label(class = "se-field-label", "Ranking method"),
+                                       shinyWidgets::radioGroupButtons(
+                                         inputId = "TopGenesMethod",
+                                         label = NULL,
+                                         choices = c("By cell" = "cell",
+                                                     "By accumulated UMI counts" = "umi"),
+                                         selected = "cell",
+                                         status = "primary",
+                                         justified = FALSE
                                        ),
-                                       id = "tabset_topgenes", width = 12,
-                                       tabPanel("Find Top Genes by Cell",
-                                                div(
-                                                  style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
-                                                  sliderInput("TopGenesTopPercent", "UMI percentage cutoff (%):", min = 1, max = 50, value = 1, step = 1,  width = "100%")
-                                                ),
-                                                div(style = "text-align: center; margin-top: 25px;",
-                                                  actionButton("TopGenesAnalysis",
-                                                              icon = shiny::icon("magnifying-glass-chart"),
-                                                              label = "Analyze",
-                                                              class = "btn-primary btn-lg",
-                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
-                                                )),
-                                       tabPanel("Find Top Genes by Accumulated UMI Counts",
-                                                div(
-                                                  style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
-                                                  sliderInput("TopGenesTopN", "Top N:", min = 10, max = 1000, value = 100, step = 10,  width = "100%")
-                                                ),
-                                                div(style = "text-align: center; margin-top: 25px;",
-                                                  actionButton("TopAccumulatedGenesAnalysis",
-                                                              icon = shiny::icon("magnifying-glass-chart"),
-                                                              label = "Analyze",
-                                                              class = "btn-primary btn-lg",
-                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
-                                                ))
+                                       conditionalPanel(
+                                         # Negated test: the panel is visible before the
+                                         # radio input has reported its initial value.
+                                         condition = "input.TopGenesMethod != 'umi'",
+                                         div(
+                                           style = "margin-top: 18px;",
+                                           sliderInput("TopGenesTopPercent", "UMI percentage cutoff",
+                                                       min = 1, max = 50, value = 1, step = 1,
+                                                       ticks = FALSE, post = "%", width = "100%"),
+                                           p(class = "se-hint",
+                                             "Keeps the genes that make up the top percentage of UMIs in each cell.")
+                                         ),
+                                         div(class = "se-actions",
+                                           actionButton("TopGenesAnalysis",
+                                                        icon = shiny::icon("magnifying-glass-chart"),
+                                                        label = "Analyze",
+                                                        class = "btn-primary"))
+                                       ),
+                                       conditionalPanel(
+                                         condition = "input.TopGenesMethod == 'umi'",
+                                         div(
+                                           style = "margin-top: 18px;",
+                                           sliderInput("TopGenesTopN", "Top N genes",
+                                                       min = 10, max = 1000, value = 100, step = 10,
+                                                       ticks = FALSE, width = "100%"),
+                                           p(class = "se-hint",
+                                             "Returns the N genes with the highest accumulated UMI counts across the selected cells.")
+                                         ),
+                                         div(class = "se-actions",
+                                           actionButton("TopAccumulatedGenesAnalysis",
+                                                        icon = shiny::icon("magnifying-glass-chart"),
+                                                        label = "Analyze",
+                                                        class = "btn-primary"))
+                                       )
                                      )
                                    )
                                  ),
@@ -1088,7 +1079,7 @@ explorer_body_ui <- function(tab_list){
                                # CSS styles for info text
                                tags$style(type="text/css", "#featurecorrelation_info {white-space: pre-wrap; color: #495057; line-height: 1.8;}"),
 
-                               # Modernized tab styling - ONLY for featurecorrelation page
+                               # Tab card styling - ONLY for featurecorrelation page
                                tags$style("
                                    #featurecorrelationtabbox-container {
                                      padding-left: 0 !important;
@@ -1096,47 +1087,59 @@ explorer_body_ui <- function(tab_list){
                                      margin-left: 0 !important;
                                      margin-right: 0 !important;
                                    }
-                                   #featurecorrelationtabbox-container > .nav-tabs-custom {
+                                   /* Cancel the tabBox wrapper column's 15px gutter on the
+                                      card itself, so the rule does not depend on the
+                                      wrapper's class name or nesting depth. */
+                                   #featurecorrelationtabbox-container .nav-tabs-custom {
+                                     background: #ffffff;
+                                     border: 2px solid #3b82f6;
+                                     border-radius: 8px;
+                                     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
                                      margin-left: -15px !important;
                                      margin-right: -15px !important;
                                      width: calc(100% + 30px) !important;
                                      box-sizing: border-box !important;
                                    }
                                    #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs {
-                                     background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
-                                     border-bottom: 2px solid #3b82f6;
+                                     background: #ffffff;
+                                     border: none;
+                                     border-bottom: 1px solid #e5e7eb;
                                      border-radius: 8px 8px 0 0;
-                                     padding: 10px 15px 0 15px;
+                                     padding: 10px 20px 0 20px;
                                      margin: 0 !important;
+                                   }
+                                   #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li {
+                                     border-top: none;
+                                     margin: 0 0 -1px 0;
+                                   }
+                                   #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li a {
+                                     background: transparent;
+                                     border: none;
+                                     border-bottom: 2px solid transparent;
+                                     border-radius: 0;
+                                     color: #5C636A;
+                                     padding: 8px 0;
+                                     margin: 0 28px 0 0;
+                                     transition: color 0.2s ease, border-color 0.2s ease;
+                                   }
+                                   #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li a:hover {
+                                     background: transparent;
+                                     color: #1D4ED8;
                                    }
                                    #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li.active:hover a,
                                    #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li.active a {
-                                     background-color: white;
-                                     border-color: #3b82f6 #3b82f6 white #3b82f6;
+                                     background: transparent;
+                                     border: none;
+                                     border-bottom: 2px solid #3b82f6;
                                      color: #1D4ED8;
                                      font-weight: 600;
                                    }
-                                   #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li.active {
-                                     border-top-color: #3b82f6;
-                                     border-top-width: 3px;
-                                   }
-                                   #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li a {
-                                     color: #5C636A;
-                                     border-radius: 6px 6px 0 0;
-                                     transition: all 0.2s ease;
-                                     margin-right: 5px;
-                                   }
-                                   #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li a:hover {
-                                     background-color: #f8f9fa;
-                                     color: #1D4ED8;
-                                   }
                                    #featurecorrelationtabbox-container .tab-content {
-                                     background: white;
-                                     border: 2px solid #3b82f6;
-                                     border-top: none;
+                                     background: #ffffff;
+                                     border: none;
                                      border-radius: 0 0 8px 8px;
-                                     padding: 25px;
-                                     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                                     padding: 20px;
+                                     box-shadow: none;
                                      margin-left: 0 !important;
                                      margin-right: 0 !important;
                                    }
@@ -1199,13 +1202,15 @@ explorer_body_ui <- function(tab_list){
                                    style = "margin-bottom: 10px;",
                                    div(id = "featurecorrelationtabbox-container",
                                      tabBox(
-                                       title = div(
-                                         style = "display: flex; align-items: center; gap: 10px;",
-                                         icon("chart-line", style = "color: #1D4ED8; font-size: 18px;"),
-                                         strong("Step 2: Calculate Correlation", style = "color: #495057; font-size: 16px;")
+                                       # The title is laid out as its own row above the tabs
+                                       # by the shared .nav-tabs > li.header rules.
+                                       title = h4(
+                                         icon("chart-line"),
+                                         "Step 2: Calculate Correlation",
+                                         style = "margin: 0; color: #1D4ED8; font-weight: 600; display: flex; align-items: center; gap: 8px;"
                                        ),
                                        id = "tabset_featurecorrelation", width = 12,
-                                       tabPanel("Find Top Correlated Gene Pairs",
+                                       tabPanel("Top correlated pairs",
                                                 div(style = "max-width: 280px; margin: 0 auto 5px auto;",
                                                   numericInput("correlationTopN", "Top N gene pairs to return:",
                                                                value = 1000, min = 10, max = 100000, step = 100, width = '100%')
@@ -1217,7 +1222,7 @@ explorer_body_ui <- function(tab_list){
                                                               class = "btn-primary btn-lg",
                                                               style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
                                                 )),
-                                       tabPanel("Find Top Correlated Genes for A Gene",
+                                       tabPanel("Correlated with one gene",
                                                 div(
                                                   style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
                                                   textInput(inputId = "MostCorrelatedAGene", label = "Input a gene:", width = '100%')
@@ -1229,7 +1234,7 @@ explorer_body_ui <- function(tab_list){
                                                               class = "btn-primary btn-lg",
                                                               style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
                                                 )),
-                                       tabPanel("Calculate Correlation of All Pairs in A Gene List",
+                                       tabPanel("All pairs in a gene list",
                                                 div(
                                                   style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
                                                   textAreaInput(inputId = "CorrelationGeneList", label = "Input a group of genes:", width = '100%', height = '100px', resize = "vertical")
@@ -2218,6 +2223,137 @@ ui <-  function(){
         .radio label {
           min-height: 24px;
           line-height: 24px;
+        }
+
+        /* tabBox title row.
+           shinydashboard renders the tabBox() `title` as a right-floated
+           <li class='header'> inside the tab strip, so it competes with the tab
+           labels for the same line: on narrow windows it wraps to two lines or
+           drops onto the strip's bottom border. Lay it out as its own
+           full-width row above the tabs instead, so the tab labels never share
+           a line with it. Applies to the DEGs and Feature Correlation tab
+           boxes. */
+        [id$='tabbox-container'] .nav-tabs-custom > ul.nav-tabs {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-end;
+        }
+
+        [id$='tabbox-container'] .nav-tabs-custom > ul.nav-tabs > li.header {
+          order: -1;
+          flex: 0 0 100%;
+          float: none !important;
+          padding: 0 0 8px 0;
+          margin: 0;
+          line-height: 1.35;
+          font-size: inherit;
+          border: none;
+        }
+
+        /* Step card: header + plain form body. Used by the Top Genes page,
+           where the two ranking modes are a segmented control rather than a
+           tab strip, so the card keeps a single closed outline. */
+        .se-step-card {
+          background: #ffffff;
+          border: 2px solid #3b82f6;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .se-step-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 14px 20px 12px 20px;
+          border-bottom: 1px solid #eef2f7;
+        }
+
+        .se-step-header h4 {
+          margin: 0;
+          font-size: 18px;
+          font-weight: 600;
+          color: #1D4ED8;
+        }
+
+        .se-step-body {
+          padding: 20px;
+        }
+
+        .se-step-body .control-label,
+        .se-step-body .se-field-label {
+          display: block;
+          font-weight: 600;
+          color: #374151;
+          margin: 0 0 8px 0;
+        }
+
+        .se-hint {
+          margin: 8px 0 0 0;
+          color: #5C636A;
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .se-actions {
+          display: flex;
+          justify-content: center;
+          margin-top: 16px;
+        }
+
+        /* Segmented method switch (#TopGenesMethod).
+           shinyWidgets gives every button the same btn-<status> class, and the
+           global .btn-primary rule paints them all with !important, so the
+           selected button is indistinguishable. Restate both states
+           explicitly: white outline for unselected, solid accent for selected. */
+        #TopGenesMethod .btn-group {
+          display: inline-flex;
+        }
+
+        #TopGenesMethod .btn-group > .btn {
+          background: #ffffff !important;
+          background-image: none !important;
+          border: 1px solid #cfd8e3 !important;
+          border-radius: 6px !important;
+          color: #374151 !important;
+          font-weight: 500;
+          box-shadow: none !important;
+          /* Space the pills apart and cancel Bootstrap's -1px collapsed border. */
+          margin: 0 12px 0 0 !important;
+          padding: 8px 16px;
+        }
+
+        #TopGenesMethod .btn-group > .btn:hover:not(.active) {
+          background: #f3f6fb !important;
+        }
+
+        #TopGenesMethod .btn-group > .btn.active {
+          background: #1D4ED8 !important;
+          border-color: #1D4ED8 !important;
+          color: #ffffff !important;
+          font-weight: 600;
+          box-shadow: none !important;
+          position: relative;
+          z-index: 2;
+        }
+
+        /* Two-column analysis pages (3/12 settings + 9/12 content).
+           Bootstrap's two 15px gutters left a 30px channel between the two
+           panels, wider than the 8px gap each page has between its Information
+           box and the panel below. Narrow both gutters to 4px so the panel
+           spacing matches in both directions. Only applies while the columns
+           sit side by side; below md they stack and keep their normal gutters. */
+        @media (min-width: 992px) {
+          #topgenes-main-row > .col-md-3,
+          #featuresummary-main-row > .col-md-3,
+          #featurecorrelation-main-row > .col-md-3 {
+            padding-right: 4px !important;
+          }
+
+          #topgenes-main-row > .col-md-9,
+          #featuresummary-main-row > .col-md-9,
+          #featurecorrelation-main-row > .col-md-9 {
+            padding-left: 4px !important;
+          }
         }
 
         /* Responsive optimization */
