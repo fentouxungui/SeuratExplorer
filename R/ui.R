@@ -359,7 +359,7 @@ explorer_body_ui <- function(tab_list){
                                         div(id = "dimplot_plot_container",
                                             uiOutput("dimplot_resizable_ui")),
                                         # show the button on right end, refer to: https://stackoverflow.com/questions/28749693/shiny-r-aligning-buttons
-                                        div(style = "display:inline-block; float:right",downloadButton("downloaddimplot", label = "Download PDF", class = "btn-primary")),
+                                        div(style = "display:inline-block; float:right",downloadButton("downloaddimplot", label = "Download PDF", class = "btn-default btn-action")),
                                         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                     box(title = div(
                                           icon("sliders-h"),
@@ -416,7 +416,7 @@ explorer_body_ui <- function(tab_list){
                                       fluidRow(
                                         box(title = "Features on Dimensional Reduction Plot",
                                             uiOutput("featureplot_resizable_ui"),
-                                            div(style = "display:inline-block; float:right", downloadButton("downloadfeatureplot", label = "Download PDF", class = "btn-primary")),
+                                            div(style = "display:inline-block; float:right", downloadButton("downloadfeatureplot", label = "Download PDF", class = "btn-default btn-action")),
                                             width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                         box(title = div(
                                               icon("sliders-h"),
@@ -482,7 +482,7 @@ explorer_body_ui <- function(tab_list){
                                   fluidRow(
                                     box(title = "Features Violin Plot",
                                         uiOutput("vlnplot_resizable_ui"),
-                                        div(style = "display:inline-block; float:right", downloadButton("downloadvlnplot", label = "Download PDF", class = "btn-primary")),
+                                        div(style = "display:inline-block; float:right", downloadButton("downloadvlnplot", label = "Download PDF", class = "btn-default btn-action")),
                                         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                     box(title = div(
                                           icon("sliders-h"),
@@ -545,8 +545,7 @@ explorer_body_ui <- function(tab_list){
                                           ),
                                           conditionalPanel(
                                             condition = "output.Vlnplot_StackPlot && input.VlnSplitBy == 'None'",
-                                            selectInput("VlnFillBy","Color By:", choices = c(Feature = "feature", Cluster = "ident")),
-                                          ),
+                                            selectInput("VlnFillBy","Color By:", choices = c(Feature = "feature", Cluster = "ident"))),
                                           checkboxInput("VlnShowLegend", "Show legend", TRUE),
                                           conditionalPanel(
                                             condition = "input.VlnShowLegend == true",
@@ -573,7 +572,7 @@ explorer_body_ui <- function(tab_list){
                                   fluidRow(
                                     box(title = "Features Dot Plot",
                                         uiOutput("dotplot_resizable_ui"),
-                                        div(style = "display:inline-block; float:right", downloadButton("downloaddotplot", label = "Download PDF", class = "btn-primary")),
+                                        div(style = "display:inline-block; float:right", downloadButton("downloaddotplot", label = "Download PDF", class = "btn-default btn-action")),
                                         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                     box(title = div(
                                           icon("sliders-h"),
@@ -622,8 +621,7 @@ explorer_body_ui <- function(tab_list){
                                           conditionalPanel(
                                             condition = "output.DotPlot_Split_isNone",
                                             colourpicker::colourInput("DotPlotLowestExprColor", "Pick Color for lowest expression:", "#E5E5E5", showColour = "both", palette = "square", width = "100%"),
-                                            colourpicker::colourInput("DotPlotHighestExprColor", "Pick Color for highest expression:", "#0000FF", showColour = "both", palette = "square", width = "100%"),
-                                          ),
+                                            colourpicker::colourInput("DotPlotHighestExprColor", "Pick Color for highest expression:", "#0000FF", showColour = "both", palette = "square", width = "100%")),
                                           sliderInput("DotDotScale", label = "Dot Scale:", min = 1, max = 12, value = 6),
                                           sliderInput("DotXlabelSize", label = "X Axis Label Size:", min = 0, max = 20, value = 14),
                                           sliderInput("DotYlabelSize", label = "Y Axis Label Size:", min = 0, max = 20, value = 10),
@@ -642,7 +640,7 @@ explorer_body_ui <- function(tab_list){
                                   fluidRow(
                                     box(title = "Features Heatmap Plot",
                                         uiOutput("heatmap_resizable_ui"),
-                                        div(style = "display:inline-block; float:right", downloadButton("downloadheatmap", label = "Download PDF", class = "btn-primary")),
+                                        div(style = "display:inline-block; float:right", downloadButton("downloadheatmap", label = "Download PDF", class = "btn-default btn-action")),
                                         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                     box(title = div(
                                           icon("sliders-h"),
@@ -698,7 +696,7 @@ explorer_body_ui <- function(tab_list){
                                   fluidRow(
                                     box(title = "Features Heatmap by Averaged Expression",
                                         uiOutput("averagedheatmap_resizable_ui"),
-                                        div(style = "display:inline-block; float:right", downloadButton("downloadaveragedheatmap", label = "Download PDF", class = "btn-primary")),
+                                        div(style = "display:inline-block; float:right", downloadButton("downloadaveragedheatmap", label = "Download PDF", class = "btn-default btn-action")),
                                         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                     box(title = div(
                                           icon("sliders-h"),
@@ -751,7 +749,7 @@ explorer_body_ui <- function(tab_list){
                                     fluidRow(
                                       box(title = "Features Ridge Plot",
                                           uiOutput("ridgeplot_resizable_ui"),
-                                          div(style = "display:inline-block; float:right", downloadButton("downloadridgeplot", label = "Download PDF", class = "btn-primary")),
+                                          div(style = "display:inline-block; float:right", downloadButton("downloadridgeplot", label = "Download PDF", class = "btn-default btn-action")),
                                           width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
                                       box(title = div(
                                             icon("sliders-h"),
@@ -787,12 +785,10 @@ explorer_body_ui <- function(tab_list){
                                             subtitle = "Panel layout, stacking, colour source, and axis label sizes.",
                                             conditionalPanel(
                                               condition = "output.Ridgeplot_stack_NotSelected",
-                                              sliderInput("RidgeplotNumberOfColumns", label = "Number of columns:", min = 1, max = 10, value = 1),
-                                            ),
+                                              sliderInput("RidgeplotNumberOfColumns", label = "Number of columns:", min = 1, max = 10, value = 1)),
                                             conditionalPanel(
                                               condition = "output.Ridgeplot_stack_show",
-                                              checkboxInput("RidgeplotStackPlot",label = "Stack Plot", FALSE),
-                                            ),
+                                              checkboxInput("RidgeplotStackPlot",label = "Stack Plot", FALSE)),
                                             conditionalPanel(
                                               condition = "input.RidgeplotStackPlot",
                                               selectInput("RidgeplotFillBy","Color By:", choices = c(Feature = "feature", Cluster = "ident"))
@@ -814,7 +810,7 @@ explorer_body_ui <- function(tab_list){
                                     fluidRow(
                                       box(title = "Cell Percentage Plot",
                                           uiOutput("cellratioplot_resizable_ui"),
-                                          div(style = "display:inline-block; float:right", downloadButton("downloadcellratioplot", label = "Download PDF", class = "btn-primary")),
+                                          div(style = "display:inline-block; float:right", downloadButton("downloadcellratioplot", label = "Download PDF", class = "btn-default btn-action")),
                                           div(style = "margin-top: 50px;",
                                               hr(),
                                               DT::dataTableOutput('cellratiodata'),
@@ -984,15 +980,17 @@ explorer_body_ui <- function(tab_list){
                                        id = "tabset_degs", width = 12,
                                        tabPanel("Find Markers for All Clusters",
                                                 div(
-                                                  style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
+                                                  # The tab card is already outlined in green; this panel keeps its
+                                                  # tint and left accent but drops the second outline so the two
+                                                  # borders no longer trace the same edge.
+                                                  style = "background: #f0fdf4; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
                                                   withSpinner(uiOutput("ClusterMarkersClusterResolution.UI"), proxy.height = "10px")
                                                 ),
                                                 div(style = "text-align: center; margin-top: 25px;",
                                                   actionButton("DEGsClusterMarkersAnalysis",
                                                               icon = shiny::icon("magnifying-glass-chart"),
                                                               label = "Analyze",
-                                                          class = "btn-primary btn-lg",
-                                                          style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #047857 0%, #065F46 100%); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);")
+                                                              class = "btn-primary btn-action")
                                             )),
                                    tabPanel("Find DEGs for two groups",
                                             # Step 1 - Filter Cells
@@ -1016,8 +1014,7 @@ explorer_body_ui <- function(tab_list){
                                               actionButton("IntraClusterDEGssAnalysis",
                                                           icon = shiny::icon("magnifying-glass-chart"),
                                                           label = "Analyze",
-                                                          class = "btn-primary btn-lg",
-                                                          style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #BE185D 0%, #9D174D 100%); border: none; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);")
+                                                          class = "btn-primary btn-action")
                                             )),
                                    tabPanel("Custom Parameters",
                                             div(
@@ -1037,8 +1034,7 @@ explorer_body_ui <- function(tab_list){
                                               actionButton("SetDefault",
                                                           icon = shiny::icon("save"),
                                                           label = "Reset to defaults",
-                                                          class = "btn-warning",
-                                                          style = "padding: 10px 30px; border-radius: 8px; font-weight: 600;")
+                                                          class = "btn-warning btn-action")
                                             ))
                                      )  # end of tabBox
                                    )  # end of degstabbox-container div
@@ -1186,7 +1182,7 @@ explorer_body_ui <- function(tab_list){
                                            actionButton("TopGenesAnalysis",
                                                         icon = shiny::icon("magnifying-glass-chart"),
                                                         label = "Analyze",
-                                                        class = "btn-primary"))
+                                                        class = "btn-primary btn-action"))
                                        ),
                                        conditionalPanel(
                                          condition = "input.TopGenesMethod == 'umi'",
@@ -1202,7 +1198,7 @@ explorer_body_ui <- function(tab_list){
                                            actionButton("TopAccumulatedGenesAnalysis",
                                                         icon = shiny::icon("magnifying-glass-chart"),
                                                         label = "Analyze",
-                                                        class = "btn-primary"))
+                                                        class = "btn-primary btn-action"))
                                        )
                                      )
                                    )
@@ -1279,8 +1275,7 @@ explorer_body_ui <- function(tab_list){
                                        actionButton("FeatureSummaryAnalysis",
                                                    icon = shiny::icon("magnifying-glass-chart"),
                                                    label = "Analyze",
-                                                   class = "btn-primary btn-lg",
-                                                   style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #047857 0%, #065F46 100%); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);")
+                                                   class = "btn-primary btn-action")
                                      )
                                    )
                                  ),
@@ -1436,32 +1431,33 @@ explorer_body_ui <- function(tab_list){
                                                   actionButton("TopCorrelationAnalysis",
                                                               icon = shiny::icon("magnifying-glass-chart"),
                                                               label = "Analyze",
-                                                              class = "btn-primary btn-lg",
-                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
+                                                              class = "btn-primary btn-action")
                                                 )),
                                        tabPanel("Correlated with one gene",
                                                 div(
-                                                  style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
+                                                  # The tab card already carries the blue outline; keep the tint
+                                                  # and left accent, drop the second full outline.
+                                                  style = "background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
                                                   textInput(inputId = "MostCorrelatedAGene", label = "Input a gene:", width = '100%')
                                                 ),
                                                 div(style = "text-align: center; margin-top: 25px;",
                                                   actionButton("MostCorrelatedAnalysis",
                                                               icon = shiny::icon("magnifying-glass-chart"),
                                                               label = "Analyze",
-                                                              class = "btn-primary btn-lg",
-                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
+                                                              class = "btn-primary btn-action")
                                                 )),
                                        tabPanel("All pairs in a gene list",
                                                 div(
-                                                  style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
+                                                  # The tab card already carries the blue outline; keep the tint
+                                                  # and left accent, drop the second full outline.
+                                                  style = "background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
                                                   textAreaInput(inputId = "CorrelationGeneList", label = "Input a group of genes:", width = '100%', height = '100px', resize = "vertical")
                                                 ),
                                                 div(style = "text-align: center; margin-top: 25px;",
                                                   actionButton("calculatecorrelation",
                                                               icon = shiny::icon("save"),
                                                               label = "Analyze",
-                                                              class = "btn-primary btn-lg",
-                                                              style = "padding: 12px 35px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);")
+                                                              class = "btn-primary btn-action")
                                                 ))
                                      )
                                    )
@@ -1558,8 +1554,7 @@ explorer_body_ui <- function(tab_list){
                                        actionButton("renameclustersCheck",
                                                    icon = shiny::icon("check"),
                                                    label = "Check",
-                                                   class = "btn-primary btn-lg",
-                                                   style = "padding: 10px 30px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #047857 0%, #065F46 100%); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);")
+                                                   class = "btn-primary btn-action")
                                      ),
                                      conditionalPanel(
                                        condition = "output.renameclusterscheck_OK",
@@ -1568,13 +1563,11 @@ explorer_body_ui <- function(tab_list){
                                            actionButton("renameclustersSubmit",
                                                        icon = shiny::icon("arrows-rotate"),
                                                        label = "Update",
-                                                       class = "btn-primary",
-                                                       style = "padding: 10px 20px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none;"),
+                                                       class = "btn-primary btn-action"),
                                            downloadButton("renameclustersDownload",
                                                          "Download",
                                                          icon = shiny::icon("file-arrow-down"),
-                                                         class = "btn-primary",
-                                                         style = "padding: 10px 20px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #B45309 0%, #92400E 100%); border: none;")
+                                                         class = "btn-default btn-action")
                                          ),
                                          div(
                                            style = "background: #fef3c7; border-left: 3px solid #f59e0b; padding: 10px; border-radius: 4px; margin-top: 15px;",
@@ -1638,12 +1631,11 @@ explorer_body_ui <- function(tab_list){
             actionButton("reorderclustersApply",
                          icon = shiny::icon("check"),
                          label = "Apply New Order",
-                         class = "btn-primary btn-lg",
-                         style = "padding: 10px 20px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #047857 0%, #065F46 100%); border: none;"),
+                         class = "btn-primary btn-action"),
             actionButton("reorderclustersReset",
                          icon = shiny::icon("arrows-rotate"),
                          label = "Reset",
-                         class = "btn-warning",
+                         class = "btn-warning btn-action",
                          style = "padding: 10px 20px; border-radius: 8px; font-weight: 600;")
           ),
 
@@ -1689,7 +1681,7 @@ explorer_body_ui <- function(tab_list){
                             width = "100%")),
             div(style = "flex: 0 0 auto;",
                 actionButton("ClusterColorApplyPalette", "Apply",
-                             icon = icon("wand-magic-sparkles"), class = "btn-primary",
+                             icon = icon("wand-magic-sparkles"), class = "btn-primary btn-action-sm",
                              style = "margin-bottom: 15px; border-radius: 6px;"))
           ),
           div(style = "max-height: 320px; overflow-y: auto; padding-right: 4px;",
@@ -1706,10 +1698,10 @@ explorer_body_ui <- function(tab_list){
              style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
           div(style = "display: flex; flex-wrap: wrap; gap: 8px;",
             actionButton("ClusterColorSubmit", "Submit", icon = icon("check"),
-                         class = "btn-primary",
+                         class = "btn-primary btn-action",
                          style = "flex: 1 1 110px; padding: 10px; border-radius: 8px; font-weight: 600;"),
             actionButton("ClusterColorReset", "Reset", icon = icon("arrows-rotate"),
-                         class = "btn-warning",
+                         class = "btn-warning btn-action",
                          style = "flex: 1 1 110px; padding: 10px; border-radius: 8px; font-weight: 600;")
           ),
           div(style = "margin-top: 8px;",
@@ -1719,7 +1711,7 @@ explorer_body_ui <- function(tab_list){
 
           hr(),
           downloadButton("download_cluster_colors", "Export colors (CSV)",
-                         class = "btn-primary",
+                         class = "btn-default btn-action",
                          style = "width: 100%; padding: 10px; border-radius: 8px; font-weight: 600;"),
           div(style = "margin-top: 10px;",
             fileInput("ClusterColorImportFile", "Import colors (CSV)",
@@ -1783,7 +1775,7 @@ explorer_body_ui <- function(tab_list){
         withSpinner(uiOutput("geneclustersAssaySlots.UI"), proxy.height = "10px"),
         div(style = "margin-top: 15px;",
           actionButton("geneclustersPlotHistogram", label = "Generate Histogram",
-            icon = icon("chart-bar"), class = "btn-primary",
+            icon = icon("chart-bar"), class = "btn-primary btn-action",
             style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
         )
       )
@@ -1799,7 +1791,7 @@ explorer_body_ui <- function(tab_list){
                 value = "", width = "100%"),
               div(style = "margin-top: 10px;",
                 actionButton("geneclustersApplyCutoffs", label = "Apply Cutoffs",
-                  icon = icon("cut"), class = "btn-warning",
+                  icon = icon("cut"), class = "btn-warning btn-action",
                   style = "padding: 10px 30px; border-radius: 6px; font-weight: 600;")
               )
             )
@@ -1833,13 +1825,13 @@ explorer_body_ui <- function(tab_list){
             h4(icon("check"), "Actions", style = "color: #047857; margin-bottom: 15px; font-weight: 600;"),
             div(style = "margin-bottom: 15px;",
               actionButton("geneclustersCheck", label = "Check", icon = icon("check"),
-                class = "btn-primary", style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
+                class = "btn-primary btn-action", style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
             ),
             actionButton("geneclustersSubmit", label = "Submit", icon = icon("upload"),
-              class = "btn-success", style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;"),
+              class = "btn-primary btn-action", style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;"),
             div(style = "margin-top: 15px;",
               downloadButton("geneclustersDownload", "Download Mapping", icon = icon("file-arrow-down"),
-                class = "btn-warning", style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
+                class = "btn-default btn-action", style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
             ),
             div(style = "background: #fef3c7; border-left: 3px solid #f59e0b; padding: 10px; border-radius: 4px; margin-top: 15px;",
               p("Tips: Click 'Check' to preview, then 'Submit' to add annotation.", style = "font-size: 12px; margin: 0; color: #92400e;")
@@ -1863,7 +1855,7 @@ explorer_body_ui <- function(tab_list){
         withSpinner(uiOutput("ModuleScoreAssays.UI"), proxy.height = "10px"),
         div(style = "margin-top: 15px;",
           actionButton("ModuleScoreCheckGenes", label = "Check Genes",
-            icon = icon("check"), class = "btn-primary",
+            icon = icon("check"), class = "btn-primary btn-action",
             style = "padding: 10px 30px; border-radius: 6px; font-weight: 600;")
         ),
         hr(),
@@ -1913,7 +1905,7 @@ explorer_body_ui <- function(tab_list){
               withSpinner(plotOutput("ClusterCellsPreview", height = "520px")),
               DT::dataTableOutput("ClusterCellsSummary"),
               div(style = "text-align: right; margin-top: 10px;",
-                downloadButton("ClusterCellsDownload", "Download mapping (CSV)", class = "btn-primary"))
+                downloadButton("ClusterCellsDownload", "Download mapping (CSV)", class = "btn-default btn-action"))
             )
           )
         )
@@ -1957,15 +1949,14 @@ explorer_body_ui <- function(tab_list){
           div(style = "text-align: center; margin-top: 15px;",
             actionButton("ClusterCellsCompute", "Compute",
                          icon = icon("play"),
-                         class = "btn-primary btn-lg",
-                         style = "padding: 10px 30px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #047857 0%, #065F46 100%); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);")
+                         class = "btn-primary btn-action")
           ),
           conditionalPanel(
             condition = "output.ClusterCells_ready",
             div(style = "text-align: center; margin-top: 10px;",
               actionButton("ClusterCellsSave", "Save to object",
                            icon = icon("check"),
-                           class = "btn-success",
+                           class = "btn-primary btn-action",
                            style = "padding: 10px 20px; border-radius: 8px; font-weight: 600;")
             )
           )
@@ -2004,7 +1995,7 @@ explorer_body_ui <- function(tab_list){
           choices = c("-" = "-", "+" = "+", "_" = "_"), selected = "_"),
         div(style = "margin-top: 15px;",
           actionButton("combinedclustersGenerate", label = "Generate",
-            icon = icon("table"), class = "btn-primary",
+            icon = icon("table"), class = "btn-primary btn-action",
             style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
         ),
         hr(),
@@ -2071,8 +2062,7 @@ explorer_body_ui <- function(tab_list){
                                        withSpinner(tagList(
                                          div(style = "margin-bottom: 15px; text-align: right;",
                                            downloadButton("download_meta_data", "Download", icon = shiny::icon("file-arrow-down"),
-                                                         class = "btn-primary",
-                                                         style = "padding: 10px 25px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border: none;")
+                                                         class = "btn-default btn-action")
                                          ),
                                          DT::dataTableOutput('dataset_meta')
                                        ))
@@ -2174,7 +2164,7 @@ explorer_body_ui <- function(tab_list){
 
             div(style = "margin-top: 15px;",
               actionButton("ExportResetFilters", "Reset filters",
-                           icon = icon("arrows-rotate"), class = "btn-warning",
+                           icon = icon("arrows-rotate"), class = "btn-warning btn-action",
                            style = "width: 100%; padding: 10px; border-radius: 8px; font-weight: 600;")),
             div(style = "margin-top: 15px;", uiOutput("ExportDownload.UI"))
           )
@@ -2248,17 +2238,13 @@ explorer_global_css <- function() {
             padding: 4px 5px 4px 12px !important;
           }
   
-          /* Optimize box style - keep default background */
+          /* Panels sit at one fixed depth. A pointer passing over the page is
+             not a state change, so the card does not lift on hover. */
           .box {
             border-radius: 6px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: box-shadow 0.2s ease;
           }
-  
-          .box:hover {
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-          }
-  
+
           .box.box-solid .box-title {
             font-weight: 600;
           }
@@ -2267,11 +2253,73 @@ explorer_global_css <- function() {
           .btn {
             border-radius: 6px;
             font-weight: 500;
-            transition: all 0.2s ease;
+            transition: background-color 0.15s ease, border-color 0.15s ease,
+                        color 0.15s ease, box-shadow 0.15s ease;
           }
-  
-          .btn:hover {
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+
+          /* A button shows hover through its fill, not by lifting off the page.
+             Disabled controls have to read as inert at a glance. */
+          .btn[disabled],
+          .btn.disabled,
+          fieldset[disabled] .btn {
+            opacity: 0.65;
+            box-shadow: none !important;
+            cursor: not-allowed;
+          }
+
+          .btn-primary[disabled],
+          .btn-primary.disabled {
+            background-color: #cfd8e3 !important;
+            border-color: #cfd8e3 !important;
+            color: #475569 !important;
+          }
+
+          .btn-primary[disabled] .action-label,
+          .btn-primary.disabled .action-label {
+            color: #475569 !important;
+          }
+
+          /* One primary action style on every analysis page: same fill (the
+             global primary), same height and radius. The section colour stays
+             on the surrounding card instead of moving onto the button. */
+          /* !important is deliberate: many buttons still carry an inline
+             padding/radius/gradient. The class wins on those presentational
+             properties only; inline width, flex and margin stay untouched. */
+          .btn-action {
+            padding: 10px 24px !important;
+            border-radius: 6px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            line-height: 1.4;
+            background-image: none !important;
+            box-shadow: none !important;
+          }
+
+          /* Secondary action (download, copy, neutral toggles): same height
+             as the primary action, neutral surface instead of the accent. */
+          .btn-default {
+            background-color: #ffffff !important;
+            border-color: #cfd8e3;
+            color: #374151;
+          }
+
+          .btn-default:hover,
+          .btn-default:focus,
+          .btn-default:active {
+            background-color: #f3f7fa !important;
+            border-color: #b6c2cc;
+            color: #1f2937;
+          }
+
+          /* Compact action used inside panels: add filter, apply palette. */
+          .btn-action-sm {
+            padding: 5px 12px !important;
+            border-radius: 4px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            line-height: 1.4;
+            background-image: none !important;
+            box-shadow: none !important;
           }
   
           /* Modal Dialog Styles */
@@ -2307,7 +2355,7 @@ explorer_global_css <- function() {
           }
   
           .param-group-chevron {
-            transition: transform 0.3s ease;
+            transition: transform 0.18s ease;
             display: inline-block;
           }
   
@@ -2324,6 +2372,11 @@ explorer_global_css <- function() {
             --se-pink-text: #BE185D;
             --se-violet-text: #6D28D9;
             --se-muted-text: #5C636A;
+            /* Filled brand surface (header, primary buttons) and its states. */
+            --se-accent: #256b8e;
+            --se-accent-dark: #1e576f;
+            --se-border: #cfd8e3;
+            --se-focus: #1D4ED8;
           }
   
           .skin-blue .main-header .navbar,
@@ -2351,6 +2404,16 @@ explorer_global_css <- function() {
           .box.box-solid.box-primary > .box-header {
             background-color: #256b8e !important;
           }
+
+          /* AdminLTE paints a primary box outline with its own #3c8dbc. Keep
+             the whole surface on the app accent instead of a second blue. */
+          .box.box-primary {
+            border-top-color: var(--se-accent);
+          }
+
+          .box.box-solid.box-primary {
+            border-color: var(--se-accent);
+          }
   
           .label-info,
           .badge-info {
@@ -2377,6 +2440,18 @@ explorer_global_css <- function() {
             background-color: transparent !important;
             color: #fff !important;
           }
+
+          /* The !important fill above also pins every pseudo-state, which left
+             primary buttons with no visible hover. Restate the pressed and
+             hovered fills explicitly, one step darker than the rest state. */
+          .btn-primary:hover,
+          .btn-primary:focus,
+          .btn-primary:active,
+          .btn-primary.active,
+          .open > .dropdown-toggle.btn-primary {
+            background-color: #1e576f !important;
+            border-color: #1e576f !important;
+          }
   
           .btn-info {
             background-color: #0e7490 !important;
@@ -2387,6 +2462,14 @@ explorer_global_css <- function() {
           .btn-info .action-label {
             background-color: transparent !important;
             color: #fff !important;
+          }
+
+          .btn-info:hover,
+          .btn-info:focus,
+          .btn-info:active,
+          .btn-info.active {
+            background-color: #0b5f78 !important;
+            border-color: #0b5f78 !important;
           }
   
           .btn-warning,
@@ -2400,6 +2483,14 @@ explorer_global_css <- function() {
           .btn-warning a {
             background-color: transparent !important;
             color: #fff !important;
+          }
+
+          .btn-warning:hover,
+          .btn-warning:focus,
+          .btn-warning:active,
+          .btn-warning.active {
+            background-color: #92400e !important;
+            border-color: #92400e !important;
           }
   
           .content-wrapper a {
@@ -2437,6 +2528,35 @@ explorer_global_css <- function() {
             border-color: #256b8e !important;
             background-color: #256b8e !important;
           }
+
+          /* In the 3/12 settings column a 10+ step slider prints every number
+             under the track and they collide. Keep the track and the value
+             bubble; drop only the unreadable grid numerals in that column. */
+          .col-md-3 .irs-grid-text,
+          .col-sm-3 .irs-grid-text {
+            display: none !important;
+          }
+
+          /* jQuery-UI ships a blue striped corner grip on resizable plots,
+             which belongs to no part of this palette. Replace it with a
+             quiet grey grip that still reads as draggable. */
+          .ui-resizable-handle {
+            background-image: none !important;
+          }
+
+          .ui-resizable-se {
+            width: 14px !important;
+            height: 14px !important;
+            right: 4px !important;
+            bottom: 4px !important;
+            border-radius: 3px;
+            background-color: #cbd5e1 !important;
+            box-shadow: inset 0 0 0 1px #94a3b8;
+          }
+
+          .ui-resizable-se:hover {
+            background-color: #94a3b8 !important;
+          }
   
           .form-control,
           .form-control:disabled,
@@ -2447,6 +2567,24 @@ explorer_global_css <- function() {
           .form-control::placeholder {
             color: var(--se-muted-text) !important;
             opacity: 1;
+          }
+
+          /* Theme the native focus glow from the palette instead of leaving
+             Bootstrap's default #66afe9 halo. */
+          .form-control:focus {
+            border-color: var(--se-focus);
+            box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+          }
+
+          .selectize-control .selectize-input.focus {
+            border-color: var(--se-focus);
+            box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+          }
+
+          /* Native checkboxes and radios follow the brand accent. */
+          .checkbox input[type='checkbox'],
+          .radio input[type='radio'] {
+            accent-color: var(--se-accent);
           }
   
           .se-sr-only {
@@ -2472,8 +2610,15 @@ explorer_global_css <- function() {
             padding: 4px 0;
           }
   
-          .param-group-summary:focus-visible {
-            outline: 2px solid #1D4ED8;
+          /* One focus ring for every interactive element, drawn outside the
+             element so a panel's overflow never clips it. */
+          .param-group-summary:focus-visible,
+          .btn:focus-visible,
+          .content-wrapper a:focus-visible,
+          .se-page-hint-close:focus-visible,
+          .se-hint-toggle:focus-visible,
+          .se-colguide > summary:focus-visible {
+            outline: 2px solid var(--se-focus);
             outline-offset: 2px;
             border-radius: 4px;
           }
@@ -2700,7 +2845,8 @@ explorer_global_css <- function() {
   
           .se-colguide-raw {
             display: block;
-            color: #9CA3AF;
+            /* #9CA3AF sat at 2.6:1 on white; this tone clears 4.5:1. */
+            color: #6B7280;
             font-size: 11px;
             margin-top: 2px;
           }
@@ -2766,9 +2912,67 @@ explorer_global_css <- function() {
             .content-wrapper {
               padding: 10px;
             }
-  
+
             .box {
               margin-bottom: 10px;
+            }
+          }
+
+          /* Browser surfaces -------------------------------------------------
+             Selection, scrollbars and table numerals ship with browser
+             defaults. They are themed from the palette so the parts we did not
+             draw still belong to the app. */
+          ::selection {
+            background: rgba(37, 107, 142, 0.22);
+          }
+
+          html {
+            scrollbar-color: #b6c2cc #eef2f7;
+          }
+
+          ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+          }
+
+          ::-webkit-scrollbar-track {
+            background: #eef2f7;
+          }
+
+          ::-webkit-scrollbar-thumb {
+            background: #b6c2cc;
+            border: 2px solid #eef2f7;
+            border-radius: 6px;
+          }
+
+          ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+          }
+
+          /* Data tables use the app's body size, and digits share a width so
+             numeric columns line up down the page. */
+          .dataTables_wrapper {
+            font-size: 13px;
+          }
+
+          table.dataTable td,
+          table.dataTable th {
+            font-variant-numeric: tabular-nums;
+          }
+
+          /* Highlight the row under the pointer so wide result tables can be
+             read across without losing the line. */
+          table.dataTable tbody tr:hover {
+            background-color: #f3f7fa !important;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+              transition-duration: 0.01ms !important;
+              animation-duration: 0.01ms !important;
+              animation-iteration-count: 1 !important;
             }
           }
         "))
@@ -3049,13 +3253,13 @@ ui <-  function(){
                                   fluidRow(
                                     # upload a file
                                     box(status = "primary", title = "Upload Data", width = 12, collapsible = TRUE, solidHeader = TRUE,
-                                        fileInput("dataset_file", "Choose A rds or qs2 file of Seurat Object:", accept = c('.rds', ".qs2")),
+                                        fileInput("dataset_file", "Choose a Seurat object file (.rds or .qs2):", accept = c('.rds', ".qs2")),
                                         div(style = "display: flex; align-items: center; text-align: center; color: #5C636A; margin: 15px 0;",
                                             div(style = "flex: 1; border-bottom: 1px dashed #dee2e6;"),
                                             span(style = "padding: 0 10px;", "OR"),
                                             div(style = "flex: 1; border-bottom: 1px dashed #dee2e6;")),
                                         div(style = "text-align: center;",
-                                            actionButton("demo_data", "Download and Run a demo data", icon = icon("download"), class = "btn-primary"),
+                                            actionButton("demo_data", "Download and run demo data", icon = icon("download"), class = "btn-primary btn-action"),
                                             tags$small(style = "display: block; color: #5C636A; margin-top: 8px;",
                                                        "Downloads a Fly gut demo dataset (~74 MB, 1000 cells) and loads it automatically. The file is cached locally for later use.")),
                                         uiOutput("dataOverview"))
