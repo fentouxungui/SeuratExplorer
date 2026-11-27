@@ -926,8 +926,10 @@ SeuratExplorer is built upon excellent work by:
 #>   LAPACK version 3.12.1
 #> 
 #> locale:
-#> [1] LC_COLLATE=Chinese (Simplified)_China.utf8  LC_CTYPE=Chinese (Simplified)_China.utf8   
-#> [3] LC_MONETARY=Chinese (Simplified)_China.utf8 LC_NUMERIC=C                               
+#> [1] LC_COLLATE=Chinese (Simplified)_China.utf8 
+#> [2] LC_CTYPE=Chinese (Simplified)_China.utf8   
+#> [3] LC_MONETARY=Chinese (Simplified)_China.utf8
+#> [4] LC_NUMERIC=C                               
 #> [5] LC_TIME=Chinese (Simplified)_China.utf8    
 #> 
 #> time zone: Asia/Shanghai
@@ -940,33 +942,78 @@ SeuratExplorer is built upon excellent work by:
 #> [1] SeuratExplorer_0.1.12 shiny_1.14.0         
 #> 
 #> loaded via a namespace (and not attached):
-#>   [1] pbapply_1.7-5         gridExtra_2.3.1       rlang_1.3.0           magrittr_2.0.5       
-#>   [5] shinydashboard_0.7.3  RcppAnnoy_0.0.23      otel_0.2.0            matrixStats_1.5.0    
-#>   [9] ggridges_0.5.7        compiler_4.6.1        systemfonts_1.3.2     ggalluvial_0.12.6    
-#>  [13] png_0.1-9             vctrs_0.7.3           reshape2_1.4.5        stringr_1.6.0        
-#>  [17] pkgconfig_2.0.3       fastmap_1.2.0         fontawesome_0.5.3     labeling_0.4.3       
-#>  [21] shinyjqui_0.4.1       promises_1.5.0        markdown_2.0          ragg_1.5.2           
-#>  [25] purrr_1.2.2           xfun_0.60             cachem_1.1.0          litedown_0.11        
-#>  [29] jsonlite_2.0.0        later_1.4.8           irlba_2.3.7           parallel_4.6.1       
-#>  [33] cluster_2.1.8.2       R6_2.6.1              ica_1.0-3             bslib_0.12.0         
-#>  [37] stringi_1.8.9         RColorBrewer_1.1-3    limma_3.68.5          parallelly_1.48.0    
-#>  [41] jquerylib_0.1.4       scattermore_1.2       Rcpp_1.1.2            knitr_1.52           
-#>  [45] future.apply_1.20.2   sctransform_0.4.3     httpuv_1.6.17         Matrix_1.7-5         
-#>  [49] igraph_2.3.3          tidyselect_1.2.1      rstudioapi_0.19.0     yaml_2.3.12          
-#>  [53] codetools_0.2-20      miniUI_0.1.2          listenv_1.0.0         lattice_0.22-9       
-#>  [57] tibble_3.3.1          plyr_1.8.9            withr_3.0.3           S7_0.2.2             
-#>  [61] evaluate_1.0.5        Rtsne_0.17            future_1.75.0         fastDummies_1.7.6    
-#>  [65] pillar_1.11.1         shinycssloaders_1.1.0 Seurat_6.0.0          KernSmooth_2.23-26   
-#>  [69] DT_0.34.0             shinyjs_2.1.1         generics_0.1.4        RcppHNSW_0.7.0       
-#>  [73] sp_2.2-3              ggplot2_4.0.3         commonmark_2.0.0      scales_1.4.0         
-#>  [77] globals_0.19.1        xtable_1.8-8          glue_1.8.1            tools_4.6.1          
-#>  [81] data.table_1.18.6.1   RSpectra_0.16-2       colourpicker_1.3.0    RANN_2.6.3           
-#>  [85] dotCall64_1.2         cowplot_1.2.0         grid_4.6.1            tidyr_1.3.2          
-#>  [89] crosstalk_1.2.2       shinyBS_0.65.0        patchwork_1.3.2       presto_1.1.0         
-#>  [93] cli_3.6.6             textshaping_1.0.5     spam_2.11-4           dplyr_1.2.1          
-#>  [97] uwot_0.2.5            gtable_0.3.6          pls_2.9-0             sass_0.4.10          
-#> [101] digest_0.6.39         progressr_1.0.0       ggrepel_0.9.8         htmlwidgets_1.6.4    
-#> [105] SeuratObject_5.4.0    farver_2.1.2          memoise_2.0.1         htmltools_0.5.9      
-#> [109] lifecycle_1.0.5       httr_1.4.9            shinyWidgets_0.9.1    statmod_1.5.2        
-#> [113] mime_0.13             MASS_7.3-65
+#>   [1] RColorBrewer_1.1-3          rstudioapi_0.19.0          
+#>   [3] jsonlite_2.0.0              magrittr_2.0.5             
+#>   [5] shinyjqui_0.4.1             farver_2.1.2               
+#>   [7] ragg_1.5.2                  vctrs_0.7.3                
+#>   [9] memoise_2.0.1               DelayedMatrixStats_1.34.0  
+#>  [11] htmltools_0.5.9             S4Arrays_1.12.0            
+#>  [13] SparseArray_1.12.2          sass_0.4.10                
+#>  [15] sctransform_0.4.3           parallelly_1.48.0          
+#>  [17] bslib_0.12.0                KernSmooth_2.23-26         
+#>  [19] fontawesome_0.5.3           htmlwidgets_1.6.4          
+#>  [21] ica_1.0-3                   plyr_1.8.9                 
+#>  [23] cachem_1.1.0                commonmark_2.0.0           
+#>  [25] igraph_2.3.3                mime_0.13                  
+#>  [27] lifecycle_1.0.5             pkgconfig_2.0.3            
+#>  [29] colourpicker_1.3.0          Matrix_1.7-5               
+#>  [31] R6_2.6.1                    fastmap_1.2.0              
+#>  [33] MatrixGenerics_1.24.0       future_1.75.0              
+#>  [35] digest_0.6.39               shinycssloaders_1.1.0      
+#>  [37] patchwork_1.3.2             AnnotationDbi_1.74.0       
+#>  [39] S4Vectors_0.50.3            Seurat_6.0.0               
+#>  [41] RSpectra_0.16-2             irlba_2.3.7                
+#>  [43] textshaping_1.0.5           crosstalk_1.2.2            
+#>  [45] GenomicRanges_1.64.0        RSQLite_3.53.3             
+#>  [47] labeling_0.4.3              progressr_1.0.0            
+#>  [49] httr_1.4.9                  abind_1.4-8                
+#>  [51] compiler_4.6.1              bit64_4.8.6                
+#>  [53] withr_3.0.3                 S7_0.2.2                   
+#>  [55] DBI_1.3.0                   fastDummies_1.7.6          
+#>  [57] R.utils_2.13.0              MASS_7.3-65                
+#>  [59] DelayedArray_0.38.2         tools_4.6.1                
+#>  [61] otel_0.2.0                  httpuv_1.6.17              
+#>  [63] future.apply_1.20.2         R.oo_1.27.1                
+#>  [65] glue_1.8.1                  promises_1.5.0             
+#>  [67] grid_4.6.1                  Rtsne_0.17                 
+#>  [69] cluster_2.1.8.2             reshape2_1.4.5             
+#>  [71] generics_0.1.4              gtable_0.3.6               
+#>  [73] shinyBS_0.65.0              R.methodsS3_1.8.2          
+#>  [75] tidyr_1.3.2                 data.table_1.18.6.1        
+#>  [77] sp_2.2-3                    XVector_0.52.0             
+#>  [79] BiocGenerics_0.58.1         RcppAnnoy_0.0.23           
+#>  [81] markdown_2.0                ggrepel_0.9.8              
+#>  [83] RANN_2.6.3                  pillar_1.11.1              
+#>  [85] stringr_1.6.0               limma_3.68.5               
+#>  [87] spam_2.11-4                 RcppHNSW_0.7.0             
+#>  [89] later_1.4.8                 dplyr_1.2.1                
+#>  [91] AUCell_1.34.0               lattice_0.22-9             
+#>  [93] bit_4.6.0                   annotate_1.90.0            
+#>  [95] tidyselect_1.2.1            miniUI_0.1.2               
+#>  [97] Biostrings_2.80.2           pbapply_1.7-5              
+#>  [99] knitr_1.52                  gridExtra_2.3.1            
+#> [101] litedown_0.11               IRanges_2.46.0             
+#> [103] Seqinfo_1.2.0               SummarizedExperiment_1.42.0
+#> [105] scattermore_1.2             shinydashboard_0.7.3       
+#> [107] stats4_4.6.1                xfun_0.60                  
+#> [109] pls_2.9-0                   Biobase_2.72.0             
+#> [111] statmod_1.5.2               matrixStats_1.5.0          
+#> [113] DT_0.34.0                   stringi_1.8.9              
+#> [115] yaml_2.3.12                 shinyWidgets_0.9.1         
+#> [117] evaluate_1.0.5              codetools_0.2-20           
+#> [119] tibble_3.3.1                graph_1.90.0               
+#> [121] cli_3.6.6                   uwot_0.2.5                 
+#> [123] systemfonts_1.3.2           xtable_1.8-8               
+#> [125] jquerylib_0.1.4             Rcpp_1.1.2                 
+#> [127] globals_0.19.1              png_0.1-9                  
+#> [129] XML_3.99-0.25               parallel_4.6.1             
+#> [131] ggplot2_4.0.3               blob_1.3.0                 
+#> [133] presto_1.1.0                ggalluvial_0.12.6          
+#> [135] dotCall64_1.2               sparseMatrixStats_1.24.0   
+#> [137] listenv_1.0.0               GSEABase_1.74.0            
+#> [139] scales_1.4.0                ggridges_0.5.7             
+#> [141] purrr_1.2.2                 SeuratObject_5.4.0         
+#> [143] crayon_1.5.3                rlang_1.3.0                
+#> [145] cowplot_1.2.0               KEGGREST_1.52.2            
+#> [147] shinyjs_2.1.1
 ```

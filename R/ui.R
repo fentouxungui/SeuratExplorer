@@ -524,12 +524,12 @@ explorer_body_ui <- function(tab_list){
                                           conditionalPanel(
                                             condition = "input.VlnSplitPlot == true && (input.VlnStackPlot != true || input.VlnFlipPlot == true)",
                                             p("Split violins use the colors defined for the Split by variable in Cluster Colors. Unsplit violins use the cluster-resolution colors; side-by-side split violins use cluster colors when defined.",
-                                              style = "font-size: 11px; color: #856404; margin: -4px 0 10px 0;")
+                                              style = "font-size: 11px; color: #92400E; margin: -4px 0 10px 0;")
                                           ),
                                           conditionalPanel(
                                             condition = "input.VlnSplitPlot == true && input.VlnStackPlot == true && input.VlnFlipPlot != true",
                                             p("Split violins in the stacked layout require Flip axes. Without it, split groups are shown side by side instead.",
-                                              style = "font-size: 11px; color: #856404; margin: -4px 0 10px 0;")
+                                              style = "font-size: 11px; color: #92400E; margin: -4px 0 10px 0;")
                                           ),
                                           conditionalPanel(
                                             condition = "input.VlnSplitPlot == true",
@@ -902,17 +902,17 @@ explorer_body_ui <- function(tab_list){
                                       negative margins so the rule does not depend on the
                                       wrapper's class name or nesting depth. */
                                    #degstabbox-container .nav-tabs-custom {
-                                     background: #ffffff;
-                                     border: 2px solid #10b981;
+                                     background: #EAF5EE;
+                                     border: 1px solid #CFE6D6;
                                      border-radius: 8px;
-                                     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                                     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
                                      margin-left: -15px !important;
                                      margin-right: -15px !important;
                                      width: calc(100% + 30px) !important;
                                      box-sizing: border-box !important;
                                    }
                                    #degstabbox-container .nav-tabs-custom .nav-tabs {
-                                     background: #ffffff;
+                                     background: #EAF5EE;
                                      border: none;
                                      border-bottom: 1px solid #e5e7eb;
                                      border-radius: 8px 8px 0 0;
@@ -946,7 +946,7 @@ explorer_body_ui <- function(tab_list){
                                      font-weight: 600;
                                    }
                                    #degstabbox-container .tab-content {
-                                     background: #ffffff;
+                                     background: #EAF5EE;
                                      border: none;
                                      border-radius: 0 0 8px 8px;
                                      padding: 20px;
@@ -1053,11 +1053,10 @@ explorer_body_ui <- function(tab_list){
                                        div(
                                          class = "col-md-8",
                                          div(
-                                           class = "box",
-                                           style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);",
+                                           class = "box se-card",
                                            div(
                                              class = "box-header",
-                                             style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+                                             style = "padding: 14px 20px; border-bottom: 2px solid #3b82f6;",
                                              div(
                                                style = "display: flex; align-items: center; gap: 10px;",
                                                icon("table", style = "color: #1D4ED8; font-size: 18px;"),
@@ -1081,11 +1080,10 @@ explorer_body_ui <- function(tab_list){
                                          conditionalPanel(
                                            condition = "output.DEGs_row_selected",
                                            div(
-                                             class = "box",
-                                             style = "background: white; border: 2px solid #10b981; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);",
+                                             class = "box se-card",
                                              div(
                                                class = "box-header",
-                                               style = "padding: 15px 20px; border-bottom: 2px solid #10b981;",
+                                               style = "padding: 14px 20px; border-bottom: 2px solid #10b981;",
                                                div(
                                                  style = "display: flex; align-items: center; gap: 10px;",
                                                  icon("external-link-alt", style = "color: #047857; font-size: 18px;"),
@@ -1128,8 +1126,8 @@ explorer_body_ui <- function(tab_list){
                                    class = "col-md-3",
                                    style = "margin-bottom: 10px;",
                                    div(
-                                     style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-                                     h4(icon("sliders-h"), "Step 1: Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+                                     style = "background: #EAF5EE; border: 1px solid #CFE6D6; padding: 14px 20px 20px; border-radius: 8px; height: 100%;",
+                                     h4(icon("sliders-h"), "Step 1: Settings", style = "color: #047857; margin-top: 0; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      withSpinner(uiOutput("TopGenesClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("TopGenesSelectedClusters.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("TopGenesAssays.UI"), proxy.height = "10px"),
@@ -1150,7 +1148,7 @@ explorer_body_ui <- function(tab_list){
                                      class = "se-step-card",
                                      div(
                                        class = "se-step-header",
-                                       icon("chart-line", style = "color: #1D4ED8;"),
+                                       icon("chart-line", style = "color: #047857;"),
                                        h4("Step 2: Calculate Top Genes")
                                      ),
                                      div(
@@ -1217,11 +1215,10 @@ explorer_body_ui <- function(tab_list){
                                        div(
                                          class = "col-xs-12",
                                          div(
-                                           class = "box",
-                                           style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);",
+                                           class = "box se-card",
                                            div(
                                              class = "box-header",
-                                             style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+                                             style = "padding: 14px 20px; border-bottom: 2px solid #3b82f6;",
                                              div(
                                                style = "display: flex; align-items: center; gap: 10px;",
                                                icon("table", style = "color: #1D4ED8; font-size: 18px;"),
@@ -1261,8 +1258,8 @@ explorer_body_ui <- function(tab_list){
                                    class = "col-md-3",
                                    style = "margin-bottom: 10px;",
                                    div(
-                                     style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-                                     h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+                                     style = "background: #EAF5EE; border: 1px solid #CFE6D6; padding: 14px 20px 20px; border-radius: 8px; height: 100%;",
+                                     h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-top: 0; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      textAreaInput("FeatureSummarySymbol", "Gene Symbols:", value = "", height = '100px', resize = "vertical"),
                                      withSpinner(uiOutput("FeatureSummaryClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("FeatureSummarySelectedClusters.UI"), proxy.height = "10px"),
@@ -1292,11 +1289,10 @@ explorer_body_ui <- function(tab_list){
                                    conditionalPanel(
                                      condition = "output.FeatureSummary_ready",
                                      div(
-                                       class = "box",
-                                       style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);",
+                                       class = "box se-card",
                                        div(
                                          class = "box-header",
-                                         style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+                                         style = "padding: 14px 20px; border-bottom: 2px solid #3b82f6;",
                                          div(
                                            style = "display: flex; align-items: center; gap: 10px;",
                                            icon("table", style = "color: #1D4ED8; font-size: 18px;"),
@@ -1331,17 +1327,17 @@ explorer_body_ui <- function(tab_list){
                                       card itself, so the rule does not depend on the
                                       wrapper's class name or nesting depth. */
                                    #featurecorrelationtabbox-container .nav-tabs-custom {
-                                     background: #ffffff;
-                                     border: 2px solid #3b82f6;
+                                     background: #EAF5EE;
+                                     border: 1px solid #CFE6D6;
                                      border-radius: 8px;
-                                     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                                     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
                                      margin-left: -15px !important;
                                      margin-right: -15px !important;
                                      width: calc(100% + 30px) !important;
                                      box-sizing: border-box !important;
                                    }
                                    #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs {
-                                     background: #ffffff;
+                                     background: #EAF5EE;
                                      border: none;
                                      border-bottom: 1px solid #e5e7eb;
                                      border-radius: 8px 8px 0 0;
@@ -1364,18 +1360,18 @@ explorer_body_ui <- function(tab_list){
                                    }
                                    #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li a:hover {
                                      background: transparent;
-                                     color: #1D4ED8;
+                                     color: #047857;
                                    }
                                    #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li.active:hover a,
                                    #featurecorrelationtabbox-container .nav-tabs-custom .nav-tabs li.active a {
                                      background: transparent;
                                      border: none;
-                                     border-bottom: 2px solid #3b82f6;
-                                     color: #1D4ED8;
+                                     border-bottom: 2px solid #10b981;
+                                     color: #047857;
                                      font-weight: 600;
                                    }
                                    #featurecorrelationtabbox-container .tab-content {
-                                     background: #ffffff;
+                                     background: #EAF5EE;
                                      border: none;
                                      border-radius: 0 0 8px 8px;
                                      padding: 20px;
@@ -1398,8 +1394,8 @@ explorer_body_ui <- function(tab_list){
                                    class = "col-md-3",
                                    style = "margin-bottom: 10px;",
                                    div(
-                                     style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-                                     h4(icon("sliders-h"), "Step 1: Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+                                     style = "background: #EAF5EE; border: 1px solid #CFE6D6; padding: 14px 20px 20px; border-radius: 8px; height: 100%;",
+                                     h4(icon("sliders-h"), "Step 1: Settings", style = "color: #047857; margin-top: 0; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      withSpinner(uiOutput("FeatureCorrelationClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("FeatureCorrelationIdentsSelected.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("FeatureCorrelationAssays.UI"), proxy.height = "10px"),
@@ -1418,7 +1414,7 @@ explorer_body_ui <- function(tab_list){
                                        title = h4(
                                          icon("chart-line"),
                                          "Step 2: Calculate Correlation",
-                                         style = "margin: 0; color: #1D4ED8; font-weight: 600; display: flex; align-items: center; gap: 8px;"
+                                         style = "margin: 0; color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"
                                        ),
                                        id = "tabset_featurecorrelation", width = 12,
                                        tabPanel("Top correlated pairs",
@@ -1475,11 +1471,10 @@ explorer_body_ui <- function(tab_list){
                                    conditionalPanel(
                                      condition = "output.FeatureCorrelation_ready",
                                      div(
-                                       class = "box",
-                                       style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);",
+                                       class = "box se-card",
                                        div(
                                          class = "box-header",
-                                         style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+                                         style = "padding: 14px 20px; border-bottom: 2px solid #3b82f6;",
                                          div(
                                            style = "display: flex; align-items: center; gap: 10px;",
                                            icon("table", style = "color: #1D4ED8; font-size: 18px;"),
@@ -1510,11 +1505,10 @@ explorer_body_ui <- function(tab_list){
                                  div(
                                    class = "col-md-9",
                                    div(
-                                     class = "box",
-                                     style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); height: 100%;",
+                                     class = "box se-card se-card--full",
                                      div(
                                        class = "box-header",
-                                       style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+                                       style = "padding: 14px 20px; border-bottom: 2px solid #3b82f6;",
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
                                          icon("table", style = "color: #1D4ED8; font-size: 18px;"),
@@ -1539,8 +1533,8 @@ explorer_body_ui <- function(tab_list){
                                  div(
                                    class = "col-md-3",
                                    div(
-                                     style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-                                     h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+                                     style = "background: #EAF5EE; border: 1px solid #CFE6D6; padding: 14px 20px 20px; border-radius: 8px; height: 100%;",
+                                     h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-top: 0; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      withSpinner(uiOutput("renameclustersClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("renameclustersDimensionReduction.UI"), proxy.height = "10px"),
                                      sliderInput("renameclustersLabelSize", "Preview label size:", min = 1, max = 20, value = 7, step = 0.5),
@@ -1589,11 +1583,10 @@ explorer_body_ui <- function(tab_list){
       div(
         class = "col-md-9",
         div(
-          class = "box",
-          style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); height: 100%;",
+          class = "box se-card se-card--full",
           div(
             class = "box-header",
-            style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+            style = "padding: 14px 20px; border-bottom: 2px solid #3b82f6;",
             div(
               style = "display: flex; align-items: center; gap: 10px;",
               icon("sort", style = "color: #1D4ED8; font-size: 18px;"),
@@ -1614,9 +1607,9 @@ explorer_body_ui <- function(tab_list){
       div(
         class = "col-md-3",
         div(
-          style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+          style = "background: #EAF5EE; border: 1px solid #CFE6D6; padding: 14px 20px 20px; border-radius: 8px; height: 100%;",
           h4(icon("sliders-h"), "Settings",
-             style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+             style = "color: #047857; margin-top: 0; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
 
           withSpinner(uiOutput("reorderclustersClusterResolution.UI"), proxy.height = "10px"),
           withSpinner(uiOutput("reorderclustersDimensionReduction.UI"), proxy.height = "10px"),
@@ -1660,8 +1653,8 @@ explorer_body_ui <- function(tab_list){
         class = "col-md-4",
         style = "margin-bottom: 10px;",
         div(
-          style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-          h4(icon("palette"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+          style = "background: #EAF5EE; border: 1px solid #CFE6D6; padding: 14px 20px 20px; border-radius: 8px; height: 100%;",
+          h4(icon("palette"), "Settings", style = "color: #047857; margin-top: 0; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
 
           h5(icon("layer-group"), "Step 1: Cluster resolution",
              style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
@@ -1705,7 +1698,7 @@ explorer_body_ui <- function(tab_list){
           ),
           div(style = "margin-top: 8px;",
             actionLink("ClusterColorClearSaved", "Remove saved colors for this resolution",
-                       style = "color: #dc3545; font-size: 12px;")),
+                       style = "color: #B42318; font-size: 12px;")),
           div(style = "margin-top: 8px;", textOutput("ClusterColorStatus")),
 
           hr(),
@@ -1726,11 +1719,10 @@ explorer_body_ui <- function(tab_list){
         class = "col-md-8",
         style = "margin-bottom: 10px;",
         div(
-          class = "box",
-          style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);",
+          class = "box se-card",
           div(
             class = "box-header",
-            style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+            style = "padding: 14px 20px; border-bottom: 2px solid #3b82f6;",
             div(
               style = "display: flex; align-items: center; gap: 10px;",
               icon("image", style = "color: #1D4ED8; font-size: 18px;"),
@@ -1810,8 +1802,8 @@ explorer_body_ui <- function(tab_list){
       condition = "output.geneclusters_table_ready",
       div(class = "row se-tight-row", style = "margin-top: 15px;",
         div(class = "col-md-9",
-          div(class = "box", style = "background: white; border: 2px solid #3b82f6; border-radius: 8px;",
-            div(class = "box-header", style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+          div(class = "box se-card se-card--flat",
+            div(class = "box-header", style = "padding: 14px 20px; border-bottom: 2px solid #3b82f6;",
               h4(icon("table"), "Classification Table", style = "color: #1D4ED8; font-weight: 600; margin: 0;")
             ),
             div(class = "box-body", style = "padding: 20px;",
@@ -1820,8 +1812,8 @@ explorer_body_ui <- function(tab_list){
           )
         ),
         div(class = "col-md-3",
-          div(style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px;",
-            h4(icon("check"), "Actions", style = "color: #047857; margin-bottom: 15px; font-weight: 600;"),
+          div(style = "background: #EAF5EE; border: 1px solid #CFE6D6; padding: 14px 20px 20px; border-radius: 8px;",
+            h4(icon("check"), "Actions", style = "color: #047857; margin-top: 0; margin-bottom: 15px; font-weight: 600;"),
             div(style = "margin-bottom: 15px;",
               actionButton("geneclustersCheck", label = "Check", icon = icon("check"),
                 class = "btn-primary btn-action", style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
@@ -1847,22 +1839,31 @@ explorer_body_ui <- function(tab_list){
       tags$span("Paste a gene set, click Check Genes, then name the score and compute it.")
     ),
     fluidRow(
-      box(title = "Module Score", solidHeader = TRUE, status = "primary", width = 12,
-        textAreaInput("ModuleScoreFeatures", "Gene Symbols:",
-          value = "", height = '100px', resize = "vertical",
-          placeholder = "Paste gene symbols, one per line or comma-separated"),
-        withSpinner(uiOutput("ModuleScoreAssays.UI"), proxy.height = "10px"),
-        div(style = "margin-top: 15px;",
-          actionButton("ModuleScoreCheckGenes", label = "Check Genes",
-            icon = icon("check"), class = "btn-primary btn-action",
-            style = "padding: 10px 30px; border-radius: 6px; font-weight: 600;")
-        ),
-        hr(),
-        uiOutput("ModuleScoreName.UI"),
-        uiOutput("ModuleScoreSubmit.UI")
+      div(class = "col-sm-12",
+        div(class = "box se-card se-card--config",
+          div(class = "box-header", style = "padding: 14px 20px;",
+            div(style = "display: flex; align-items: center; gap: 10px;",
+              icon("calculator", style = "color: #1D4ED8; font-size: 18px;"),
+              h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Module Score")
+            )
+          ),
+          div(class = "box-body", style = "padding: 20px;",
+            textAreaInput("ModuleScoreFeatures", "Gene Symbols:",
+              value = "", height = '100px', resize = "vertical",
+              placeholder = "Paste gene symbols, one per line or comma-separated"),
+            withSpinner(uiOutput("ModuleScoreAssays.UI"), proxy.height = "10px"),
+            div(style = "margin-top: 15px;",
+              actionButton("ModuleScoreCheckGenes", label = "Check Genes",
+                icon = icon("check"), class = "btn-primary btn-action",
+                style = "padding: 10px 30px; border-radius: 6px; font-weight: 600;")
+            ),
+            hr(),
+            uiOutput("ModuleScoreName.UI"),
+            uiOutput("ModuleScoreSubmit.UI")
+          )
+        )
       )
-    ),
-    uiOutput("ModuleScoreResult.UI")
+    )
   )
   tab_list[["clustercells"]] = tabItem(tabName = "clustercells",
     div(
@@ -1874,11 +1875,10 @@ explorer_body_ui <- function(tab_list){
       div(
         class = "col-md-9",
         div(
-          class = "box",
-          style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); height: 100%;",
+          class = "box se-card se-card--full",
           div(
             class = "box-header",
-            style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+            style = "padding: 14px 20px; border-bottom: 2px solid #3b82f6;",
             div(
               style = "display: flex; align-items: center; gap: 10px;",
               icon("image", style = "color: #1D4ED8; font-size: 18px;"),
@@ -1912,8 +1912,8 @@ explorer_body_ui <- function(tab_list){
       div(
         class = "col-md-3",
         div(
-          style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-          h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+          style = "background: #EAF5EE; border: 1px solid #CFE6D6; padding: 14px 20px 20px; border-radius: 8px; height: 100%;",
+          h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-top: 0; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
 
           h5(icon("database"), "Data", style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
           withSpinner(uiOutput("ClusterCellsReduction.UI"), proxy.height = "10px"),
@@ -2013,11 +2013,10 @@ explorer_body_ui <- function(tab_list){
                                  div(
                                    class = "col-xs-12",
                                    div(
-                                     class = "box",
-                                     style = "background: white; border: 2px solid #10b981; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);",
+                                     class = "box se-card se-card--inspect",
                                      div(
                                        class = "box-header",
-                                       style = "padding: 15px 20px; border-bottom: 2px solid #10b981;",
+                                       style = "padding: 14px 20px; border-bottom: 2px solid #10b981;",
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
                                          icon("search", style = "color: #047857; font-size: 18px;"),
@@ -2044,11 +2043,10 @@ explorer_body_ui <- function(tab_list){
                                  div(
                                    class = "col-xs-12",
                                    div(
-                                     class = "box",
-                                     style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);",
+                                     class = "box se-card se-card--inspect",
                                      div(
                                        class = "box-header",
-                                       style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+                                       style = "padding: 14px 20px; border-bottom: 2px solid #3b82f6;",
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
                                          icon("table", style = "color: #1D4ED8; font-size: 18px;"),
@@ -2080,11 +2078,10 @@ explorer_body_ui <- function(tab_list){
                                  div(
                                    class = "col-xs-12",
                                    div(
-                                     class = "box",
-                                     style = "background: white; border: 2px solid #8b5cf6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);",
+                                     class = "box se-card se-card--inspect",
                                      div(
                                        class = "box-header",
-                                       style = "padding: 15px 20px; border-bottom: 2px solid #8b5cf6;",
+                                       style = "padding: 14px 20px; border-bottom: 2px solid #8b5cf6;",
                                        div(
                                          style = "display: flex; align-items: center; gap: 10px;",
                                          icon("code", style = "color: #6D28D9; font-size: 18px;"),
@@ -2095,7 +2092,7 @@ explorer_body_ui <- function(tab_list){
                                        class = "box-body",
                                        style = "padding: 20px;",
                                        div(
-                                         style = "background: #f5f3ff; border: 1px solid #8b5cf6; padding: 20px; border-radius: 8px; margin-bottom: 20px;",
+                                         style = "background: #EAF5EE; border: 1px solid #CFE6D6; padding: 14px 20px 20px; border-radius: 8px; margin-bottom: 20px;",
                                          h4(icon("sliders-h"), "Display Settings", style = "color: #6D28D9; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                          sliderInput("ObjectStrutureLevel", label = "Structure Depth:", min = 1, max = 10, value = 3)
                                        ),
@@ -2121,8 +2118,8 @@ explorer_body_ui <- function(tab_list){
           class = "col-md-4",
           style = "margin-bottom: 10px;",
           div(
-            style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
-            h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
+            style = "background: #EAF5EE; border: 1px solid #CFE6D6; padding: 14px 20px 20px; border-radius: 8px; height: 100%;",
+            h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-top: 0; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
 
             h5(icon("filter"), "Step 1: Filter Cells (optional)",
                style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
@@ -2174,11 +2171,10 @@ explorer_body_ui <- function(tab_list){
           class = "col-md-8",
           style = "margin-bottom: 10px;",
           div(
-            class = "box",
-            style = "background: white; border: 2px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);",
+            class = "box se-card",
             div(
               class = "box-header",
-              style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
+              style = "padding: 14px 20px; border-bottom: 2px solid #3b82f6;",
               div(
                 style = "display: flex; align-items: center; gap: 10px;",
                 icon("table", style = "color: #1D4ED8; font-size: 18px;"),
@@ -2247,7 +2243,60 @@ explorer_global_css <- function() {
           .box.box-solid .box-title {
             font-weight: 600;
           }
-  
+
+          /* One heading inset for every card header, including the
+             shinydashboard boxes whose default is 10px. Inline headers already
+             use 14px; this brings the rest in line. */
+          .box > .box-header {
+            padding-top: 14px;
+          }
+
+          /* Result cards. The same surface, edge and shadow used to be written
+             inline on every results panel, so a colour change meant editing a
+             dozen strings. One class keeps them identical and leaves the value
+             in a single place. */
+          .se-card {
+            /* Results and previews: a pale blue keeps them in the brand family
+               without colouring the data itself (plots and tables stay white).
+               The tint is low-chroma, so text contrast is unaffected. */
+            background: #E9F2FB;
+            border: 1px solid #D2E2F4;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+          }
+
+          /* The header edge was a 2px accent colour inline on every card; the
+             card's own edge now carries the separation. */
+          .se-card > .box-header {
+            border-bottom: 1px solid #e5e7eb !important;
+          }
+
+          .se-card--full {
+            height: 100%;
+          }
+
+          /* The same card without the drop shadow, for a card that already
+             sits inside a shaded container. */
+          .se-card--flat {
+            box-shadow: none;
+          }
+
+          /* Card taxonomy by role, not by page: green marks a panel the user
+             configures, pale blue marks computed output, warm grey marks
+             read-only source data. All three stay low-chroma, so body text
+             contrast is unchanged. */
+          .se-card--config {
+            /* Desaturated sage, not a status green: the tint marks a panel you
+               configure, while #047857 stays reserved for success. */
+            background: #EAF5EE;
+            border-color: #CFE6D6;
+          }
+
+          .se-card--inspect {
+            background: #F3EFE7;
+            border-color: #E1DACB;
+          }
+
           /* Optimize button style */
           .btn {
             border-radius: 6px;
@@ -2364,10 +2413,15 @@ explorer_global_css <- function() {
   
           /* Accessibility: AA text tokens and fixed shinydashboard surfaces */
           :root {
-            --se-primary: #2563EB;
+            /* Two names, one blue: #2563EB was a third near-identical value.
+               Keep the token for compatibility, but point it at the text blue. */
+            --se-primary: #1D4ED8;
             --se-primary-text: #1D4ED8;
             --se-success-text: #047857;
-            --se-warning-text: #B45309;
+            /* Warning text on a light surface. #B45309 stays as the filled
+               warning button and the section heading; this token is the text
+               tone and now matches the Tips boxes and inline hints. */
+            --se-warning-text: #92400E;
             --se-pink-text: #BE185D;
             --se-violet-text: #6D28D9;
             --se-muted-text: #5C636A;
@@ -2492,6 +2546,15 @@ explorer_global_css <- function() {
             border-color: #92400e !important;
           }
   
+          /* Canvas: a step darker than white, so the white result cards read as
+             raised surfaces instead of merging into the page. `body` raises the
+             specificity over AdminLTE's own .content-wrapper rule. */
+          body .content-wrapper {
+            /* !important wins regardless of which AdminLTE skin rule loads
+               first; nothing sets this background inline. */
+            background-color: #E9EDF2 !important;
+          }
+
           .content-wrapper a {
             color: var(--se-primary-text);
           }
@@ -2671,7 +2734,8 @@ explorer_global_css <- function() {
             order: -1;
             flex: 0 0 100%;
             float: none !important;
-            padding: 0 0 8px 0;
+            /* 4px on top of the tab strip's own 10px = the shared 14px inset. */
+            padding: 4px 0 8px 0;
             margin: 0;
             line-height: 1.35;
             font-size: inherit;
@@ -2682,16 +2746,20 @@ explorer_global_css <- function() {
              where the two ranking modes are a segmented control rather than a
              tab strip, so the card keeps a single closed outline. */
           .se-step-card {
-            background: #ffffff;
-            border: 2px solid #3b82f6;
+            /* Configuration: the ranking method and the Analyze button live
+               here, the table it produces is a separate card below. */
+            background: #EAF5EE;
+            border: 1px solid #CFE6D6;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
           }
   
           .se-step-header {
             display: flex;
             align-items: center;
             gap: 8px;
+            /* 14px: the heading inset shared by settings panels and box
+               headers, so side-by-side headings start on the same line. */
             padding: 14px 20px 12px 20px;
             border-bottom: 1px solid #eef2f7;
           }
@@ -2700,7 +2768,9 @@ explorer_global_css <- function() {
             margin: 0;
             font-size: 18px;
             font-weight: 600;
-            color: #1D4ED8;
+            /* Matches the green used by the Step 1 settings panel, so the two
+               halves of the page read as the same role. */
+            color: #047857;
           }
   
           .se-step-body {
@@ -2974,6 +3044,12 @@ explorer_global_css <- function() {
               padding-left: 4px !important;
               padding-right: 4px !important;
             }
+          }
+
+          /* Feature Correlation: the tab strip already adds 10px at the top,
+             so 4px more brings the title to the shared 14px inset. */
+          #featurecorrelationtabbox-container .nav-tabs-custom > ul.nav-tabs > li.header {
+            padding-top: 4px;
           }
   
           /* Responsive optimization */
