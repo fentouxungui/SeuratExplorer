@@ -360,7 +360,7 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
     if (n <= 20) return(NULL)
     p(paste0("This resolution has ", n,
              " clusters. Use 'Highlight Clusters' above or a coarser resolution for readability."),
-      style = "font-size: 11px; color: #856404; margin: 2px 0 6px 0;")
+      style = "font-size: 11px; color: #92400E; margin: 2px 0 6px 0;")
   })
 
   # Store the current plot dimensions
@@ -1054,7 +1054,7 @@ num_or(session$clientData$output_vlnplot_width, 800) * num_or(input$VlnPlotHWRat
     if (n <= 20) return(NULL)
     p(paste0("This resolution has ", n,
              " clusters. If the legend is too long, hide it or use 'Highlight Clusters' in the Dim Reduction Plot."),
-      style = "font-size: 11px; color: #856404; margin: 2px 0 0 0;")
+      style = "font-size: 11px; color: #92400E; margin: 2px 0 0 0;")
   })
 
   output$VlnSplitColorHint.UI <- renderUI({
@@ -1063,7 +1063,7 @@ num_or(session$clientData$output_vlnplot_width, 800) * num_or(input$VlnPlotHWRat
     if (!is.null(get_cluster_color_map(data, input$VlnSplitBy))) return(NULL)
     p(paste0("No colors saved for '", input$VlnSplitBy,
              "' in Cluster Colors; split violins use the default split colors. Set and Submit them in Cluster Colors."),
-      style = "font-size: 11px; color: #856404; margin: 2px 0 0 0;")
+      style = "font-size: 11px; color: #92400E; margin: 2px 0 0 0;")
   })
 
   ################################ Dot Plot
@@ -1956,7 +1956,7 @@ num_or(session$clientData$output_ridgeplot_width, 800) * num_or(input$RidgeplotH
                         style = "font-size: 11px; font-weight: 600; color: #6D28D9;"),
               if (i > 1L) actionLink(paste0("CellratioSubsetCellsRemove_", i),
                                      label = NULL, icon = icon("times-circle"),
-                                     style = "color: #dc3545; font-size: 14px;"))
+                                     style = "color: #B42318; font-size: 14px;"))
         },
         div(style = "margin-bottom: 6px;",
             selectInput(ids$col, label = "Filter Cells By:",
@@ -2216,7 +2216,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     if (n <= 20) return(NULL)
     p(paste0("This resolution has ", n,
              " clusters. If the legend is too long, hide it or use 'Highlight Clusters' in the Dim Reduction Plot."),
-      style = "font-size: 11px; color: #856404; margin: 2px 0 0 0;")
+      style = "font-size: 11px; color: #92400E; margin: 2px 0 0 0;")
   })
 
   output$cellratiodata <-  DT::renderDT(server=FALSE,{
@@ -2441,7 +2441,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
             title = tagList(icon("exclamation-triangle"), "Error"),
             tags$div(
               tags$p("Marker calculation failed:"),
-              tags$pre(style = "color: #dc3545; white-space: pre-wrap;", out$message)
+              tags$pre(style = "color: #B42318; white-space: pre-wrap;", out$message)
             ),
             easyClose = TRUE,
             footer = modalButton("OK"),
@@ -2535,7 +2535,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
         column(2, if (i > 1) actionLink(
           paste0("IntraClusterDEGsRemoveFilter_", i),
           label = NULL, icon = icon("times-circle"),
-          style = "color: #dc3545; font-size: 16px; margin-top: 25px;"
+          style = "color: #B42318; font-size: 16px; margin-top: 25px;"
         ))
       )
     })
@@ -2653,7 +2653,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
           title = tagList(icon("exclamation-triangle"), "Error"),
           tags$div(
             tags$p("DEG calculation failed:"),
-            tags$pre(style = "color: #dc3545; white-space: pre-wrap;", result$message)
+            tags$pre(style = "color: #B42318; white-space: pre-wrap;", result$message)
           ),
           easyClose = TRUE,
           footer = modalButton("OK"),
@@ -3454,7 +3454,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
             title = tagList(icon("exclamation-triangle"), "Calculation failed"),
             tags$div(
               tags$p("Correlation calculation failed:"),
-              tags$pre(style = "color: #dc3545; white-space: pre-wrap;", out$message)
+              tags$pre(style = "color: #B42318; white-space: pre-wrap;", out$message)
             ),
             footer = modalButton("OK"),
             easyClose = TRUE,
@@ -3732,7 +3732,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       cuts <- geneclusters_cutoffs()
       if (!is.null(cuts) && length(cuts) > 0) {
         for (cval in cuts) {
-          p <- p + ggplot2::geom_vline(xintercept = cval, color = "#dc3545", linetype = "dashed", linewidth = 1)
+          p <- p + ggplot2::geom_vline(xintercept = cval, color = "#B42318", linetype = "dashed", linewidth = 1)
         }
       }
       p
@@ -3779,7 +3779,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     output$geneclusters_histogram <- renderPlot({
       p <- ggplot2::ggplot(data.frame(expr = geneclusters_expr()), ggplot2::aes(x = expr)) +
         ggplot2::geom_histogram(bins = 50, fill = "#3b82f6", alpha = 0.7, color = "white") +
-        ggplot2::geom_vline(xintercept = cuts, color = "#dc3545", linetype = "dashed", linewidth = 1) +
+        ggplot2::geom_vline(xintercept = cuts, color = "#B42318", linetype = "dashed", linewidth = 1) +
         ggplot2::labs(x = gene, y = "Cell Count", title = paste("Expression of", gene)) +
         ggplot2::theme_bw() +
         ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"))
@@ -3966,7 +3966,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       if (!aucell_available) {
         div(style = "background: #fff3cd; padding: 5px 8px; border-radius: 4px; margin-top: 4px;",
           p("AUCell is not installed, so only AddModuleScore is available. Install it with BiocManager::install(\"AUCell\").",
-            style = "font-size: 11px; margin: 0; color: #856404;"))
+            style = "font-size: 11px; margin: 0; color: #92400E;"))
       },
       conditionalPanel(
         condition = "input.ModuleScoreMethod == 'aucell'",
@@ -3997,8 +3997,6 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
         style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
     )
   })
-
-  output$ModuleScoreResult.UI <- renderUI({ NULL })
 
   # Gene check
   observeEvent(input$ModuleScoreCheckGenes, {
@@ -4133,7 +4131,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
                    if (isTRUE(info$cached)) " (rankings reused from cache)" else ""))
         },
         if (!is.null(info$note)) {
-          p(info$note, style = "color: #856404;")
+          p(info$note, style = "color: #92400E;")
         },
         p("You can now explore this score in:",
           tags$ul(
@@ -5373,7 +5371,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
           column(1, if (i > 1) actionLink(
             paste0("ExportRemoveFilter_", i),
             label = NULL, icon = icon("times-circle"),
-            style = "color: #dc3545; font-size: 16px; margin-top: 25px;"
+            style = "color: #B42318; font-size: 16px; margin-top: 25px;"
           ))
         )
       })
@@ -5457,11 +5455,11 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
         if (isTRUE(st$keep_na) && st$n_na > 0) {
           p(paste0(format(st$n_na, big.mark = ","),
                    " cell(s) have NA in a filter column and are kept."),
-            style = "color: #856404; font-size: 12px; margin: 0;")
+            style = "color: #92400E; font-size: 12px; margin: 0;")
         } else if (!isTRUE(st$keep_na) && st$n_na > 0) {
           p(paste0(format(st$n_na, big.mark = ","),
                    " cell(s) were excluded because a filter column is NA."),
-            style = "color: #b45309; font-size: 12px; margin: 0;")
+            style = "color: #92400E; font-size: 12px; margin: 0;")
         }
       )
     })
