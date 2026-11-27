@@ -354,7 +354,7 @@ explorer_body_ui <- function(tab_list){
                                     icon("circle-info"),
                                     tags$span("The plot updates automatically as you change the settings. Hover over a parameter label to see what it does.")
                                   ),
-                                  fluidRow(
+                                  div(class = "row se-tight-row",
                                     box(title = "Dimensional Reduction Plot",
                                         div(id = "dimplot_plot_container",
                                             uiOutput("dimplot_resizable_ui")),
@@ -413,7 +413,7 @@ explorer_body_ui <- function(tab_list){
                                         icon("circle-info"),
                                         tags$span("The plot updates automatically as you change the settings. Hover over a parameter label to see what it does.")
                                       ),
-                                      fluidRow(
+                                      div(class = "row se-tight-row",
                                         box(title = "Features on Dimensional Reduction Plot",
                                             uiOutput("featureplot_resizable_ui"),
                                             div(style = "display:inline-block; float:right", downloadButton("downloadfeatureplot", label = "Download PDF", class = "btn-default btn-action")),
@@ -479,7 +479,7 @@ explorer_body_ui <- function(tab_list){
                                     icon("circle-info"),
                                     tags$span("The plot updates automatically as you change the settings. Hover over a parameter label to see what it does.")
                                   ),
-                                  fluidRow(
+                                  div(class = "row se-tight-row",
                                     box(title = "Features Violin Plot",
                                         uiOutput("vlnplot_resizable_ui"),
                                         div(style = "display:inline-block; float:right", downloadButton("downloadvlnplot", label = "Download PDF", class = "btn-default btn-action")),
@@ -569,7 +569,7 @@ explorer_body_ui <- function(tab_list){
                                     icon("circle-info"),
                                     tags$span("The plot updates automatically as you change the settings. Hover over a parameter label to see what it does.")
                                   ),
-                                  fluidRow(
+                                  div(class = "row se-tight-row",
                                     box(title = "Features Dot Plot",
                                         uiOutput("dotplot_resizable_ui"),
                                         div(style = "display:inline-block; float:right", downloadButton("downloaddotplot", label = "Download PDF", class = "btn-default btn-action")),
@@ -637,7 +637,7 @@ explorer_body_ui <- function(tab_list){
                                     icon("circle-info"),
                                     tags$span("The plot updates automatically as you change the settings. Hover over a parameter label to see what it does.")
                                   ),
-                                  fluidRow(
+                                  div(class = "row se-tight-row",
                                     box(title = "Features Heatmap Plot",
                                         uiOutput("heatmap_resizable_ui"),
                                         div(style = "display:inline-block; float:right", downloadButton("downloadheatmap", label = "Download PDF", class = "btn-default btn-action")),
@@ -693,7 +693,7 @@ explorer_body_ui <- function(tab_list){
                                     icon("circle-info"),
                                     tags$span("The plot updates automatically as you change the settings. Hover over a parameter label to see what it does.")
                                   ),
-                                  fluidRow(
+                                  div(class = "row se-tight-row",
                                     box(title = "Features Heatmap by Averaged Expression",
                                         uiOutput("averagedheatmap_resizable_ui"),
                                         div(style = "display:inline-block; float:right", downloadButton("downloadaveragedheatmap", label = "Download PDF", class = "btn-default btn-action")),
@@ -746,7 +746,7 @@ explorer_body_ui <- function(tab_list){
                                       icon("circle-info"),
                                       tags$span("The plot updates automatically as you change the settings. Hover over a parameter label to see what it does.")
                                     ),
-                                    fluidRow(
+                                    div(class = "row se-tight-row",
                                       box(title = "Features Ridge Plot",
                                           uiOutput("ridgeplot_resizable_ui"),
                                           div(style = "display:inline-block; float:right", downloadButton("downloadridgeplot", label = "Download PDF", class = "btn-default btn-action")),
@@ -807,7 +807,7 @@ explorer_body_ui <- function(tab_list){
                                       icon("circle-info"),
                                       tags$span("The plot updates automatically as you change the settings. Hover over a parameter label to see what it does.")
                                     ),
-                                    fluidRow(
+                                    div(class = "row se-tight-row",
                                       box(title = "Cell Percentage Plot",
                                           uiOutput("cellratioplot_resizable_ui"),
                                           div(style = "display:inline-block; float:right", downloadButton("downloadcellratioplot", label = "Download PDF", class = "btn-default btn-action")),
@@ -980,10 +980,9 @@ explorer_body_ui <- function(tab_list){
                                        id = "tabset_degs", width = 12,
                                        tabPanel("Find Markers for All Clusters",
                                                 div(
-                                                  # The tab card is already outlined in green; this panel keeps its
-                                                  # tint and left accent but drops the second outline so the two
-                                                  # borders no longer trace the same edge.
-                                                  style = "background: #f0fdf4; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
+                                                  # The tab card already provides the frame, so this panel adds
+                                                  # no second fill or border of its own.
+                                                  class = "se-section",
                                                   withSpinner(uiOutput("ClusterMarkersClusterResolution.UI"), proxy.height = "10px")
                                                 ),
                                                 div(style = "text-align: center; margin-top: 25px;",
@@ -995,7 +994,7 @@ explorer_body_ui <- function(tab_list){
                                    tabPanel("Find DEGs for two groups",
                                             # Step 1 - Filter Cells
                                             div(
-                                              style = "background: #eff6ff; border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 25px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.1);",
+                                              class = "se-section",
                                               h4(icon("filter"), "Step 1: Filter Cells (Optional)", style = "color: #1D4ED8; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                               p("Click the + button to add multiple filter conditions. Cells matching ALL conditions (intersection) will be kept.", style = "color: #5C636A; margin-bottom: 8px;"),
                                               p("If no filters are modified, all cells will be kept by default.", style = "color: #5C636A; margin-bottom: 15px;"),
@@ -1004,7 +1003,7 @@ explorer_body_ui <- function(tab_list){
                                             ),
                                             # Step 2 - Set Comparison
                                             div(
-                                              style = "background: #fdf2f8; border: 1px solid #ec4899; border-left: 4px solid #ec4899; padding: 25px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 6px rgba(236, 72, 153, 0.1);",
+                                              class = "se-section",
                                               h4(icon("balance-scale"), "Step 2: Set the comparison", style = "color: #BE185D; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                               withSpinner(uiOutput("IntraClusterDEGsCustomizedGroups.UI"), proxy.height = "10px"),
                                               withSpinner(uiOutput("IntraClusterDEGsCustomizedGroupsCase.UI"), proxy.height = "10px"),
@@ -1018,7 +1017,7 @@ explorer_body_ui <- function(tab_list){
                                             )),
                                    tabPanel("Custom Parameters",
                                             div(
-                                              style = "background: #fef3c7; border: 1px solid #f59e0b; border-left: 4px solid #f59e0b; padding: 25px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.1);",
+                                              class = "se-section",
                                               h4(icon("sliders-h"), "Analysis Parameters", style = "color: #B45309; margin-bottom: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                               withSpinner(uiOutput("DEGsAssays.UI"), proxy.height = "10px"),
                                               div(style = "margin-top: 20px;",
@@ -1042,7 +1041,7 @@ explorer_body_ui <- function(tab_list){
 
                                conditionalPanel(
                                  condition = "!output.DEGs_ready",
-                                 div(class = "se-empty-state", style = "margin: 15px 15px 0 15px;",
+                                 div(class = "se-empty-state", style = "margin-left: 15px; margin-right: 15px;",
                                      icon("arrow-down"),
                                      tags$span("Set the options, then click Analyze. Results will appear here."))
                                ),
@@ -1129,7 +1128,7 @@ explorer_body_ui <- function(tab_list){
                                    class = "col-md-3",
                                    style = "margin-bottom: 10px;",
                                    div(
-                                     style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+                                     style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
                                      h4(icon("sliders-h"), "Step 1: Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      withSpinner(uiOutput("TopGenesClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("TopGenesSelectedClusters.UI"), proxy.height = "10px"),
@@ -1207,7 +1206,7 @@ explorer_body_ui <- function(tab_list){
                                  # Analysis Results
                                  conditionalPanel(
                                    condition = "!output.TopGenes_ready",
-                                   div(class = "se-empty-state", style = "margin: 15px 15px 0 15px;",
+                                   div(class = "se-empty-state", style = "margin-left: 15px; margin-right: 15px;",
                                        icon("arrow-down"),
                                        tags$span("Set the options, then click Analyze. Results will appear here."))
                                  ),
@@ -1262,7 +1261,7 @@ explorer_body_ui <- function(tab_list){
                                    class = "col-md-3",
                                    style = "margin-bottom: 10px;",
                                    div(
-                                     style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+                                     style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
                                      h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      textAreaInput("FeatureSummarySymbol", "Gene Symbols:", value = "", height = '100px', resize = "vertical"),
                                      withSpinner(uiOutput("FeatureSummaryClusterResolution.UI"), proxy.height = "10px"),
@@ -1399,7 +1398,7 @@ explorer_body_ui <- function(tab_list){
                                    class = "col-md-3",
                                    style = "margin-bottom: 10px;",
                                    div(
-                                     style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+                                     style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
                                      h4(icon("sliders-h"), "Step 1: Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      withSpinner(uiOutput("FeatureCorrelationClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("FeatureCorrelationIdentsSelected.UI"), proxy.height = "10px"),
@@ -1423,7 +1422,7 @@ explorer_body_ui <- function(tab_list){
                                        ),
                                        id = "tabset_featurecorrelation", width = 12,
                                        tabPanel("Top correlated pairs",
-                                                div(style = "max-width: 280px; margin: 0 auto 5px auto;",
+                                                div(class = "se-section", style = "max-width: 280px;",
                                                   numericInput("correlationTopN", "Top N gene pairs to return:",
                                                                value = 1000, min = 10, max = 100000, step = 100, width = '100%')
                                                 ),
@@ -1435,9 +1434,9 @@ explorer_body_ui <- function(tab_list){
                                                 )),
                                        tabPanel("Correlated with one gene",
                                                 div(
-                                                  # The tab card already carries the blue outline; keep the tint
-                                                  # and left accent, drop the second full outline.
-                                                  style = "background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
+                                                  # The tab card already provides the frame, so this panel
+                                                  # adds no second fill or border of its own.
+                                                  class = "se-section",
                                                   textInput(inputId = "MostCorrelatedAGene", label = "Gene symbol:", width = '100%')
                                                 ),
                                                 div(style = "text-align: center; margin-top: 25px;",
@@ -1448,9 +1447,9 @@ explorer_body_ui <- function(tab_list){
                                                 )),
                                        tabPanel("All pairs in a gene list",
                                                 div(
-                                                  # The tab card already carries the blue outline; keep the tint
-                                                  # and left accent, drop the second full outline.
-                                                  style = "background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
+                                                  # The tab card already provides the frame, so this panel
+                                                  # adds no second fill or border of its own.
+                                                  class = "se-section",
                                                   textAreaInput(inputId = "CorrelationGeneList", label = "Gene list:", width = '100%', height = '100px', resize = "vertical")
                                                 ),
                                                 div(style = "text-align: center; margin-top: 25px;",
@@ -1506,7 +1505,7 @@ explorer_body_ui <- function(tab_list){
                                  icon("circle-info"),
                                  tags$span("Rename the levels of one cluster resolution, check the preview, then Update. Download the mapping to reuse the names later.")
                                ),
-                               fluidRow(id = "renameclusters-main-row",
+                               div(id = "renameclusters-main-row", class = "row se-tight-row",
                                  # Rename Clusters Table (Left column, accounting for 9/12)
                                  div(
                                    class = "col-md-9",
@@ -1540,7 +1539,7 @@ explorer_body_ui <- function(tab_list){
                                  div(
                                    class = "col-md-3",
                                    div(
-                                     style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+                                     style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
                                      h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                      withSpinner(uiOutput("renameclustersClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("renameclustersDimensionReduction.UI"), proxy.height = "10px"),
@@ -1570,7 +1569,7 @@ explorer_body_ui <- function(tab_list){
                                                          class = "btn-default btn-action")
                                          ),
                                          div(
-                                           style = "background: #fef3c7; border-left: 3px solid #f59e0b; padding: 10px; border-radius: 4px; margin-top: 15px;",
+                                           style = "background: #fef3c7; border: 1px solid #f59e0b; padding: 10px; border-radius: 4px; margin-top: 15px;",
                                            p("Tips: Download the cluster name mapping file to save new cluster names permanently.", style = "font-size: 12px; margin: 0; color: #92400e;")
                                          )
                                        )
@@ -1585,7 +1584,7 @@ explorer_body_ui <- function(tab_list){
       icon("circle-info"),
       tags$span("Drag the levels into the order you want, then Apply. Only the level order changes; no cell is reassigned.")
     ),
-    fluidRow(id = "reorderclusters-main-row",
+    div(id = "reorderclusters-main-row", class = "row se-tight-row",
       # Order preview (Left column, 9/12)
       div(
         class = "col-md-9",
@@ -1615,7 +1614,7 @@ explorer_body_ui <- function(tab_list){
       div(
         class = "col-md-3",
         div(
-          style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+          style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
           h4(icon("sliders-h"), "Settings",
              style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
 
@@ -1640,7 +1639,7 @@ explorer_body_ui <- function(tab_list){
           ),
 
           div(
-            style = "background: #fef3c7; border-left: 3px solid #f59e0b; padding: 10px; border-radius: 4px; margin-top: 15px;",
+            style = "background: #fef3c7; border: 1px solid #f59e0b; padding: 10px; border-radius: 4px; margin-top: 15px;",
             p("Tips: drag the levels into the desired order, then click Apply. This updates the selected metadata column in place and changes only the factor level order, not the cluster assignment of any cell.",
               style = "font-size: 12px; margin: 0; color: #92400e;")
           )
@@ -1654,14 +1653,14 @@ explorer_body_ui <- function(tab_list){
       icon("circle-info"),
       tags$span("Choose a resolution, set the colors, then Submit. Saved colors are used by every plot that colors cells by cluster.")
     ),
-    fluidRow(id = "clustercolors-main-row",
+    div(id = "clustercolors-main-row", class = "row se-tight-row",
 
       # Settings
       div(
         class = "col-md-4",
         style = "margin-bottom: 10px;",
         div(
-          style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+          style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
           h4(icon("palette"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
 
           h5(icon("layer-group"), "Step 1: Cluster resolution",
@@ -1756,7 +1755,7 @@ explorer_body_ui <- function(tab_list){
       icon("circle-info"),
       tags$span("Pick a gene or metadata column, generate the histogram, choose cutoffs, then Check and Submit to add the annotation.")
     ),
-    fluidRow(
+    div(class = "row se-tight-row",
       box(title = "Gene Expression Histogram",
         plotOutput("geneclusters_histogram"),
         width = 9, status = "primary", collapsible = TRUE, solidHeader = TRUE),
@@ -1803,13 +1802,13 @@ explorer_body_ui <- function(tab_list){
     # before the classification table exists.
     conditionalPanel(
       condition = "output.geneclusters_histogram_ready && !output.geneclusters_table_ready",
-      div(class = "se-empty-state", style = "margin-top: 15px;",
+      div(class = "se-empty-state",
           icon("arrow-down"),
           tags$span("Enter cutoff values above and click Apply Cutoffs. The classification table will appear here."))
     ),
     conditionalPanel(
       condition = "output.geneclusters_table_ready",
-      fluidRow(style = "margin-top: 15px;",
+      div(class = "row se-tight-row", style = "margin-top: 15px;",
         div(class = "col-md-9",
           div(class = "box", style = "background: white; border: 2px solid #3b82f6; border-radius: 8px;",
             div(class = "box-header", style = "padding: 15px 20px; border-bottom: 2px solid #3b82f6;",
@@ -1821,7 +1820,7 @@ explorer_body_ui <- function(tab_list){
           )
         ),
         div(class = "col-md-3",
-          div(style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px;",
+          div(style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px;",
             h4(icon("check"), "Actions", style = "color: #047857; margin-bottom: 15px; font-weight: 600;"),
             div(style = "margin-bottom: 15px;",
               actionButton("geneclustersCheck", label = "Check", icon = icon("check"),
@@ -1833,7 +1832,7 @@ explorer_body_ui <- function(tab_list){
               downloadButton("geneclustersDownload", "Download Mapping", icon = icon("file-arrow-down"),
                 class = "btn-default btn-action", style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
             ),
-            div(style = "background: #fef3c7; border-left: 3px solid #f59e0b; padding: 10px; border-radius: 4px; margin-top: 15px;",
+            div(style = "background: #fef3c7; border: 1px solid #f59e0b; padding: 10px; border-radius: 4px; margin-top: 15px;",
               p("Tips: Click 'Check' to preview, then 'Submit' to add annotation.", style = "font-size: 12px; margin: 0; color: #92400e;")
             )
           )
@@ -1871,7 +1870,7 @@ explorer_body_ui <- function(tab_list){
       icon("circle-info"),
       tags$span("Choose a reduction and parameters, then Compute. Nothing is written to the object until you click Save.")
     ),
-    fluidRow(
+    div(class = "row se-tight-row",
       div(
         class = "col-md-9",
         div(
@@ -1913,7 +1912,7 @@ explorer_body_ui <- function(tab_list){
       div(
         class = "col-md-3",
         div(
-          style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+          style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
           h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
 
           h5(icon("database"), "Data", style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
@@ -1970,11 +1969,11 @@ explorer_body_ui <- function(tab_list){
       icon("circle-info"),
       tags$span("Join two cluster resolutions with a connector, generate the table, then name and submit the new grouping.")
     ),
-    fluidRow(
+    div(class = "row se-tight-row",
       box(title = "Combination Table",
         conditionalPanel(
           condition = "!output.combinedclusters_ready",
-          div(class = "se-empty-state", style = "margin: 10px 0;",
+          div(class = "se-empty-state",
               icon("arrow-down"),
               tags$span("Choose two resolutions and a connector on the right, then click Generate. The table will appear here."))
         ),
@@ -2096,7 +2095,7 @@ explorer_body_ui <- function(tab_list){
                                        class = "box-body",
                                        style = "padding: 20px;",
                                        div(
-                                         style = "background: #f5f3ff; border: 1px solid #8b5cf6; border-left: 4px solid #8b5cf6; padding: 20px; border-radius: 8px; margin-bottom: 20px;",
+                                         style = "background: #f5f3ff; border: 1px solid #8b5cf6; padding: 20px; border-radius: 8px; margin-bottom: 20px;",
                                          h4(icon("sliders-h"), "Display Settings", style = "color: #6D28D9; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
                                          sliderInput("ObjectStrutureLevel", label = "Structure Depth:", min = 1, max = 10, value = 3)
                                        ),
@@ -2122,7 +2121,7 @@ explorer_body_ui <- function(tab_list){
           class = "col-md-4",
           style = "margin-bottom: 10px;",
           div(
-            style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
+            style = "background: #f0fdf4; border: 1px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
             h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
 
             h5(icon("filter"), "Step 1: Filter Cells (optional)",
@@ -2747,6 +2746,20 @@ explorer_global_css <- function() {
             margin: 0;
             color: #004085;
           }
+
+          /* A plain section inside a tab card. The DEGs steps used to be tinted
+             cards nested inside the tab container; a card inside a card competes
+             with the tab strip for the same edge. A hairline rule and spacing
+             separate the steps instead, and the heading colour still names them. */
+          .se-section {
+            padding: 20px 0;
+            border-top: 1px solid #e5e7eb;
+          }
+
+          .se-section:first-child {
+            padding-top: 0;
+            border-top: 0;
+          }
   
           .se-actions {
             display: flex;
@@ -2760,7 +2773,9 @@ explorer_global_css <- function() {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin: 0 0 10px 0;
+            /* 16px: the same step used between a page hint and the content
+               below it on pages that carry a section rule. */
+            margin: 0 0 16px 0;
             padding: 8px 36px 8px 12px;
             background: #eff6ff;
             border: 1px solid #bfdbfe;
@@ -2827,6 +2842,9 @@ explorer_global_css <- function() {
             align-items: center;
             justify-content: center;
             gap: 8px;
+            /* One step below whatever precedes the placeholder, so it sits on
+               the same rhythm as a page hint's bottom margin. */
+            margin: 16px 0 0 0;
             padding: 22px 16px;
             border: 1px dashed #cbd5e1;
             border-radius: 8px;
@@ -2938,6 +2956,23 @@ explorer_global_css <- function() {
             #featuresummary-main-row > .col-md-9,
             #featurecorrelation-main-row > .col-md-9 {
               padding-left: 4px !important;
+            }
+          }
+
+          /* The same channel for pages whose two columns are not a 3/12 + 9/12
+             pair in that order (9/12 first, 8/12, or boxes that render as
+             col-sm-*). One class replaces copying the id rules per page. The
+             -4px row margin keeps the panels flush with the container edge
+             exactly as Bootstrap's -15px row margin plus 15px columns does. */
+          @media (min-width: 992px) {
+            .se-tight-row {
+              margin-left: -4px;
+              margin-right: -4px;
+            }
+
+            .se-tight-row > [class*='col-'] {
+              padding-left: 4px !important;
+              padding-right: 4px !important;
             }
           }
   
