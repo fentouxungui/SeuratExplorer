@@ -2732,6 +2732,12 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     }else{
       df <- degs_display()
       col_art <- dt_column_artifacts(df, degs_column_dict())
+      # Numeric columns read best right-aligned so digits line up down the column.
+      # FindMarkers() may return either avg_log2FC or the legacy avg_logFC/avg_diff,
+      # so the targets are resolved from whichever columns are actually present.
+      num_targets <- match(intersect(c("p_val", "p_val_adj", "avg_log2FC",
+                                       "avg_logFC", "avg_diff", "pct.1", "pct.2"),
+                                     names(df)), names(df)) - 1L
       data_res <- DT::datatable(df,
                                 extensions = 'Buttons',
                                 selection = "single",
@@ -2746,6 +2752,8 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
                                                autoWidth = TRUE,
                                                ordering = TRUE,
                                                dom = 'Bfrtip',
+                                               columnDefs = list(list(className = "dt-right",
+                                                                      targets = num_targets)),
                                                headerCallback = col_art$header_callback,
                                                buttons = list('copy',
                                                               list(extend = 'csv', title = "DEGs"),
@@ -3156,12 +3164,19 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     # column widths can drift apart after sorting (header cells end up sized from
     # the header text, body cells from the data). Keep a single <table> instead, so
     # header and body share one layout and cannot become misaligned.
+    # Counts and percentages read best right-aligned so digits line up.
+    num_targets <- match(intersect(c("total.cells", "total.pos.cells", "total.UMI.pct",
+                                     "cut.Cells", "cut.pct.mean", "cut.pct.median",
+                                     "MeanUMICounts", "PCT"),
+                                   names(df)), names(df)) - 1L
     dt <- DT::datatable(df, extensions = 'Buttons',
                   colnames = col_art$labels,
                   options = list(scrollX = FALSE,
                                  paging = TRUE, searching = TRUE,
                                  autoWidth = TRUE,
                                  ordering = TRUE, dom = 'Bfrtip',
+                                 columnDefs = list(list(className = "dt-right",
+                                                        targets = num_targets)),
                                  headerCallback = col_art$header_callback,
                                  buttons = list('copy',
                                                 list(extend = 'csv', title = "top-features"),
@@ -3274,6 +3289,9 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     if(verbose){message("SeuratExplorer: preparing dataset_featuresummary...")}
     df <- FeatureSummary$summary
     col_art <- dt_column_artifacts(df, feature_summary_column_dict())
+    # Counts and expression values read best right-aligned.
+    num_targets <- match(intersect(c("TotalCells", "PCT", "Expr.mean", "Expr.median"),
+                                   names(df)), names(df)) - 1L
     # Show data
     DT::datatable(df, extensions = 'Buttons',
                   rownames = FALSE,
@@ -3287,6 +3305,8 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
                                  autoWidth = TRUE,
                                  ordering = TRUE,
                                  dom = 'Bfrtip',
+                                 columnDefs = list(list(className = "dt-right",
+                                                        targets = num_targets)),
                                  headerCallback = col_art$header_callback,
                                  buttons = list('copy',
                                                 list(extend = 'csv', title = "feature-summary"),
@@ -3597,13 +3617,17 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     req(FeatureCorrelation$summary)
     if(verbose){message("SeuratExplorer: preparing dataset_featuresummary...")}
     # Show data
-    DT::datatable(FeatureCorrelation$summary, extensions = 'Buttons',
+    df <- FeatureCorrelation$summary
+    num_targets <- match(intersect("correlation", names(df)), names(df)) - 1L
+    DT::datatable(df, extensions = 'Buttons',
                   # A single <table> (no scrollX): the header and body share one
                   # layout, so they cannot drift apart after sorting.
                   options = list(scrollX = FALSE,
                                  paging = TRUE, searching = TRUE,
                                  autoWidth = TRUE,
                                  ordering = TRUE, dom = 'Bfrtip',
+                                 columnDefs = list(list(className = "dt-right",
+                                                        targets = num_targets)),
                                  buttons = list('copy',
                                                 list(extend = 'csv', title = "feature-correlation"),
                                                 list(extend = 'excel', title = "feature-correlation"))))
@@ -5172,10 +5196,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     saved <- if (is.null(col)) NULL else data$cluster_colors[[col]]
     base <- complete_cluster_colors(saved, lv)
     dirty <- !identical(unname(base), unname(cols))
-    paste0(length(lv), " groups | ",
+    paste0(length(lv), " groups · ",
            if (is.null(saved)) "no saved colors" else "saved colors loaded",
-           if (dirty) " | unsaved changes",
-           if (dup > 0) paste0(" | ", dup, " duplicate(s)"))
+           if (dirty) " · unsaved changes",
+           if (dup > 0) paste0(" · ", dup, " duplicate(s)"))
   })
 
   output$clustercolors_preview <- renderPlot({
