@@ -2624,7 +2624,9 @@ explorer_global_css <- function() {
           .content-wrapper a:focus-visible,
           .se-page-hint-close:focus-visible,
           .se-hint-toggle:focus-visible,
-          .se-colguide > summary:focus-visible {
+          .se-colguide > summary:focus-visible,
+          .sidebar-menu a:focus-visible,
+          [id$='tabbox-container'] .nav-tabs a:focus-visible {
             outline: 2px solid var(--se-focus);
             outline-offset: 2px;
             border-radius: 4px;
