@@ -2559,9 +2559,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
   output$IntraClusterDEGsCustomizedGroupsCase.UI <- renderUI({
     req(input$IntraClusterDEGsCustomizedGroups)
     if(verbose){message("SeuratExplorer: preparing IntraClusterDEGsCustomizedGroupsCase.UI...")}
-    selectInput("IntraClusterDEGsCustomizedGroupsCase","Choose Case groups:",
-                choices = levels(data$obj@meta.data[,input$IntraClusterDEGsCustomizedGroups]),
-                multiple = TRUE)
+    selectizeInput("IntraClusterDEGsCustomizedGroupsCase","Choose Case groups:",
+                choices = levels(factor(data$obj@meta.data[,input$IntraClusterDEGsCustomizedGroups])),
+                multiple = TRUE,
+                options = list(placeholder = "Select one or more groups"))
   })
 
   # define the idents used
@@ -2569,9 +2570,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     req(input$IntraClusterDEGsCustomizedGroups)
     req(input$IntraClusterDEGsCustomizedGroupsCase)
     if(verbose){message("SeuratExplorer: preparing IntraClusterDEGsCustomizedGroupsControl.UI...")}
-    selectInput("IntraClusterDEGsCustomizedGroupsControl","Choose control groups:", multiple = TRUE,
-                choices = setdiff(levels(data$obj@meta.data[,input$IntraClusterDEGsCustomizedGroups]),
-                                  input$IntraClusterDEGsCustomizedGroupsCase))
+    selectizeInput("IntraClusterDEGsCustomizedGroupsControl","Choose control groups:", multiple = TRUE,
+                choices = setdiff(levels(factor(data$obj@meta.data[,input$IntraClusterDEGsCustomizedGroups])),
+                                  input$IntraClusterDEGsCustomizedGroupsCase),
+                options = list(placeholder = "Select one or more groups"))
   })
 
 
@@ -3954,7 +3956,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     if (!modulescore_checked()) return(NULL)
     div(style = "margin-top: 10px;",
       actionButton("ModuleScoreCompute", label = "Compute Module Score",
-        icon = icon("calculator"), class = "btn-success",
+        icon = icon("calculator"), class = "btn-primary btn-action",
         style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
     )
   })
@@ -3993,7 +3995,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
           p("Continue with the found genes?")
         ),
         footer = tagList(
-          actionButton("ModuleScoreContinue", "Continue", class = "btn-primary"),
+          actionButton("ModuleScoreContinue", "Continue", class = "btn-primary btn-action"),
           modalButton("Cancel")
         ),
         easyClose = TRUE, size = "m"
@@ -4166,11 +4168,11 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     if (!combinedclusters_generated()) return(NULL)
     div(style = "margin-top: 10px;",
       actionButton("combinedclustersSubmit", label = "Submit",
-        icon = icon("upload"), class = "btn-success",
+        icon = icon("upload"), class = "btn-primary btn-action",
         style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;"),
       div(style = "margin-top: 10px;",
         downloadButton("combinedclustersDownload", "Download Mapping",
-          icon = icon("file-arrow-down"), class = "btn-warning",
+          icon = icon("file-arrow-down"), class = "btn-default btn-action",
           style = "width: 100%; padding: 10px; border-radius: 6px; font-weight: 600;")
       )
     )
@@ -5079,7 +5081,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
                     "' will be removed. You can set them again and Submit.")),
       footer = tagList(
         modalButton("Cancel"),
-        actionButton("ClusterColorClearSavedConfirm", "Remove", class = "btn-danger")
+        actionButton("ClusterColorClearSavedConfirm", "Remove", class = "btn-danger btn-action")
       ),
       easyClose = TRUE
     ))
@@ -5468,14 +5470,14 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       st <- export_filter_mask()
       if (st$n_keep < 1) {
         return(tags$button(
-          class = "btn btn-primary btn-lg", disabled = "disabled",
+          class = "btn btn-primary btn-action", disabled = "disabled",
           style = "width: 100%; padding: 12px; border-radius: 8px; font-weight: 600;",
           icon("ban"), " No cells to export"))
       }
       downloadButton("download_export_object",
                      label = paste0("Download (", format(st$n_keep, big.mark = ","), " cells)"),
-                     class = "btn-primary btn-lg",
-                     style = "width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #047857 0%, #065F46 100%); border: none;")
+                     class = "btn-primary btn-action",
+                     style = "width: 100%;")
     })
 
     ## ---- state snapshot for the download handler -------------------------

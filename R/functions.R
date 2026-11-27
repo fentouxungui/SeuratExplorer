@@ -1972,7 +1972,7 @@ wait_modal <- function(title, detail = NULL, extra = NULL, note = NULL,
     footer = if (is.null(cancel_id)) {
       NULL
     } else {
-      tagList(actionButton(cancel_id, "Cancel", class = "btn-danger"))
+      tagList(actionButton(cancel_id, "Cancel", class = "btn-danger btn-action"))
     },
     size = "m"
   ))
@@ -2150,7 +2150,7 @@ param_group_collapse <- function(id, title, icon_name, color = "#3b82f6", subtit
       tags$span(
         class = "param-group-chevron",
         icon("chevron-down"),
-        style = "transition: transform 0.3s ease; display: inline-block;"
+        style = "transition: transform 0.18s ease; display: inline-block;"
       )
     ),
     tags$div(
@@ -2169,7 +2169,9 @@ create_resizable_plot_ui <- function(plot_id, initial_width = 800, initial_heigh
     id = paste0(plot_id, "_wrapper"),
     style = "
         background-color: #f8f9fa;
-        border: 2px dashed #dee2e6;
+        /* One hairline dashed edge marks the resize area; a 2px dashes read
+           as a second frame around the plot. */
+        border: 1px dashed #cbd5e1;
         border-radius: 8px;
         padding: 20px;
         position: relative;
