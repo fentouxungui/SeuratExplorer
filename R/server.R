@@ -2316,10 +2316,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     total_clusters <- length(all_clusters)
     if (total_clusters < 2) {
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Nothing to compare"),
         tags$div(
-          tags$p("Please select a cluster resolution with more than one group!"),
-          tags$small(style = "color: #5C636A;", "The selected resolution must have at least 2 clusters.")
+          tags$p("This cluster resolution has only one group."),
+          tags$small(style = "color: #5C636A;", "Marker genes need at least two groups; choose a resolution with more clusters.")
         ),
         easyClose = TRUE,
         footer = modalButton("OK"),
@@ -2395,7 +2395,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
           paste("assay:", deg_assay))
         showNotification(  ui = tagList(
           icon("check-circle", style = "color: #047857; margin-right: 5px;"),
-          "Cluster markers calculation completed!"
+          "Cluster markers ready."
         ),  type = "message", duration = 5)
         invisible(NULL)
       }
@@ -2407,7 +2407,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
         if (long_task_state$cancelled) {
           removeModal()
           showNotification(ui = tagList(icon("ban", style = "margin-right: 5px;"),
-                                        "Cluster markers calculation cancelled."),
+                                        "Cluster markers cancelled."),
                            type = "warning", duration = 5)
           return(invisible(NULL))
         }
@@ -2440,7 +2440,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
           showModal(modalDialog(
             title = tagList(icon("exclamation-triangle"), "Error"),
             tags$div(
-              tags$p("FindAllMarkers failed:"),
+              tags$p("Marker calculation failed:"),
               tags$pre(style = "color: #dc3545; white-space: pre-wrap;", out$message)
             ),
             easyClose = TRUE,
@@ -2594,10 +2594,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
             is.null(input$IntraClusterDEGsCustomizedGroupsControl),
             !filter_ready)) {
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Missing groups"),
         tags$div(
-          tags$p("Please specify the case & control samples and clusters used."),
-          tags$small(style = "color: #5C636A;", "All fields are required for DEGs analysis.")
+          tags$p("Choose the case group, the control group, and the cells to compare."),
+          tags$small(style = "color: #5C636A;", "Every field on this tab is required before the comparison can run.")
         ),
         easyClose = TRUE,
         footer = modalButton("OK"),
@@ -2652,7 +2652,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
         showModal(modalDialog(
           title = tagList(icon("exclamation-triangle"), "Error"),
           tags$div(
-            tags$p("FindMarkers failed:"),
+            tags$p("DEG calculation failed:"),
             tags$pre(style = "color: #dc3545; white-space: pre-wrap;", result$message)
           ),
           easyClose = TRUE,
@@ -2672,7 +2672,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
           paste("assay:", input$DEGsAssay))
         showNotification(  ui = tagList(
           icon("check-circle", style = "color: #047857; margin-right: 5px;"),
-          "Intra-cluster DEGs calculation completed!"
+          "Two-group DEGs ready."
         ), type = "message", duration = 5)
       }
     }
@@ -2719,10 +2719,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     # Show data
     if (nrow(DEGs$degs) == 0 | is.null(DEGs$degs)) {
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "No results"),
         tags$div(
-          tags$p("None of DEGs found."),
-          tags$small(style = "color: #5C636A;", "Try changing the default Assay in 'Custom Parameters' page or contact technician for details.")
+          tags$p("No gene passed the thresholds."),
+          tags$small(style = "color: #5C636A;", "Relax the logFC or min.pct thresholds, or check the assay on the Custom Parameters tab.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -2788,7 +2788,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     }
     selected.db <- db[[input$selectspecies]]
     if (!selected.gene %in% selected.db[,input$selectsgenetype]) {
-      return(renderText("Gene not found, please check parameters above, or this gene not existed in the database."))
+      return(renderText("This gene is not in the selected database. Check the species and feature type above."))
     }
 
     external_links <- h4(paste0('Gene Selected: ', selected.gene))
@@ -2976,14 +2976,14 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
         TopGenes$topgenes_ready <- TRUE
         showNotification(  ui = tagList(
           icon("check-circle", style = "color: #047857; margin-right: 5px;"),
-          "Top genes analysis completed!"
+          "Top genes ready."
         ), type = "message", duration = 5)
       } else {
         showModal(modalDialog(
-          title = tagList(icon("exclamation-triangle"), "Error"),
+          title = tagList(icon("exclamation-triangle"), "No results"),
           tags$div(
-            tags$p("No genes found."),
-            tags$small(style = "color: #5C636A;", "Please check the parameters.")
+            tags$p("No gene was found in the selected cells."),
+            tags$small(style = "color: #5C636A;", "Lower the UMI cutoff, or include more cells under Subset cells.")
           ),
           footer = modalButton("OK"),
           easyClose = TRUE,
@@ -2998,7 +2998,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       if (long_task_state$cancelled) {
         removeModal()
         showNotification(ui = tagList(icon("ban", style = "margin-right: 5px;"),
-                                      "Top genes calculation cancelled."),
+                                      "Top genes cancelled."),
                          type = "warning", duration = 5)
         return(invisible(NULL))
       }
@@ -3085,14 +3085,14 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
         TopGenes$topgenes_ready <- TRUE
         showNotification(  ui = tagList(
           icon("check-circle", style = "color: #047857; margin-right: 5px;"),
-          "Accumulated top genes analysis completed!"
+          "Accumulated top genes ready."
         ), type = "message", duration = 5)
       } else {
         showModal(modalDialog(
-          title = tagList(icon("exclamation-triangle"), "Error"),
+          title = tagList(icon("exclamation-triangle"), "No results"),
           tags$div(
-            tags$p("No genes found."),
-            tags$small(style = "color: #5C636A;", "Please check the parameters.")
+            tags$p("No gene was found in the selected cells."),
+            tags$small(style = "color: #5C636A;", "Include more cells under Subset cells; groups with fewer than three cells are skipped.")
           ),
           footer = modalButton("OK"),
           easyClose = TRUE,
@@ -3107,7 +3107,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       if (long_task_state$cancelled) {
         removeModal()
         showNotification(ui = tagList(icon("ban", style = "margin-right: 5px;"),
-                                      "Top genes calculation cancelled."),
+                                      "Top genes cancelled."),
                          type = "warning", duration = 5)
         return(invisible(NULL))
       }
@@ -3207,10 +3207,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     }
     if (any(is.na(GeneRevised))) {
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Check the gene symbols"),
         tags$div(
           tags$p(check_genes_error),
-          tags$small(style = "color: #5C636A;", "Please check the gene symbols and try again.")
+          tags$small(style = "color: #5C636A;", "Only genes present in the selected assay can be used.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -3254,7 +3254,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       FeatureSummary$summary_ready <- TRUE
       showNotification(  ui = tagList(
         icon("check-circle", style = "color: #047857; margin-right: 5px;"),
-        "Feature summary completed!",
+        "Feature summary ready.",
       ), type = "message", duration = 5)
     }
   })
@@ -3349,9 +3349,9 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     if (nrow(normalized.expr) < 2) {
       removeModal()
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Not enough genes"),
         tags$div(
-          tags$p("Not enough expressed genes for a correlation analysis."),
+          tags$p("Too few expressed genes remain for a correlation analysis."),
           tags$small(style = "color: #5C636A;", "Genes with mean expression <= 0.1 are removed before the analysis.")
         ),
         footer = modalButton("OK"),
@@ -3391,14 +3391,14 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
           FeatureCorrelation$summary_ready <- TRUE
           showNotification(  ui = tagList(
             icon("check-circle", style = "color: #047857; margin-right: 5px;"),
-            "Top correlations calculated successfully!"
+            "Top correlations ready."
           ), type = "message", duration = 5)
         } else {
           showModal(modalDialog(
-            title = tagList(icon("exclamation-triangle"), "Error"),
+            title = tagList(icon("exclamation-triangle"), "No results"),
             tags$div(
-              tags$p("No gene pairs found."),
-              tags$small(style = "color: #5C636A;", "Some genes may have very low expression values. Try different genes.")
+              tags$p("No gene pair passed the expression filter."),
+              tags$small(style = "color: #5C636A;", "Only genes with mean expression above 0.1 are tested; widen the cell selection or pick another assay.")
             ),
             footer = modalButton("OK"),
             easyClose = TRUE,
@@ -3413,7 +3413,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
         if (long_task_state$cancelled) {
           removeModal()
           showNotification(ui = tagList(icon("ban", style = "margin-right: 5px;"),
-                                        "Top correlation calculation cancelled."),
+                                        "Top correlation cancelled."),
                            type = "warning", duration = 5)
           return(invisible(NULL))
         }
@@ -3431,7 +3431,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
         if (inherits(out, "error")) {
           removeModal()
           showModal(modalDialog(
-            title = tagList(icon("exclamation-triangle"), "Error"),
+            title = tagList(icon("exclamation-triangle"), "Calculation failed"),
             tags$div(
               tags$p("Correlation calculation failed:"),
               tags$pre(style = "color: #dc3545; white-space: pre-wrap;", out$message)
@@ -3462,10 +3462,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
                                   GeneLibrary = rownames(data$obj[[input$FeatureCorrelationAssay]]))
     if(is.na(feature.revised)){
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Gene not found"),
         tags$div(
-          tags$p("The input gene cannot be found."),
-          tags$small(style = "color: #5C636A;", "Please check the gene symbol and try again.")
+          tags$p("That gene is not in the selected assay."),
+          tags$small(style = "color: #5C636A;", "Check the spelling; gene symbols are case-insensitive.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -3500,12 +3500,12 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
         FeatureCorrelation$summary_ready <- TRUE
         showNotification(  ui = tagList(
           icon("check-circle", style = "color: #047857; margin-right: 5px;"),
-          "Most correlated genes calculated successfully!"
+          "Most correlated genes ready."
         ), type = "message", duration = 5)
       }else{
-        show_error("Error",
-                   "No gene pairs are found!",
-                   subtitle = "Probably some genes have very low expression values.",
+        show_error("No results",
+                   "No gene pair passed the expression filter.",
+                   subtitle = "Only genes with mean expression above 0.1 are tested.",
                    size = "l")
       }
     }
@@ -3521,10 +3521,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     }
     if (any(is.na(GeneRevised))) {
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Check the gene symbols"),
         tags$div(
           tags$p(check_genes_error),
-          tags$small(style = "color: #5C636A;", "Please check the gene symbols.")
+          tags$small(style = "color: #5C636A;", "Only genes present in the selected assay can be used.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -3532,10 +3532,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       ))
     }else if(length(GeneRevised) < 2){
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Two genes needed"),
         tags$div(
-          tags$p("Please input at least two genes!"),
-          tags$small(style = "color: #5C636A;", "Correlation analysis requires multiple genes.")
+          tags$p("Enter at least two genes."),
+          tags$small(style = "color: #5C636A;", "A correlation needs two or more genes; one gene on its own has nothing to pair with.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -3570,7 +3570,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
         FeatureCorrelation$summary_ready <- TRUE
         showNotification(  ui = tagList(
           icon("check-circle", style = "color: #047857; margin-right: 5px;"),
-          "Gene correlation calculated successfully!"
+          "Gene correlation ready."
         ), type = "message", duration = 5)
       }else{
         showModal(modalDialog(
@@ -3668,7 +3668,8 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       if (input_name %in% data$extra_qc_options) {
         gene <- input_name
       } else {
-        showModal(modalDialog(title = "Error", "Gene or numeric metadata column not found!",
+        showModal(modalDialog(title = "Not found",
+                              "That gene or numeric metadata column is not in the selected assay.",
                               easyClose = TRUE, footer = modalButton("OK")))
         return()
       }
@@ -3681,14 +3682,16 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
                                    layer = input$geneclustersSlot,
                                    meta_numeric_columns = data$extra_qc_options)
     if (is.null(vals)) {
-      showModal(modalDialog(title = "Error", "Cannot extract values for this input.",
+      showModal(modalDialog(title = "No values",
+                            "Values could not be read from the selected assay slot.",
                             easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
     # Exclude NA
     vals <- vals[!is.na(vals)]
     if (length(vals) == 0) {
-      showModal(modalDialog(title = "Error", "All values are NA for this input.",
+      showModal(modalDialog(title = "No values",
+                            "All values for this input are NA.",
                             easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
@@ -3721,7 +3724,9 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     cuts <- suppressWarnings(as.numeric(cuts_text))
     cuts <- cuts[!is.na(cuts)]
     if (length(cuts) == 0) {
-      showModal(modalDialog(title = "Error", "Please enter valid numeric cutoff values separated by commas.", easyClose = TRUE, footer = modalButton("OK")))
+      showModal(modalDialog(title = "Invalid cutoffs",
+                            "Enter numeric cutoff values separated by commas, for example 0.5, 1.0, 2.0.",
+                            easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
     cuts <- sort(cuts)
@@ -3787,26 +3792,30 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     new_col_name <- paste0(gene, "_cluster")
 
     if ('-' %in% df$name) {
-      showModal(modalDialog(title = "Error", "'-' found in names. Please edit all levels.", easyClose = TRUE, footer = modalButton("OK")))
+      showModal(modalDialog(title = "Names not set",
+                            "'-' marks a group whose name was not edited. Give every group a name.",
+                            easyClose = TRUE, footer = modalButton("OK")))
       geneclusters_check_ok(FALSE)
       return()
     }
     if ('' %in% trimws(df$name)) {
-      showModal(modalDialog(title = "Error", "Names cannot be empty!", easyClose = TRUE, footer = modalButton("OK")))
+      showModal(modalDialog(title = "Empty name",
+                            "A group name cannot be empty.",
+                            easyClose = TRUE, footer = modalButton("OK")))
       geneclusters_check_ok(FALSE)
       return()
     }
     if (!all(sapply(df$name, check_allowed_chars))) {
       err_names <- df$name[!sapply(df$name, check_allowed_chars)]
-      showModal(modalDialog(title = "Error",
-        HTML(paste(c("Unsupported characters found:", err_names), collapse = '<br>')),
+      showModal(modalDialog(title = "Unsupported characters",
+        HTML(paste(c("These names contain characters that are not allowed:", err_names), collapse = '<br>')),
         easyClose = TRUE, footer = modalButton("OK"), size = "l"))
       geneclusters_check_ok(FALSE)
       return()
     }
     if (new_col_name %in% colnames(data$obj@meta.data)) {
-      showModal(modalDialog(title = "Error",
-        paste0("Column '", new_col_name, "' already exists in metadata. Please use a different gene or rename the existing column first."),
+      showModal(modalDialog(title = "Column in use",
+        paste0("Column '", new_col_name, "' already exists in the metadata. Use a different gene, or rename the existing column first."),
         easyClose = TRUE, footer = modalButton("OK")))
       geneclusters_check_ok(FALSE)
       return()
@@ -3853,11 +3862,15 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
   observeEvent(input$geneclustersSubmit, {
     anno <- geneclusters_new_anno()
     if (is.null(anno)) {
-      showModal(modalDialog(title = "Error", "Please run Check first.", easyClose = TRUE, footer = modalButton("OK")))
+      showModal(modalDialog(title = "Run Check first",
+                            "Click Check to preview the groups before submitting.",
+                            easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
     if (anno$col_name %in% colnames(data$obj@meta.data)) {
-      showModal(modalDialog(title = "Error", "Column already exists. Do not submit twice.", easyClose = TRUE, footer = modalButton("OK")))
+      showModal(modalDialog(title = "Already submitted",
+                            "This annotation was added to the metadata already.",
+                            easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
 
@@ -3877,10 +3890,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
                                                 verbose = getOption('SeuratExplorerVerbose'))
     data$version <- data$version + 1
 
-    showModal(modalDialog(title = "Success",
-      paste0("Annotation '", anno$col_name, "' added to metadata!"),
+    showModal(modalDialog(title = "Added",
+      paste0("Annotation '", anno$col_name, "' was added to the metadata."),
       easyClose = TRUE, footer = modalButton("OK")))
-    showNotification(ui = tagList(icon("check-circle"), "Gene-based clusters added!"),
+    showNotification(ui = tagList(icon("check-circle"), "Gene-based clusters added."),
       type = "message", duration = 5)
   })
 
@@ -3981,7 +3994,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     missing_genes <- input_genes[!found_mask]
 
     if (length(found_genes) == 0) {
-      showModal(modalDialog(title = "Error",
+      showModal(modalDialog(title = "No matching genes",
         "None of the input genes were found in the selected assay.",
         easyClose = TRUE, footer = modalButton("OK")))
       modulescore_checked(FALSE)
@@ -4004,7 +4017,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     } else {
       modulescore_valid_genes(found_genes)
       modulescore_checked(TRUE)
-      showNotification("All genes found! Enter a name and click Compute.", type = "message", duration = 5)
+      showNotification("All genes found. Enter a name, then click Compute Module Score.", type = "message", duration = 5)
     }
   })
 
@@ -4025,24 +4038,26 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
 
     # Validate name
     if (name == "") {
-      showModal(modalDialog(title = "Error", "Score name cannot be empty.", easyClose = TRUE, footer = modalButton("OK")))
+      showModal(modalDialog(title = "Name required",
+                            "Give the score a name before computing it.",
+                            easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
     if (!check_allowed_chars(name, allowed_characters = "[^a-zA-Z0-9_]")) {
-      showModal(modalDialog(title = "Error",
+      showModal(modalDialog(title = "Invalid name",
         "Name contains invalid characters. Only letters, numbers, and underscore allowed.",
         easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
     if (name %in% colnames(data$obj@meta.data)) {
-      showModal(modalDialog(title = "Error",
+      showModal(modalDialog(title = "Name in use",
         paste0("Column '", name, "' already exists. Choose a different name."),
         easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
     # AddModuleScore writes '<name>1' before renaming, so that column must be free too.
     if (method == "addmodulescore" && paste0(name, "1") %in% colnames(data$obj@meta.data)) {
-      showModal(modalDialog(title = "Error",
+      showModal(modalDialog(title = "Name in use",
         paste0("Column '", name, "1' already exists and would be overwritten by AddModuleScore. Choose a different name."),
         easyClose = TRUE, footer = modalButton("OK")))
       return()
@@ -4069,7 +4084,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     )
 
     if (inherits(result, "error")) {
-      showModal(modalDialog(title = "Error",
+      showModal(modalDialog(title = "Scoring failed",
         tagList(p(paste0("Module score failed (", method, "):")),
                 tags$pre(result$message)),
         easyClose = TRUE, footer = modalButton("OK"), size = "l"))
@@ -4184,7 +4199,8 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     res1 <- input$CombinedClusterResolution
     res2 <- input$CombinedClusterResolutionSecond
     if (res1 == res2) {
-      showModal(modalDialog(title = "Error", "The two clusters must be different.",
+      showModal(modalDialog(title = "Same resolution",
+        "Choose two different cluster resolutions to combine.",
         easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
@@ -4236,19 +4252,20 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     new_col_name <- trimws(input$combinedclustersNewName)
 
     if (new_col_name == "") {
-      showModal(modalDialog(title = "Error", "Cluster name cannot be empty.",
+      showModal(modalDialog(title = "Name required",
+        "Give the new column a name before submitting.",
         easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
     if (!check_allowed_chars(new_col_name, allowed_characters = "[^a-zA-Z0-9_]")) {
-      showModal(modalDialog(title = "Error",
+      showModal(modalDialog(title = "Invalid name",
         "Name contains invalid characters. Only letters, numbers, and underscore allowed.",
         easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
     if (new_col_name %in% colnames(data$obj@meta.data)) {
-      showModal(modalDialog(title = "Error",
-        paste0("Column '", new_col_name, "' already exists in metadata."),
+      showModal(modalDialog(title = "Name in use",
+        paste0("Column '", new_col_name, "' already exists in the metadata."),
         easyClose = TRUE, footer = modalButton("OK")))
       return()
     }
@@ -4281,10 +4298,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     data$version <- data$version + 1
 
     showModal(modalDialog(
-      title = tagList(icon("check-circle", style = "color: #047857;"), "Success"),
-      paste0("Annotation '", new_col_name, "' added to metadata!"),
+      title = tagList(icon("check-circle", style = "color: #047857;"), "Added"),
+      paste0("Annotation '", new_col_name, "' was added to the metadata."),
       easyClose = TRUE, footer = modalButton("OK")))
-    showNotification(ui = tagList(icon("check-circle"), "Combination clusters added!"),
+    showNotification(ui = tagList(icon("check-circle"), "Combination clusters added."),
       type = "message", duration = 5)
   })
 
@@ -4405,7 +4422,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       title = "Clustering cells",
       tags$div(style = "text-align: center; padding: 20px;",
         icon("circle-notch", class = "fa-spin fa-3x", style = "color: #1D4ED8; margin-bottom: 15px;"),
-        tags$p("Finding neighbours and clustering. Large objects can take a while.",
+        tags$p("Finding neighbors and clustering. Large objects can take a while.",
                style = "color: #5C636A;")),
       footer = NULL, easyClose = FALSE, size = "m"))
 
@@ -4454,7 +4471,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       paste("algorithm:", alg))
 
     updateTextInput(session, "ClusterCellsName", value = nm)
-    showNotification(ui = tagList(icon("check-circle"), " Clustering finished. Review the preview, then Save."),
+    showNotification(ui = tagList(icon("check-circle"), "Clustering finished. Review the preview, then Save."),
                      type = "message", duration = 5)
   })
 
@@ -4533,10 +4550,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
                                                 verbose = getOption("SeuratExplorerVerbose"))
     data$version <- data$version + 1
     updateTextInput(session, "ClusterCellsName", value = nm)
-    showModal(modalDialog(title = "Success",
+    showModal(modalDialog(title = "Saved",
                           paste0("'", nm, "' was added to the metadata."),
                           easyClose = TRUE, footer = modalButton("OK")))
-    showNotification(ui = tagList(icon("check-circle"), " Clusters saved to the object."),
+    showNotification(ui = tagList(icon("check-circle"), "Clusters saved to the object."),
                      type = "message", duration = 5)
   })
 
@@ -4566,7 +4583,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
                   editable = list(target = 'cell', disable = list(columns = 0)), # Disables columns 1
                   selection = "single",
                   options = list(dom = 'lrtip', lengthChange = FALSE, pageLength = -1,
-                                 language = list(info = "Double click '-' to start edit, only support letters, numbers, whitespace, -, + and _.")),
+                                 language = list(info = "Double-click '-' to start editing. Allowed: letters, numbers, spaces, -, + and _.")),
                   rownames = FALSE
                   )
   })
@@ -4591,10 +4608,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     # check input format
     if ('-' %in% cell_annotation_df()$New_Name) {
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Names not set"),
         tags$div(
-          tags$p("'-' found in cluster names."),
-          tags$small(style = "color: #5C636A;", "Please edit all levels and remove '-' characters.")
+          tags$p("'-' marks a cluster whose name was not edited."),
+          tags$small(style = "color: #5C636A;", "Give every cluster a name, then click Check again.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -4603,10 +4620,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else if('' %in% trimws(cell_annotation_df()$New_Name)){
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Empty name"),
         tags$div(
-          tags$p("New cluster names cannot be empty!"),
-          tags$small(style = "color: #5C636A;", "Please provide names for all clusters.")
+          tags$p("A cluster name cannot be empty."),
+          tags$small(style = "color: #5C636A;", "Provide a name for every cluster.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -4615,17 +4632,17 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       output$renameclusterscheck_OK <- reactive(FALSE)
     }else if (!all(sapply(cell_annotation_df()$New_Name, check_allowed_chars))) {
       error_names <- cell_annotation_df()$New_Name[!sapply(cell_annotation_df()$New_Name, check_allowed_chars)]
-      show_error("Error",
-                 HTML(paste(c("Unsupported character found in New_Name! only support letters, numbers, whitespace, -, + and _. Please check names below:", error_names),
+      show_error("Unsupported characters",
+                 HTML(paste(c("These names contain characters that are not allowed. Use letters, numbers, spaces, -, + and _ only:", error_names),
                             collapse = '<br>')),
                  size = "l")
       output$renameclusterscheck_OK <- reactive(FALSE)
     } else  if (!check_allowed_chars(input$renameclustersNewClusterName, allowed_characters = "[^a-zA-Z0-9_]")) {
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Invalid column name"),
         tags$div(
-          tags$p("Unsupported character found in cluster name."),
-          tags$small(style = "color: #5C636A;", paste0("Only letters, numbers, and underscore are supported. Found in: ", input$renameclustersNewClusterName))
+          tags$p("The new column name contains characters that are not allowed."),
+          tags$small(style = "color: #5C636A;", paste0("Only letters, numbers, and underscore are allowed. Input: ", input$renameclustersNewClusterName))
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -4636,10 +4653,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       # check cluster name duplicates
       if (input$renameclustersNewClusterName %in% colnames(data$obj@meta.data)) {
           showModal(modalDialog(
-            title = tagList(icon("exclamation-triangle"), "Error"),
+            title = tagList(icon("exclamation-triangle"), "Name in use"),
             tags$div(
-              tags$p("Duplicated cluster name found."),
-              tags$small(style = "color: #5C636A;", "Please change the cluster name to a unique one.")
+              tags$p("That column name already exists in the metadata."),
+              tags$small(style = "color: #5C636A;", "Choose a name that is not used yet.")
             ),
             footer = modalButton("OK"),
             easyClose = TRUE,
@@ -4673,7 +4690,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
 
   output$renameclustersNewClusterNamehints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing renameclustersNewClusterNamehints.UI...")}
-    p(paste0("Avoid using already existed column names in meta data. And only support letters, numbers, whitespace, -, +, _; Whitespace at both ends will be removed automatically!"),
+    p(paste0("Use a name that does not already exist in the metadata. Allowed: letters, numbers, spaces, -, + and _. Spaces at either end are removed automatically."),
       class = "se-note-text")
   })
 
@@ -4683,10 +4700,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
 
     if (new_anno_mapping_list$NewClusterName == ''){
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Run Check first"),
         tags$div(
-          tags$p("Please run Check before submitting!"),
-          tags$small(style = "color: #5C636A;", "Validate your changes first.")
+          tags$p("Click Check to validate the new names before submitting."),
+          tags$small(style = "color: #5C636A;", "Nothing has been saved yet.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -4694,10 +4711,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       ))
     }else if(new_anno_mapping_list$NewClusterName %in% colnames(data$obj@meta.data)){
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Already submitted"),
         tags$div(
-          tags$p("Duplicated labels found."),
-          tags$small(style = "color: #5C636A;", "Do not resubmit existing cluster names.")
+          tags$p("A column with this name already exists in the metadata."),
+          tags$small(style = "color: #5C636A;", "This mapping was submitted already; do not submit it twice.")
         ),
         footer = modalButton("OK"),
         easyClose = TRUE,
@@ -4720,10 +4737,10 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       showModal(modalDialog(
         title = tagList(
           icon("check-circle", style = "color: #047857; margin-right: 5px;"),
-          "Success"
+          "Saved"
         ),
         tags$div(
-          tags$p("New annotation added!"),
+          tags$p("The new annotation was added."),
           tags$small(style = "color: #5C636A;", "Your changes have been saved.")
         ),
         footer = modalButton("OK"),
@@ -4732,7 +4749,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
       ))
       showNotification(  ui = tagList(
         icon("check-circle", style = "color: #047857; margin-right: 5px;"),
-        "Cluster renamed successfully!"
+        "Cluster renamed."
       ), type = "message", duration = 5)
     }
   })
@@ -4817,7 +4834,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
 
     if (length(cur) != length(lv) || !setequal(cur, lv)) {
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Incomplete order"),
         "The new order must contain every current level exactly once.",
         easyClose = TRUE, footer = modalButton("OK"), size = "m"
       ))
@@ -4861,7 +4878,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
     showNotification(
       ui = tagList(
         icon("check-circle", style = "color: #047857; margin-right: 5px;"),
-        "Cluster levels reordered successfully!"
+        "Cluster levels reordered."
       ),
       type = "message", duration = 5
     )
@@ -5618,10 +5635,10 @@ server <- function(input, output, session) {
     # validate + need: check file name post-fix, in not rds or qs2, will throw an error
     if (!(tolower(ext) %in% c("qs2",'rds'))) {
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Unsupported file"),
         tags$div(
-          tags$p("Invalid file format."),
-          tags$small(style = "color: #5C636A;", "Please upload a file with the extension .rds or .qs2!")
+          tags$p("This file does not look like a Seurat object."),
+          tags$small(style = "color: #5C636A;", "Choose a file ending in .rds or .qs2.")
         ),
         easyClose = TRUE,
         footer = modalButton("OK"),
@@ -5684,9 +5701,9 @@ server <- function(input, output, session) {
         unlink(demo_dest, force = TRUE)
       }
       showModal(modalDialog(
-        title = tagList(icon("exclamation-triangle"), "Error"),
+        title = tagList(icon("exclamation-triangle"), "Download failed"),
         tags$div(
-          tags$p("Failed to download the demo data."),
+          tags$p("The demo data could not be downloaded."),
           tags$small(style = "color: #5C636A;", conditionMessage(e))
         ),
         easyClose = TRUE,
