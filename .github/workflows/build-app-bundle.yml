@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag whose Release should receive the bundles (e.g. v0.1.10)"
+        description: "Existing tag whose Release should receive the bundles (e.g. v0.1.12)"
         required: true
         type: string
 
@@ -39,7 +39,7 @@ env:
   APP_HOMEPAGE: "https://github.com/fentouxungui/SeuratExplorer"
   APP_LICENSE: "GPL-3.0-or-later"
   R_VERSION: "4.6.1"
-  CRAN_SNAPSHOT: "2026-10-01"
+  CRAN_SNAPSHOT: "2026-11-01"
   SMOKE: "on"
   SMOKE_TIMEOUT_SEC: "300"
 
@@ -336,7 +336,8 @@ jobs:
           # marker-test path, so a missing copy fails the build.
           required_extra <- c("presto")
           optional_extra <- c("ComplexHeatmap", "patchwork", "MAST", "limma",
-                              "DESeq2", "AUCell", "Signac")
+                              "DESeq2", "AUCell", "Signac",
+                              "Polychrome", "pals")
           extra_pkgs <- c(required_extra, optional_extra)
           seed <- unique(c(loc_names, declared, extra_pkgs))
           closure <- unique(c(
@@ -444,7 +445,9 @@ jobs:
               "The demo dataset is downloaded only after the user clicks",
               "'Download and Run a demo data'; the app starts without network.",
               "Optional modules use presto, ComplexHeatmap, patchwork, MAST,",
-              "limma, DESeq2, AUCell and Signac when installed."
+              "limma, DESeq2, AUCell, Signac, Polychrome and pals when installed.",
+              "Leiden clustering requires Python/leidenalg via reticulate and is",
+              "not available in this bundle; the Export Data page is enabled by default."
             ),
             packages = lapply(seq_len(nrow(pkgs)), function(i) list(
               name = pkgs$Package[i], version = pkgs$Version[i],
