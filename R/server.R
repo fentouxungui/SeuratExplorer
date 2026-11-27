@@ -399,8 +399,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       sliderInput("DimPlotHWRatio", label = "Adjust Height/Width Ratio", min = 0.1, max = 4, value = 0.9)
     }else{
       div(
-        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
-        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
+        class = "se-tip-box",
+        p("Tip: drag the right or bottom edge to resize the plot.", class = "se-note-text")
       )
     }
   })
@@ -514,15 +514,15 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       NULL
     } else if(length(data$extra_qc_options) > 10){
       div(
-        style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+        class = "se-note-box",
         p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " ")),
-          style = "font-size: 12px; margin: 0; color: #004085;")
+          class = "se-note-text")
       )
     } else{
       div(
-        style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+        class = "se-note-box",
         p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " ")),
-          style = "font-size: 12px; margin: 0; color: #004085;")
+          class = "se-note-text")
       )
     }
   })
@@ -581,8 +581,8 @@ explorer_server <- function(input, output, session, data, verbose=FALSE){
       sliderInput("FeaturePlotHWRatio", label = "Adjust Height/Width Ratio", min = 0.1, max = 4, value = 0.9)
     }else{
       div(
-        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
-        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
+        class = "se-tip-box",
+        p("Tip: drag the right or bottom edge to resize the plot.", class = "se-note-text")
       )
     }
   })
@@ -724,15 +724,15 @@ num_or(session$clientData$output_featureplot_width, 800) * num_or(input$FeatureP
       NULL
     } else if(length(data$extra_qc_options) > 10){
       div(
-        style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+        class = "se-note-box",
         p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " ")),
-          style = "font-size: 12px; margin: 0; color: #004085;")
+          class = "se-note-text")
       )
     } else{
       div(
-        style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+        class = "se-note-box",
         p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " ")),
-          style = "font-size: 12px; margin: 0; color: #004085;")
+          class = "se-note-text")
       )
     }
   })
@@ -868,8 +868,8 @@ num_or(session$clientData$output_featureplot_width, 800) * num_or(input$FeatureP
       sliderInput("VlnPlotHWRatio", label = "Adjust Height/Width Ratio", min = 0.1, max = 4, value = 0.9)
     }else{
       div(
-        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
-        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
+        class = "se-tip-box",
+        p("Tip: drag the right or bottom edge to resize the plot.", class = "se-note-text")
       )
     }
   })
@@ -1183,8 +1183,8 @@ num_or(session$clientData$output_vlnplot_width, 800) * num_or(input$VlnPlotHWRat
       sliderInput("DotPlotHWRatio", label = "Adjust Height/Width Ratio", min = 0.1, max = 4, value = 0.9)
     }else{
       div(
-        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
-        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
+        class = "se-tip-box",
+        p("Tip: drag the right or bottom edge to resize the plot.", class = "se-note-text")
       )
     }
   })
@@ -1343,8 +1343,8 @@ num_or(session$clientData$output_dotplot_width, 800) * num_or(input$DotPlotHWRat
       sliderInput("HeatmapPlotHWRatio", label = "Adjust Height/Width Ratio:", min = 0.1, max = 4, value = 0.9, step = 0.1)
     }else{
       div(
-        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
-        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
+        class = "se-tip-box",
+        p("Tip: drag the right or bottom edge to resize the plot.", class = "se-note-text")
       )
     }
   })
@@ -1484,8 +1484,8 @@ num_or(session$clientData$output_heatmap_width, 800) * num_or(input$HeatmapPlotH
       sliderInput("AveragedHeatmapPlotHWRatio", label = "Adjust Height/Width Ratio:", min = 0.1, max = 4, value = 0.9, step = 0.1)
     }else{
       div(
-        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
-        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
+        class = "se-tip-box",
+        p("Tip: drag the right or bottom edge to resize the plot.", class = "se-note-text")
       )
     }
   })
@@ -1580,15 +1580,15 @@ num_or(session$clientData$output_averagedheatmap_width, 800) * num_or(input$Aver
       NULL
     } else if(length(data$extra_qc_options) > 10){
       div(
-        style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+        class = "se-note-box",
         p(paste0("Also supports: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " ")),
-          style = "font-size: 12px; margin: 0; color: #004085;")
+          class = "se-note-text")
       )
     } else{
       div(
-        style = "background-color: #e9ecef; border: 1px solid #3b82f6; padding: 5px; border-radius: 4px; margin-top: 5px; margin-bottom: 10px;",
+        class = "se-note-box",
         p(paste0("Also supports: ", paste0(data$extra_qc_options, collapse = " ")),
-          style = "font-size: 12px; margin: 0; color: #004085;")
+          class = "se-note-text")
       )
     }
   })
@@ -1690,8 +1690,8 @@ num_or(session$clientData$output_averagedheatmap_width, 800) * num_or(input$Aver
       sliderInput("RidgeplotHWRatio", label = "Adjust Height/Width Ratio:", min = 0.1, max = 4, value = 0.9, step = 0.1)
     }else{
       div(
-        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
-        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
+        class = "se-tip-box",
+        p("Tip: drag the right or bottom edge to resize the plot.", class = "se-note-text")
       )
     }
   })
@@ -2075,8 +2075,8 @@ num_or(session$clientData$output_ridgeplot_width, 800) * num_or(input$RidgeplotH
       sliderInput("CellratioPlotHWRatio", label = "Adjust Height/Width Ratio", min = 0.1, max = 4, value = 0.9)
     }else{
       div(
-        style = "background-color: #e7f3ff; padding: 10px; border-radius: 4px;",
-        p("Tip: drag the right or bottom edge to resize the plot.", style = "font-size: 12px; margin: 0; color: #004085;")
+        class = "se-tip-box",
+        p("Tip: drag the right or bottom edge to resize the plot.", class = "se-note-text")
       )
     }
   })
@@ -3627,13 +3627,13 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
   output$geneclusters_hints.UI <- renderUI({
     if (length(data$extra_qc_options) == 0) {
       p("Enter a gene symbol.",
-        style = "font-size: 12px; margin: 0; color: #004085;")
+        class = "se-note-text")
     } else if (length(data$extra_qc_options) > 10) {
       p(paste0("Also supports numeric metadata columns: ", paste0(c(data$extra_qc_options[1:10], '...'), collapse = " "), "."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
+        class = "se-note-text")
     } else {
       p(paste0("Also supports numeric metadata columns: ", paste0(data$extra_qc_options, collapse = " "), "."),
-        style = "font-size: 12px; margin: 0; color: #004085;")
+        class = "se-note-text")
     }
   })
 
@@ -4674,7 +4674,7 @@ num_or(session$clientData$output_cellratioplot_width, 800) * num_or(input$Cellra
   output$renameclustersNewClusterNamehints.UI <- renderUI({
     if(verbose){message("SeuratExplorer: preparing renameclustersNewClusterNamehints.UI...")}
     p(paste0("Avoid using already existed column names in meta data. And only support letters, numbers, whitespace, -, +, _; Whitespace at both ends will be removed automatically!"),
-      style = "font-size: 12px; margin: 0; color: #004085;")
+      class = "se-note-text")
   })
 
   observeEvent(input$renameclustersSubmit, {

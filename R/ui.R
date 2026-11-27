@@ -44,11 +44,11 @@ explorer_sidebar_ui <- function(){
     featuresummary = "Summarize gene expression (mean / median / percentage) per cluster.",
     featurecorrelation = "Calculate gene-gene expression correlations.",
     renameclusters = "Interactively rename cluster labels.",
-    reorderclusters = "Reorder the identity levels of a cluster resolution without changing cell assignments.",
+    reorderclusters = "Reorder a cluster resolution's levels without changing which cells belong to each group.",
     clustercolors = "Assign custom colors to the groups of a cluster resolution and share them across plots.",
     geneclusters = "Group cells by a gene's expression level with custom cutoffs.",
     combinedclusters = "Combine two cluster annotations into a new grouping.",
-    clustercells = "Run FindNeighbors and FindClusters on a chosen reduction and save the result as a new metadata column.",
+    clustercells = "Cluster cells from a chosen reduction and save the group labels as a new metadata column.",
     addmodulescore = "Score cells with a gene set using AddModuleScore (Seurat) or AUCell.",
     featuresdf = "Search and browse feature / gene names across assays.",
     cellmetadata = "Browse and download cell-level metadata.",
@@ -99,13 +99,13 @@ explorer_sidebar_ui <- function(){
 param_hints <- function() {
   c(
     DimDimensionReduction = "Embedding used to lay out the cells (UMAP, t-SNE or PCA).",
-    DimClusterResolution = "Metadata column that defines the groups used to colour and label the cells.",
-    DimShowLabel = "Print each group name at the centre of its cells.",
-    DimShowLegend = "Show the colour legend next to the plot.",
+    DimClusterResolution = "Metadata column that defines the groups used to color and label the cells.",
+    DimShowLabel = "Print each group name at the center of its cells.",
+    DimShowLegend = "Show the color legend next to the plot.",
     DimLabelSize = "Font size of the group labels.",
     DimPointSize = "Size of each cell's point. Smaller values keep dense embeddings readable.",
     DimSplit = "Draw one panel per level of this metadata column.",
-    DimHighlightedClusters = "Colour only these groups; the other cells are drawn in grey.",
+    DimHighlightedClusters = "Color only these groups; the other cells are drawn in gray.",
     DimPlotMode = "Let SeuratExplorer size the plotting area to the window. Turn off to set the width and height yourself.",
     DimPlotHWRatio = "Height of the plot relative to its width when the plotting area is sized automatically.",
     FeatureGeneSymbol = "One gene per line (or comma-separated); each gene is drawn on the embedding.",
@@ -114,10 +114,10 @@ param_hints <- function() {
     FeatureSlot = "Slot read from the assay; data holds normalized expression.",
     FeatureClusterResolution = "Grouping used for the cluster labels.",
     FeatureSplit = "Draw one panel per level of this metadata column.",
-    FeatureShowLabel = "Print cluster names at the centre of each group.",
+    FeatureShowLabel = "Print cluster names at the center of each group.",
     FeatureLabelSize = "Font size of the cluster labels.",
-    FeaturePlotLowestExprColor = "Colour for cells with the lowest expression.",
-    FeaturePlotHighestExprColor = "Colour for cells with the highest expression.",
+    FeaturePlotLowestExprColor = "Color for cells with the lowest expression.",
+    FeaturePlotHighestExprColor = "Color for cells with the highest expression.",
     FeaturePointAlpha = "Point opacity; lower it when dense regions overlap.",
     FeatureMinCutoff = "Hide cells below this expression percentile.",
     FeatureMaxCutoff = "Hide cells above this expression percentile.",
@@ -132,7 +132,7 @@ param_hints <- function() {
     VlnSplitPlot = "Split each violin in two by the Split by variable (two-level variables only).",
     VlnStackPlot = "Stack the violins of several genes in one panel.",
     VlnFlipPlot = "Swap the x and y axes.",
-    VlnFillBy = "Colour the stacked violins by gene or by cluster.",
+    VlnFillBy = "Color the stacked violins by gene or by cluster.",
     VlnPointSize = "Size of the jittered cells on each violin; 0 hides them.",
     VlnPointAlpha = "Opacity of the jittered cells.",
     VlnPlotMode = "Let SeuratExplorer size the plot to the window.",
@@ -145,8 +145,8 @@ param_hints <- function() {
     IntraClusterDotplotSubsetCells = "Keep only cells matching these conditions before plotting.",
     DotRotateAxis = "Rotate x-axis labels for long names.",
     DotFlipCoordinate = "Swap the x and y axes.",
-    DotPlotLowestExprColor = "Colour for the lowest average expression.",
-    DotPlotHighestExprColor = "Colour for the highest average expression.",
+    DotPlotLowestExprColor = "Color for the lowest average expression.",
+    DotPlotHighestExprColor = "Color for the highest average expression.",
     DotDotScale = "Overall size of the dots.",
     DotPlotMode = "Let SeuratExplorer size the plot to the window.",
     HeatmapGeneSymbol = "One gene per line (or comma-separated).",
@@ -158,7 +158,7 @@ param_hints <- function() {
     HeatmapTextHjust = "Horizontal adjustment of the cluster labels.",
     HeatmapTextVjust = "Vertical adjustment of the cluster labels.",
     HeatmapTextRatateAngle = "Rotation of the cluster labels, in degrees.",
-    HeatmapGroupBarHeight = "Height of the colour bar that marks the groups.",
+    HeatmapGroupBarHeight = "Height of the color bar that marks the groups.",
     HeatmapLineWidth = "Width of the lines drawn between cells.",
     HeatmapFeatureTextSize = "Font size of the gene labels.",
     HeatmapPlotMode = "Let SeuratExplorer size the plot to the window.",
@@ -179,9 +179,9 @@ param_hints <- function() {
     RidgeplotIdentsSelected = "Which levels of that grouping to include.",
     RidgeplotNumberOfColumns = "Number of panels per row when several genes are plotted.",
     RidgeplotStackPlot = "Overlay all genes as separate ridges per group.",
-    RidgeplotFillBy = "Colour the stacked ridges by gene or by cluster.",
+    RidgeplotFillBy = "Color the stacked ridges by gene or by cluster.",
     RidgeplotPlotMode = "Let SeuratExplorer size the plot to the window.",
-    CellratioFillChoice = "Metadata column whose levels are stacked as colours.",
+    CellratioFillChoice = "Metadata column whose levels are stacked as colors.",
     CellratioXChoice = "Metadata column shown along the x-axis.",
     CellratioFacetChoice = "Split the plot into one panel per level of this column.",
     CellratioSubsetCells = "Keep only cells matching these conditions before computing percentages.",
@@ -195,7 +195,7 @@ param_hints <- function() {
     CellratioFlowCurve = "Curvature of the flows between columns.",
     CellratioMode = "Let SeuratExplorer size the plot to the window.",
     FeaturePlotHWRatio = "Height of the plot relative to its width when the plotting area is sized automatically.",
-    VlnShowLegend = "Show the colour legend.",
+    VlnShowLegend = "Show the color legend.",
     VlnLegendNcol = "Number of columns used to lay out the legend.",
     VlnXlabelSize = "Font size of the x-axis title.",
     VlnYlabelSize = "Font size of the y-axis title.",
@@ -209,12 +209,12 @@ param_hints <- function() {
     RidgeplotXlabelSize = "Font size of the x-axis title.",
     RidgeplotYlabelSize = "Font size of the y-axis title.",
     RidgeplotHWRatio = "Height of the plot relative to its width when the plotting area is sized automatically.",
-    CellratioShowLegend = "Show the colour legend.",
+    CellratioShowLegend = "Show the color legend.",
     CellratioLegendNcol = "Number of columns used to lay out the legend.",
     CellratioRotateAxis = "Rotate x-axis labels for long names.",
     CellratioSubsetCellsSelectedClusters = "Levels of the selected column to keep.",
     CellratioPercentSize = "Font size of the percentage labels.",
-    CellratioPercentColor = "Colour of the percentage labels; Automatic picks a contrasting colour.",
+    CellratioPercentColor = "Color of the percentage labels; Automatic picks a contrasting color.",
     CellratioPlotHWRatio = "Height of the plot relative to its width when the plotting area is sized automatically.",
     ClusterMarkersClusterResolution = "Grouping used to define the clusters whose markers are computed.",
     DEGsAssay = "Assay used for the differential expression test.",
@@ -277,10 +277,10 @@ param_hints <- function() {
     ExportDropScaleData = "Remove the scale.data slot to shrink the file.",
     ExportDroplevels = "Drop unused factor levels from metadata columns.",
     ExportWriteProvenance = "Record the export settings in obj@misc.",
-    ClusterCellsReduction = "Embedding used to build the neighbour graph (usually PCA).",
+    ClusterCellsReduction = "Embedding used to build the neighbor graph (usually PCA).",
     ClusterCellsDims = "Dimensions of that embedding used for the graph.",
     ClusterCellsAssay = "Assay passed to FindNeighbors; it only names the graph.",
-    ClusterCellsK = "Nearest neighbours per cell (Seurat default 20).",
+    ClusterCellsK = "Nearest neighbors per cell (Seurat default 20).",
     ClusterCellsPrune = "SNN edges weaker than this are dropped (Seurat default 1/15).",
     ClusterCellsNNMethod = "annoy ships with Seurat; rann needs the RANN package.",
     ClusterCellsMetric = "Distance metric used by annoy.",
@@ -454,7 +454,7 @@ explorer_body_ui <- function(tab_list){
                                             param_group_collapse(
                                               id = "featureplot_color", title = "Color Settings",
                                               icon_name = "palette", color = "#8b5cf6",
-                                              subtitle = "Colour ramp from the lowest to the highest expression.",
+                                              subtitle = "Color ramp from the lowest to the highest expression.",
                                               colourpicker::colourInput("FeaturePlotLowestExprColor", "Lowest expression color:", "#E5E5E5", showColour = "both", palette = "square", width = "100%"),
                                               colourpicker::colourInput("FeaturePlotHighestExprColor", "Highest expression color:", "#FF0000", showColour = "both", palette = "square", width = "100%")
                                             ),
@@ -1264,7 +1264,7 @@ explorer_body_ui <- function(tab_list){
                                    div(
                                      style = "background: #f0fdf4; border: 1px solid #10b981; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; height: 100%;",
                                      h4(icon("sliders-h"), "Settings", style = "color: #047857; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
-                                     textAreaInput("FeatureSummarySymbol", "Input Gene Symbols:", value = "", height = '100px', resize = "vertical"),
+                                     textAreaInput("FeatureSummarySymbol", "Gene Symbols:", value = "", height = '100px', resize = "vertical"),
                                      withSpinner(uiOutput("FeatureSummaryClusterResolution.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("FeatureSummarySelectedClusters.UI"), proxy.height = "10px"),
                                      withSpinner(uiOutput("FeatureSummaryAssays.UI"), proxy.height = "10px"),
@@ -1301,7 +1301,7 @@ explorer_body_ui <- function(tab_list){
                                          div(
                                            style = "display: flex; align-items: center; gap: 10px;",
                                            icon("table", style = "color: #1D4ED8; font-size: 18px;"),
-                                           h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Gene Short Summary")
+                                           h4(style = "margin: 0; color: #1D4ED8; font-weight: 600;", "Feature Summary")
                                          )
                                        ),
                                        div(
@@ -1438,7 +1438,7 @@ explorer_body_ui <- function(tab_list){
                                                   # The tab card already carries the blue outline; keep the tint
                                                   # and left accent, drop the second full outline.
                                                   style = "background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
-                                                  textInput(inputId = "MostCorrelatedAGene", label = "Input a gene:", width = '100%')
+                                                  textInput(inputId = "MostCorrelatedAGene", label = "Gene symbol:", width = '100%')
                                                 ),
                                                 div(style = "text-align: center; margin-top: 25px;",
                                                   actionButton("MostCorrelatedAnalysis",
@@ -1451,11 +1451,11 @@ explorer_body_ui <- function(tab_list){
                                                   # The tab card already carries the blue outline; keep the tint
                                                   # and left accent, drop the second full outline.
                                                   style = "background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;",
-                                                  textAreaInput(inputId = "CorrelationGeneList", label = "Input a group of genes:", width = '100%', height = '100px', resize = "vertical")
+                                                  textAreaInput(inputId = "CorrelationGeneList", label = "Gene list:", width = '100%', height = '100px', resize = "vertical")
                                                 ),
                                                 div(style = "text-align: center; margin-top: 25px;",
                                                   actionButton("calculatecorrelation",
-                                                              icon = shiny::icon("save"),
+                                                              icon = shiny::icon("magnifying-glass-chart"),
                                                               label = "Analyze",
                                                               class = "btn-primary btn-action")
                                                 ))
@@ -1652,7 +1652,7 @@ explorer_body_ui <- function(tab_list){
     div(
       class = "se-page-hint",
       icon("circle-info"),
-      tags$span("Choose a resolution, set the colors, then Submit. Saved colors are used by every plot that colours cells by cluster.")
+      tags$span("Choose a resolution, set the colors, then Submit. Saved colors are used by every plot that colors cells by cluster.")
     ),
     fluidRow(id = "clustercolors-main-row",
 
@@ -1923,7 +1923,7 @@ explorer_body_ui <- function(tab_list){
 
           hr(),
           h5(icon("layer-group"), "Graph", style = "color: #047857; font-weight: 600; display: flex; align-items: center; gap: 8px;"),
-          numericInput("ClusterCellsK", "Neighbours (k.param):", value = 20, min = 2, step = 1, width = "100%"),
+          numericInput("ClusterCellsK", "Neighbors (k.param):", value = 20, min = 2, step = 1, width = "100%"),
           numericInput("ClusterCellsPrune", "prune.SNN:", value = 0.0667, min = 0, max = 1, step = 0.01, width = "100%"),
           selectInput("ClusterCellsNNMethod", "nn.method:",
                       choices = c("annoy" = "annoy", "rann" = "rann"), width = "100%"),
@@ -2720,6 +2720,31 @@ explorer_global_css <- function() {
             font-size: 13px;
             line-height: 1.5;
           }
+
+          /* Notes and tips that renderUI() in server.R used to draw with a
+             repeated inline style on every page. One class each keeps the
+             same message identical everywhere and lets the palette move them
+             in one place. */
+          .se-note-box {
+            background-color: #e9ecef;
+            border: 1px solid #3b82f6;
+            padding: 5px;
+            border-radius: 4px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+          }
+
+          .se-tip-box {
+            background-color: #e7f3ff;
+            padding: 10px;
+            border-radius: 4px;
+          }
+
+          .se-note-text {
+            font-size: 12px;
+            margin: 0;
+            color: #004085;
+          }
   
           .se-actions {
             display: flex;
@@ -3093,9 +3118,24 @@ explorer_global_scripts <- function() {
             }).observe(document.body, { childList: true, subtree: true });
           })();
         ", param_hints_js(param_hints()), param_option_hints_js(param_option_hints())))),
-        tags$script(HTML(
-          "document.querySelector('body > div.wrapper > header > nav > div > ul > li > a > span').style.visibility = 'hidden';"
-        )), # to hide how many notifications in shinydashboard::dropdownMenu(), refer to:https://stackoverflow.com/questions/65915414/alter-dropdown-menu-in-shiny
+        # Hide the notification count bubble in the header. Anchored on
+        # .main-header instead of an exact DOM path: the old selector threw a
+        # TypeError as soon as the header markup changed, and the count badge
+        # is the only .label that sits directly under a dropdown toggle.
+        tags$script(HTML("
+          (function() {
+            function hideHeaderBadges() {
+              var header = document.querySelector('.main-header');
+              if (!header) return;
+              header.querySelectorAll('.dropdown-toggle > .label').forEach(function(el) {
+                el.style.visibility = 'hidden';
+              });
+            }
+            hideHeaderBadges();
+            document.addEventListener('DOMContentLoaded', hideHeaderBadges);
+            if (window.jQuery) { jQuery(document).on('shiny:connected', hideHeaderBadges); }
+          })();
+        ")),
         tags$script(HTML("
           (function() {
             var lastWidth = null;
