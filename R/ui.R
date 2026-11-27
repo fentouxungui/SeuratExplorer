@@ -2569,6 +2569,13 @@ explorer_global_css <- function() {
             opacity: 1;
           }
 
+          /* The caret is a browser surface too: keep it on the app accent
+             instead of the platform default. */
+          .form-control,
+          textarea.form-control {
+            caret-color: var(--se-accent);
+          }
+
           /* Theme the native focus glow from the palette instead of leaving
              Bootstrap's default #66afe9 halo. */
           .form-control:focus {
